@@ -1,5 +1,6 @@
 # Codex/Vivado temporary files
 codex_temp/
+tmp/
 .Xil/
 *.jou
 *.log

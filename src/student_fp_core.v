@@ -322,12 +322,15 @@ module CNN(
     wire [31:0] pack_finished;
     wire [11:0] in_w_ext = {6'd0, in_w};
     wire [11:0] col_ext = {6'd0, col};
-    wire [11:0] kernel_row_offset = (krow == 2'd0) ? 12'd0 :
-                                    (krow == 2'd1) ? in_w_ext :
-                                                     (in_w_ext << 1);
+    wire [1:0] next_krow = krow + 2'd1;
+    wire [11:0] kernel_row_offset = kernel_row_offset_for(krow, in_w);
+    wire [11:0] next_kernel_row_offset = kernel_row_offset_for(next_krow, in_w);
     wire [11:0] current_feature_index = row_base + kernel_row_offset + col_ext;
+    wire [11:0] next_feature_index = row_base + next_kernel_row_offset + col_ext;
     wire [9:0] current_word_addr = base_in + current_feature_index[11:2];
     wire [1:0] current_lane = current_feature_index[1:0];
+    wire [9:0] next_word_addr = base_in + next_feature_index[11:2];
+    wire [1:0] next_lane = next_feature_index[1:0];
     wire last_pixel = (out_index == (total_pixels - 12'd1));
     wire flush_word = (out_index[1:0] == 2'd3) || last_pixel;
 
@@ -436,6 +439,18 @@ module CNN(
         input signed [7:0] b;
         begin
             mul8 = a * b;
+        end
+    endfunction
+
+    function [11:0] kernel_row_offset_for;
+        input [1:0] row_sel;
+        input [5:0] width;
+        begin
+            case (row_sel)
+                2'd0: kernel_row_offset_for = 12'd0;
+                2'd1: kernel_row_offset_for = {6'd0, width};
+                default: kernel_row_offset_for = {5'd0, width, 1'b0};
+            endcase
         end
     endfunction
 
@@ -695,8 +710,14 @@ module CNN(
                         state <= C_FINISH_PIXEL;
                     end
                     else begin
-                        krow <= krow + 2'd1;
-                        state <= C_ROW_ADDR;
+                        krow <= next_krow;
+                        req_word_addr <= next_word_addr;
+                        req_lane <= next_lane;
+                        kernel0 <= selected_weight(layer, next_krow, 2'd0);
+                        kernel1 <= selected_weight(layer, next_krow, 2'd1);
+                        kernel2 <= selected_weight(layer, next_krow, 2'd2);
+                        addr <= next_word_addr;
+                        state <= C_ROW_WAIT_A;
                     end
                 end
 

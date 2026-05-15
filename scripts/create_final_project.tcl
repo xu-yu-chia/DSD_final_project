@@ -1,4 +1,4 @@
-set script_path [info script]
+set script_path [string map [list "\\" "/"] [info script]]
 if {[file pathtype $script_path] eq "relative"} {
     set script_path [file normalize [file join [pwd] $script_path]]
 } else {
@@ -9,8 +9,11 @@ set repo_dir [file normalize [file join $script_dir ..]]
 if {![file exists [file join $repo_dir RISCV_CNN.v]] && [file exists [file join [pwd] RISCV_CNN.v]]} {
     set repo_dir [file normalize [pwd]]
 }
+if {![file exists [file join $repo_dir RISCV_CNN.v]] && [file exists [file join [pwd] DSD_final_project RISCV_CNN.v]]} {
+    set repo_dir [file normalize [file join [pwd] DSD_final_project]]
+}
 if {![file exists [file join $repo_dir RISCV_CNN.v]]} {
-    set repo_dir {C:/Users/User/DSD_Lab/FinalProject}
+    set repo_dir {C:/Users/User/DSD_Lab/Final/DSD_final_project}
 }
 puts "FinalProject repo_dir: $repo_dir"
 set project_dir [file join $repo_dir vivado_finalproject]

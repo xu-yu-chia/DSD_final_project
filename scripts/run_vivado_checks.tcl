@@ -1,7 +1,25 @@
-set script_path [info script]
-set repo_dir {C:/Users/User/DSD_Lab/FinalProject}
-if {![file exists [file join $repo_dir RISCV_CNN.v]]} {
-    error "Cannot locate FinalProject repo containing RISCV_CNN.v"
+set script_path [string map [list "\\" "/"] [info script]]
+if {[file pathtype $script_path] eq "relative"} {
+    set script_path [file normalize [file join [pwd] $script_path]]
+} else {
+    set script_path [file normalize $script_path]
+}
+set script_dir [file dirname $script_path]
+set repo_dir ""
+foreach candidate [list \
+    [file normalize [file join $script_dir ..]] \
+    [file normalize [pwd]] \
+    [file normalize [file join [pwd] DSD_final_project]] \
+    {C:/Users/User/DSD_Lab/Final/DSD_final_project} \
+    {C:/Users/User/DSD_Lab/FinalProject} \
+] {
+    if {[file exists [file join $candidate RISCV_CNN.v]]} {
+        set repo_dir $candidate
+        break
+    }
+}
+if {$repo_dir eq ""} {
+    error "Cannot locate DSD_final_project repo containing RISCV_CNN.v"
 }
 set script_dir [file join $repo_dir scripts]
 
@@ -15,7 +33,7 @@ set report_dir [file join $repo_dir reports]
 file mkdir $report_dir
 
 source [file join $script_dir run_rtl_xsim.tcl]
-set work_dir [file join $repo_dir codex_temp vivado_work]
+set work_dir [file join $repo_dir tmp vivado_work]
 file mkdir $work_dir
 cd $work_dir
 

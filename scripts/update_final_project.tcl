@@ -1,4 +1,4 @@
-set script_path [info script]
+set script_path [string map [list "\\" "/"] [info script]]
 if {[file pathtype $script_path] eq "relative"} {
     set script_path [file normalize [file join [pwd] $script_path]]
 } else {
@@ -9,6 +9,8 @@ set repo_dir ""
 foreach candidate [list \
     [file normalize [file join $script_dir ..]] \
     [file normalize [pwd]] \
+    [file normalize [file join [pwd] DSD_final_project]] \
+    {C:/Users/User/DSD_Lab/Final/DSD_final_project} \
     {C:/Users/User/DSD_Lab/FinalProject} \
 ] {
     if {[file exists [file join $candidate RISCV_CNN.v]]} {
