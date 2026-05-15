@@ -4,7 +4,7 @@
 專案位置：`C:\Users\User\DSD_Lab\FinalProject`  
 正式 Vivado project：`C:\Users\User\DSD_Lab\FinalProject\final\final.xpr`
 
-目前版本：`v0.1.1`
+目前版本：`v0.1.2`
 
 ## 版本控制規則
 
@@ -18,6 +18,17 @@
 - GitHub clone / 對外同步路徑：`C:\Users\User\DSD_Lab\DSD_final_project`
 
 ## 版本紀錄
+
+### v0.1.2 - 2026-05-16
+
+- 確認 `C:\Users\User\DSD_Lab\DSD_final_project` 是使用者 GitHub repo 的本機 clone。
+- 已將 `FinalProject` 目前 Git 追蹤的正式檔案同步到該 clone 路徑，保留原本 `README.md` 與 `.git`。
+- 在 `DSD_final_project` clone 內建立 commit：`4dac788 v0.1.1 import final project baseline`。
+- 嘗試推送到 GitHub：
+  - `v0.1.1` tag 已推上遠端。
+  - `main` 分支因 GitHub HTTPS token/帳密驗證失敗，尚未推上遠端；目前本機 `main` 比 `origin/main` ahead 1 commit。
+- 沒有修改 RTL、Vivado project、COE、constraints 或 reports。
+- 沒有重新跑 simulation/synthesis/implementation。
 
 ### v0.1.1 - 2026-05-16
 
