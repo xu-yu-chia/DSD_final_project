@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-17 02:48 Asia/Taipei
+最後更新：2026-05-17 02:59 Asia/Taipei
 
 主要工作區：
 
@@ -31,7 +31,7 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
   - 在 CNN datapath 加入 BRAM read prefetch pipeline。
   - RTL simulation 通過，`cycle_count = 25660`。
   - Implementation timing 通過，`WNS = 0.043 ns`。
-  - 相比 `v0.2.1`，`LUT×cycle AT` 約改善 14.77%。
+  - 相比 `v0.1.2` baseline，`LUT×cycle AT` 約改善 21.22%。
 - `v0.2.1` - 2026-05-16 13:04 Asia/Taipei
   - 將 top-level port `FPGA_clk` 改為 PDF 要求的 `clk`。
   - 同步更新 `constraints/RISCV_CNN.xdc` 與 `tb/tb_finalproject.v` 的 clock port 名稱。
@@ -61,7 +61,7 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 之後每次更動都要同步完成以下事項：
 
 1. 更新 `CODEX_WORKLOG.md`，包含更動內容、驗證結果、速度與面積比較。
-2. 每個新版本都必須在「速度與面積版本比較」表格新增一列，並在「解讀」區補上該版本的重點說明，讓報告可以直接看出每次迭代後優化了哪些項目、付出哪些面積或 timing 代價、AT product 如何變化。
+2. 每個新版本都必須在「速度與面積版本比較」表格新增一列，並在「解讀」區補上該版本的重點說明；速度變化、面積變化與 AT 變化一律相對 `v0.1.2` baseline 比較，不與前一版本比較。
 3. 每個新版本都必須有獨立小節，至少包含修改檔案、修正內容、驗證結果、cycle_count、utilization、WNS，以及是否採用或捨棄該嘗試的理由。
 4. 執行必要驗證，至少確認 RTL simulation；若有 RTL/時序相關修改，需跑完整 Vivado checks。
 5. 建立 Git commit，commit message 需包含版本或明確功能摘要。
@@ -73,21 +73,22 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 面積主要以 implementation report 的 Slice LUTs、Slice Registers、Block RAM Tile、DSPs 紀錄。  
 AT product 以 `Slice LUTs × cycle_count` 作為本專案的簡化比較指標，數值越低越好。
 
-| 版本 | 時間 | cycle_count | 速度變化 | Slice LUTs | LUT 面積變化 | Registers | BRAM Tile | DSP | WNS | LUT×cycle AT | AT 變化 |
+| 版本 | 時間 | cycle_count | 速度變化 vs baseline | Slice LUTs | LUT 面積變化 vs baseline | Registers | BRAM Tile | DSP | WNS | LUT×cycle AT | AT 變化 vs baseline |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | `v0.1.2` | 2026-05-16 00:46 | 34080 | baseline | 2140 | baseline | 1915 | 15 | 2 | 0.049 ns | 72931200 | baseline |
 | `v0.2.0` | 2026-05-16 01:23 | 30712 | cycles -3368 / -9.88% | 2197 | +57 / +2.66% | 1915 | 15 | 2 | 0.087 ns | 67474264 | -5456936 / -7.48% |
 | `v0.2.1` | 2026-05-16 13:04 | 30712 | cycles -3368 / -9.88% | 2195 | +55 / +2.57% | 1915 | 15 | 2 | 0.130 ns | 67412840 | -5518360 / -7.57% |
-| `v0.3.0` | 2026-05-17 02:48 | 25660 | cycles -5052 / -16.45% vs v0.2.1 | 2239 | +44 / +2.00% vs v0.2.1 | 1915 | 15 | 2 | 0.043 ns | 57452740 | -9960100 / -14.77% vs v0.2.1 |
+| `v0.3.0` | 2026-05-17 02:48 | 25660 | cycles -8420 / -24.71% | 2239 | +99 / +4.63% | 1915 | 15 | 2 | 0.043 ns | 57452740 | -15478460 / -21.22% |
 
 解讀：
 
-- `v0.2.0` 相比 `v0.1.2`，cycle 數下降約 9.88%，等效 throughput 約提升 10.97%。
-- `v0.2.1` 只修正 clock port 命名，cycle_count 維持 30712。
-- `v0.3.0` 在 CNN datapath 加入 BRAM read prefetch pipeline，cycle_count 相比 `v0.2.1` 少 5052 cycles，約下降 16.45%。
-- `v0.3.0` Slice LUTs 相比 `v0.2.1` 增加 44 個，Registers、BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
-- 以 `LUT×cycle` 估算 AT product，`v0.3.0` 相比 `v0.2.1` 改善約 14.77%，相比 baseline 改善約 21.22%。
-- 若使用 PDF 官方 area 公式 `Slice LUTs + Slice Registers + F7 Muxes + F8 Muxes + 280 × DSPs`，`v0.3.0` area = 4986，official AT = 127940760，相比 `v0.2.1` 約改善 15.71%。
+- 所有速度、面積與 AT 變化皆固定相對 `v0.1.2` baseline，不使用前一版本作為比較基準。
+- `v0.2.0` cycle 數下降約 9.88%，等效 throughput 約提升 10.97%；LUT 增加 57 個，簡化 `LUT×cycle AT` 改善約 7.48%。
+- `v0.2.1` 只修正 clock port 命名，cycle_count 維持 30712；LUT 比 baseline 增加 55 個，簡化 `LUT×cycle AT` 改善約 7.57%。
+- `v0.3.0` 在 CNN datapath 加入 BRAM read prefetch pipeline，cycle_count 比 baseline 少 8420 cycles，約下降 24.71%，等效 throughput 約提升 32.81%。
+- `v0.3.0` Slice LUTs 比 baseline 增加 99 個，約增加 4.63%；Registers、BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
+- 以 `LUT×cycle` 估算 AT product，`v0.3.0` 比 baseline 改善約 21.22%。
+- 若使用 PDF 官方 area 公式 `Slice LUTs + Slice Registers + F7 Muxes + F8 Muxes + 280 × DSPs`，baseline area = 4912、baseline official AT = 167400960；`v0.3.0` area = 4986、official AT = 127940760，比 baseline 改善約 23.57%。
 
 ## v0.3.0 CNN pipeline ranking 優化
 
@@ -126,7 +127,7 @@ Implementation utilization: 2239 Slice LUTs, 1915 registers, 15 BRAM tiles, 2 DS
 
 採用判定：
 
-- 採用此版本作為目前正式版本，因為 RTL 全測通過、implementation timing 通過，且 AT product 明顯優於 `v0.2.1`。
+- 採用此版本作為目前正式版本，因為 RTL 全測通過、implementation timing 通過，且 AT product 相對 `v0.1.2` baseline 明顯改善。
 
 ## v0.2.1 PDF clock / COE 修正
 
