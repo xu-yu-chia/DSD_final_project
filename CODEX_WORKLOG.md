@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-16 13:04 Asia/Taipei
+最後更新：2026-05-17 02:48 Asia/Taipei
 
 主要工作區：
 
@@ -16,8 +16,8 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前正式版本：`v0.2.1`
-- `v0.2.1` 將 top-level clock port 對齊 PDF 要求的 `clk`。
+- 目前正式版本：`v0.3.0`
+- `v0.3.0` 加入 CNN BRAM read prefetch pipeline，以降低 ranking 用 AT product。
 - RTL simulation 已通過全部 15 個 testcase。
 - Synthesis、placement、routing、post-route timing 皆已完成並通過。
 - `scripts/run_vivado_checks.tcl` 目前刻意不產生 bitstream。
@@ -27,6 +27,11 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.3.0` - 2026-05-17 02:48 Asia/Taipei
+  - 在 CNN datapath 加入 BRAM read prefetch pipeline。
+  - RTL simulation 通過，`cycle_count = 25660`。
+  - Implementation timing 通過，`WNS = 0.043 ns`。
+  - 相比 `v0.2.1`，`LUT×cycle AT` 約改善 14.77%。
 - `v0.2.1` - 2026-05-16 13:04 Asia/Taipei
   - 將 top-level port `FPGA_clk` 改為 PDF 要求的 `clk`。
   - 同步更新 `constraints/RISCV_CNN.xdc` 與 `tb/tb_finalproject.v` 的 clock port 名稱。
@@ -56,10 +61,12 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 之後每次更動都要同步完成以下事項：
 
 1. 更新 `CODEX_WORKLOG.md`，包含更動內容、驗證結果、速度與面積比較。
-2. 執行必要驗證，至少確認 RTL simulation；若有 RTL/時序相關修改，需跑完整 Vivado checks。
-3. 建立 Git commit，commit message 需包含版本或明確功能摘要。
-4. 需要形成正式節點時建立 Git tag，例如 `v0.2.1`、`v0.3.0`。
-5. 修改完成後一律推送到 GitHub remote `origin`：即使不建立 tag，也必須至少建立並推送 commit；只有使用者明確要求暫停推送時才例外。
+2. 每個新版本都必須在「速度與面積版本比較」表格新增一列，並在「解讀」區補上該版本的重點說明，讓報告可以直接看出每次迭代後優化了哪些項目、付出哪些面積或 timing 代價、AT product 如何變化。
+3. 每個新版本都必須有獨立小節，至少包含修改檔案、修正內容、驗證結果、cycle_count、utilization、WNS，以及是否採用或捨棄該嘗試的理由。
+4. 執行必要驗證，至少確認 RTL simulation；若有 RTL/時序相關修改，需跑完整 Vivado checks。
+5. 建立 Git commit，commit message 需包含版本或明確功能摘要。
+6. 需要形成正式節點時建立 Git tag，例如 `v0.2.1`、`v0.3.0`。
+7. 修改完成後一律推送到 GitHub remote `origin`：即使不建立 tag，也必須至少建立並推送 commit；只有使用者明確要求暫停推送時才例外。
 
 ## 速度與面積版本比較
 
@@ -71,15 +78,57 @@ AT product 以 `Slice LUTs × cycle_count` 作為本專案的簡化比較指標�
 | `v0.1.2` | 2026-05-16 00:46 | 34080 | baseline | 2140 | baseline | 1915 | 15 | 2 | 0.049 ns | 72931200 | baseline |
 | `v0.2.0` | 2026-05-16 01:23 | 30712 | cycles -3368 / -9.88% | 2197 | +57 / +2.66% | 1915 | 15 | 2 | 0.087 ns | 67474264 | -5456936 / -7.48% |
 | `v0.2.1` | 2026-05-16 13:04 | 30712 | cycles -3368 / -9.88% | 2195 | +55 / +2.57% | 1915 | 15 | 2 | 0.130 ns | 67412840 | -5518360 / -7.57% |
+| `v0.3.0` | 2026-05-17 02:48 | 25660 | cycles -5052 / -16.45% vs v0.2.1 | 2239 | +44 / +2.00% vs v0.2.1 | 1915 | 15 | 2 | 0.043 ns | 57452740 | -9960100 / -14.77% vs v0.2.1 |
 
 解讀：
 
 - `v0.2.0` 相比 `v0.1.2`，cycle 數下降約 9.88%，等效 throughput 約提升 10.97%。
 - `v0.2.1` 只修正 clock port 命名，cycle_count 維持 30712。
-- Slice LUTs 相比 baseline 增加 55 個，約增加 2.57%；Registers、BRAM、DSP 維持不變。
-- 以 `LUT×cycle` 估算 AT product，`v0.2.1` 約改善 7.57%。
+- `v0.3.0` 在 CNN datapath 加入 BRAM read prefetch pipeline，cycle_count 相比 `v0.2.1` 少 5052 cycles，約下降 16.45%。
+- `v0.3.0` Slice LUTs 相比 `v0.2.1` 增加 44 個，Registers、BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
+- 以 `LUT×cycle` 估算 AT product，`v0.3.0` 相比 `v0.2.1` 改善約 14.77%，相比 baseline 改善約 21.22%。
+- 若使用 PDF 官方 area 公式 `Slice LUTs + Slice Registers + F7 Muxes + F8 Muxes + 280 × DSPs`，`v0.3.0` area = 4986，official AT = 127940760，相比 `v0.2.1` 約改善 15.71%。
 
-## 本次 PDF clock / COE 修正
+## v0.3.0 CNN pipeline ranking 優化
+
+修改檔案：
+
+```text
+src\student_fp_core.v
+reports\timing_impl.rpt
+reports\timing_synth.rpt
+reports\utilization_impl.rpt
+reports\utilization_synth.rpt
+reports\route_status.rpt
+```
+
+修正內容：
+
+- `C_PIXEL_START` 先送出第一個 kernel row 的 BRAM read address，移除每個 output pixel 原本額外的 `C_ROW_ADDR` 等待週期。
+- `C_MAC` 提早送出下一個 kernel row 的 BRAM read address，讓下一列 memory read 與目前列的 accumulate 重疊。
+- `C_ACCUM_ROW` 保留累加 pipeline stage，非最後 kernel row 時直接進入 `C_ROW_CAP_A` 捕捉已提前讀出的資料。
+
+驗證結果：
+
+```text
+RTL simulation: FINALPROJECT_RTL_PASS
+cycle_count: 25660
+result_valid: 7fff
+result_pass:  7fff
+Implementation route status: 0 routing errors
+Implementation WNS: 0.043 ns
+Implementation utilization: 2239 Slice LUTs, 1915 registers, 15 BRAM tiles, 2 DSPs
+```
+
+未採用嘗試：
+
+- 曾嘗試移除 prefetch 後不再進入的 `C_ROW_ADDR` dead state 與相關 address wire，implementation LUT 可降到 2185，但 WNS 變成 -0.053 ns，未通過 10 ns timing，因此不作為正式版本採用。
+
+採用判定：
+
+- 採用此版本作為目前正式版本，因為 RTL 全測通過、implementation timing 通過，且 AT product 明顯優於 `v0.2.1`。
+
+## v0.2.1 PDF clock / COE 修正
 
 修改檔案：
 
@@ -142,12 +191,27 @@ Block RAM Tile   = 15 / 50       (30.00%)
 DSPs             = 2 / 90        (2.22%)
 ```
 
-## 本次優化重點
+採用判定：
+
+- 採用此版本作為 clock/spec 修正版，因為它不改變 `cycle_count`，但修正 top-level clock port 與 XDC/testbench 對齊 PDF 要求；implementation timing 通過。
+- `scripts/run_vivado_checks.tcl` 曾在 sandbox 內遇到 Vivado `.Xil` 暫存目錄刪除錯誤，改用等效 implementation-only Tcl 重跑並通過，因此保留此版本。
+
+## v0.2.0 CNN row pipeline 優化與工作區整理
 
 修改檔案：
 
 ```text
 src\student_fp_core.v
+reports\timing_impl.rpt
+reports\timing_synth.rpt
+reports\utilization_impl.rpt
+reports\utilization_synth.rpt
+reports\route_status.rpt
+scripts\create_final_project.tcl
+scripts\run_rtl_xsim.tcl
+scripts\run_vivado_checks.tcl
+scripts\update_final_project.tcl
+.gitignore
 ```
 
 CNN datapath 優化方式：
@@ -173,7 +237,7 @@ CNN datapath 優化方式：
 - 但 post-route timing 失敗，約 `WNS = -1.492 ns`。
 - 因此最後保留目前這版 timing 較穩定的 pipeline 優化。
 
-## 驗證結果
+驗證結果：
 
 執行指令：
 
@@ -217,6 +281,11 @@ Block RAM Tile   = 15 / 50       (30.00%)
 DSPs             = 2 / 90        (2.22%)
 ```
 
+採用判定：
+
+- 採用此版本作為第一個 ranking 優化版本，因為 `cycle_count` 從 34080 降到 30712，implementation timing 仍通過。
+- 曾測試更激進的 BRAM capture 直接計算版本，RTL 可降到 `cycle_count = 29028`，但 post-route timing 約 `WNS = -1.492 ns`，因此捨棄。
+
 Report 檔案：
 
 ```text
@@ -227,7 +296,7 @@ reports\utilization_synth.rpt
 reports\route_status.rpt
 ```
 
-## Script 與工作區整理
+### Script 與工作區整理
 
 修改檔案：
 
@@ -246,7 +315,7 @@ scripts\update_final_project.tcl
 - `run_vivado_checks.tcl` 的暫存工作目錄從 `codex_temp\vivado_work` 改為 `tmp\vivado_work`。
 - `.gitignore` 新增忽略 `tmp/`。
 
-## 舊檔保存與刪除
+### 舊檔保存與刪除
 
 刪除舊資料夾前，已將有保留價值的舊檔搬到：
 
@@ -281,6 +350,41 @@ C:\Users\User\DSD_Lab\Final\FinalProject廢棄
 ```text
 C:\Users\User\DSD_Lab\Final\DSD_final_project
 ```
+
+## v0.1.2 Baseline project / workspace sync
+
+修改檔案：
+
+```text
+CODEX_WORKLOG.md
+README.md
+reports\timing_impl.rpt
+reports\timing_synth.rpt
+reports\utilization_impl.rpt
+reports\utilization_synth.rpt
+reports\route_status.rpt
+```
+
+修正內容：
+
+- 記錄 GitHub clone / workspace 同步狀態。
+- 將 baseline Vivado project、RTL、testbench、constraints、COE 與 reports 保存在 `DSD_final_project`。
+- 以此版本作為後續 ranking 優化的比較 baseline。
+
+驗證結果：
+
+```text
+RTL simulation: PASS
+cycle_count: 34080
+Implementation route status: 0 routing errors
+Implementation WNS: 0.049 ns
+Implementation utilization: 2140 Slice LUTs, 1915 registers, 15 BRAM tiles, 2 DSPs
+```
+
+採用判定：
+
+- 採用此版本作為 baseline，因為 RTL simulation、synthesis、implementation 與 timing 皆通過。
+- `v0.1.0` 和 `v0.1.1` 屬於 project 建立與 Git 匯入節點，未另行作 ranking 比較；後續面積與速度比較以 `v0.1.2` 為 baseline。
 
 ## 重要專案檔案
 

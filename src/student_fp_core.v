@@ -327,10 +327,13 @@ module CNN(
     wire [11:0] next_kernel_row_offset = kernel_row_offset_for(next_krow, in_w);
     wire [11:0] current_feature_index = row_base + kernel_row_offset + col_ext;
     wire [11:0] next_feature_index = row_base + next_kernel_row_offset + col_ext;
+    wire [11:0] first_feature_index = row_base + col_ext;
     wire [9:0] current_word_addr = base_in + current_feature_index[11:2];
     wire [1:0] current_lane = current_feature_index[1:0];
     wire [9:0] next_word_addr = base_in + next_feature_index[11:2];
     wire [1:0] next_lane = next_feature_index[1:0];
+    wire [9:0] first_word_addr = base_in + first_feature_index[11:2];
+    wire [1:0] first_lane = first_feature_index[1:0];
     wire last_pixel = (out_index == (total_pixels - 12'd1));
     wire flush_word = (out_index[1:0] == 2'd3) || last_pixel;
 
@@ -661,7 +664,13 @@ module CNN(
                     accum <= {{18{(layer ? bias1[7] : bias0[7])}},
                               (layer ? bias1 : bias0), 6'd0};
                     krow <= 2'd0;
-                    state <= C_ROW_ADDR;
+                    req_word_addr <= first_word_addr;
+                    req_lane <= first_lane;
+                    kernel0 <= selected_weight(layer, 2'd0, 2'd0);
+                    kernel1 <= selected_weight(layer, 2'd0, 2'd1);
+                    kernel2 <= selected_weight(layer, 2'd0, 2'd2);
+                    addr <= first_word_addr;
+                    state <= C_ROW_WAIT_A;
                 end
 
                 C_ROW_ADDR: begin
@@ -701,6 +710,14 @@ module CNN(
 
                 C_MAC: begin
                     row_sum_reg <= row_sum;
+                    if (krow != 2'd2) begin
+                        req_word_addr <= next_word_addr;
+                        req_lane <= next_lane;
+                        kernel0 <= selected_weight(layer, next_krow, 2'd0);
+                        kernel1 <= selected_weight(layer, next_krow, 2'd1);
+                        kernel2 <= selected_weight(layer, next_krow, 2'd2);
+                        addr <= next_word_addr;
+                    end
                     state <= C_ACCUM_ROW;
                 end
 
@@ -711,13 +728,7 @@ module CNN(
                     end
                     else begin
                         krow <= next_krow;
-                        req_word_addr <= next_word_addr;
-                        req_lane <= next_lane;
-                        kernel0 <= selected_weight(layer, next_krow, 2'd0);
-                        kernel1 <= selected_weight(layer, next_krow, 2'd1);
-                        kernel2 <= selected_weight(layer, next_krow, 2'd2);
-                        addr <= next_word_addr;
-                        state <= C_ROW_WAIT_A;
+                        state <= C_ROW_CAP_A;
                     end
                 end
 
