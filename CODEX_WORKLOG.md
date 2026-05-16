@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-16 12:57 Asia/Taipei
+最後更新：2026-05-16 13:04 Asia/Taipei
 
 主要工作區：
 
@@ -16,8 +16,8 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前正式版本：`v0.2.0`
-- 目前工作區修正：`v0.2.1-working`，將 top-level clock port 對齊 PDF 要求的 `clk`；尚未建立正式 tag。
+- 目前正式版本：`v0.2.1`
+- `v0.2.1` 將 top-level clock port 對齊 PDF 要求的 `clk`。
 - RTL simulation 已通過全部 15 個 testcase。
 - Synthesis、placement、routing、post-route timing 皆已完成並通過。
 - `scripts/run_vivado_checks.tcl` 目前刻意不產生 bitstream。
@@ -27,13 +27,14 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
-- `v0.2.1-working` - 2026-05-16 12:53 Asia/Taipei
+- `v0.2.1` - 2026-05-16 13:04 Asia/Taipei
   - 將 top-level port `FPGA_clk` 改為 PDF 要求的 `clk`。
   - 同步更新 `constraints/RISCV_CNN.xdc` 與 `tb/tb_finalproject.v` 的 clock port 名稱。
   - 未修改助教 `.coe` 檔案；三個 `.coe` 已與 `coe備份檔/` 備份比對 SHA256 一致。
   - RTL simulation 通過，`cycle_count = 30712`。
   - Implementation timing 通過，`WNS = 0.130 ns`。
   - `scripts/run_vivado_checks.tcl` 在 sandbox 內遇到 Vivado `.Xil` 暫存目錄刪除錯誤；改用等效的 implementation-only Tcl 在核准後重跑 synthesis/place/route/report，結果通過。
+  - 建立 Git tag：`v0.2.1`，並推送到 GitHub。
 - `v0.2.0` - 2026-05-16 01:23 Asia/Taipei
   - 完成 CNN row pipeline 優化。
   - RTL simulation 通過，`cycle_count = 30712`。
@@ -69,14 +70,14 @@ AT product 以 `Slice LUTs × cycle_count` 作為本專案的簡化比較指標�
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | `v0.1.2` | 2026-05-16 00:46 | 34080 | baseline | 2140 | baseline | 1915 | 15 | 2 | 0.049 ns | 72931200 | baseline |
 | `v0.2.0` | 2026-05-16 01:23 | 30712 | cycles -3368 / -9.88% | 2197 | +57 / +2.66% | 1915 | 15 | 2 | 0.087 ns | 67474264 | -5456936 / -7.48% |
-| `v0.2.1-working` | 2026-05-16 12:53 | 30712 | cycles -3368 / -9.88% | 2195 | +55 / +2.57% | 1915 | 15 | 2 | 0.130 ns | 67412840 | -5518360 / -7.57% |
+| `v0.2.1` | 2026-05-16 13:04 | 30712 | cycles -3368 / -9.88% | 2195 | +55 / +2.57% | 1915 | 15 | 2 | 0.130 ns | 67412840 | -5518360 / -7.57% |
 
 解讀：
 
 - `v0.2.0` 相比 `v0.1.2`，cycle 數下降約 9.88%，等效 throughput 約提升 10.97%。
-- `v0.2.1-working` 只修正 clock port 命名，cycle_count 維持 30712。
+- `v0.2.1` 只修正 clock port 命名，cycle_count 維持 30712。
 - Slice LUTs 相比 baseline 增加 55 個，約增加 2.57%；Registers、BRAM、DSP 維持不變。
-- 以 `LUT×cycle` 估算 AT product，`v0.2.1-working` 約改善 7.57%。
+- 以 `LUT×cycle` 估算 AT product，`v0.2.1` 約改善 7.57%。
 
 ## 本次 PDF clock / COE 修正
 
