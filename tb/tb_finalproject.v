@@ -12,7 +12,7 @@ module tb_finalproject;
     integer timeout;
 
     RISCV_CNN dut (
-        .FPGA_clk(FPGA_clk),
+        .clk(FPGA_clk),
         .rstn(rstn),
         .tc(tc),
         .mode(mode),

@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-16 01:23 Asia/Taipei
+最後更新：2026-05-16 12:57 Asia/Taipei
 
 主要工作區：
 
@@ -16,15 +16,24 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前版本：`v0.2.0`
+- 目前正式版本：`v0.2.0`
+- 目前工作區修正：`v0.2.1-working`，將 top-level clock port 對齊 PDF 要求的 `clk`；尚未建立正式 tag。
 - RTL simulation 已通過全部 15 個 testcase。
 - Synthesis、placement、routing、post-route timing 皆已完成並通過。
 - `scripts/run_vivado_checks.tcl` 目前刻意不產生 bitstream。
 - Vivado journal/log 與暫存工作檔集中放在 `tmp/`。
 - 舊的 `FinalProject` 資料夾已刪除；有保留價值的舊檔已搬到 `legacy_artifacts/FinalProject_deprecated/`。
+- 助教提供的 `.coe` 檔案不可修改；目前 `init_rom.coe`、`golden_rom.coe`、`instr_mem_cpucheck.coe` 皆已確認與 `coe備份檔/` 內備份檔 SHA256 完全一致。
 
 ## 版本紀錄
 
+- `v0.2.1-working` - 2026-05-16 12:53 Asia/Taipei
+  - 將 top-level port `FPGA_clk` 改為 PDF 要求的 `clk`。
+  - 同步更新 `constraints/RISCV_CNN.xdc` 與 `tb/tb_finalproject.v` 的 clock port 名稱。
+  - 未修改助教 `.coe` 檔案；三個 `.coe` 已與 `coe備份檔/` 備份比對 SHA256 一致。
+  - RTL simulation 通過，`cycle_count = 30712`。
+  - Implementation timing 通過，`WNS = 0.130 ns`。
+  - `scripts/run_vivado_checks.tcl` 在 sandbox 內遇到 Vivado `.Xil` 暫存目錄刪除錯誤；改用等效的 implementation-only Tcl 在核准後重跑 synthesis/place/route/report，結果通過。
 - `v0.2.0` - 2026-05-16 01:23 Asia/Taipei
   - 完成 CNN row pipeline 優化。
   - RTL simulation 通過，`cycle_count = 30712`。
@@ -49,7 +58,7 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 2. 執行必要驗證，至少確認 RTL simulation；若有 RTL/時序相關修改，需跑完整 Vivado checks。
 3. 建立 Git commit，commit message 需包含版本或明確功能摘要。
 4. 需要形成正式節點時建立 Git tag，例如 `v0.2.1`、`v0.3.0`。
-5. 將 commit 與 tag 推送到 GitHub remote `origin`。
+5. 修改完成後一律推送到 GitHub remote `origin`：即使不建立 tag，也必須至少建立並推送 commit；只有使用者明確要求暫停推送時才例外。
 
 ## 速度與面積版本比較
 
@@ -60,12 +69,77 @@ AT product 以 `Slice LUTs × cycle_count` 作為本專案的簡化比較指標�
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | `v0.1.2` | 2026-05-16 00:46 | 34080 | baseline | 2140 | baseline | 1915 | 15 | 2 | 0.049 ns | 72931200 | baseline |
 | `v0.2.0` | 2026-05-16 01:23 | 30712 | cycles -3368 / -9.88% | 2197 | +57 / +2.66% | 1915 | 15 | 2 | 0.087 ns | 67474264 | -5456936 / -7.48% |
+| `v0.2.1-working` | 2026-05-16 12:53 | 30712 | cycles -3368 / -9.88% | 2195 | +55 / +2.57% | 1915 | 15 | 2 | 0.130 ns | 67412840 | -5518360 / -7.57% |
 
 解讀：
 
 - `v0.2.0` 相比 `v0.1.2`，cycle 數下降約 9.88%，等效 throughput 約提升 10.97%。
-- Slice LUTs 增加 57 個，約增加 2.66%；Registers、BRAM、DSP 維持不變。
-- 以 `LUT×cycle` 估算 AT product，`v0.2.0` 約改善 7.48%。
+- `v0.2.1-working` 只修正 clock port 命名，cycle_count 維持 30712。
+- Slice LUTs 相比 baseline 增加 55 個，約增加 2.57%；Registers、BRAM、DSP 維持不變。
+- 以 `LUT×cycle` 估算 AT product，`v0.2.1-working` 約改善 7.57%。
+
+## 本次 PDF clock / COE 修正
+
+修改檔案：
+
+```text
+RISCV_CNN.v
+constraints\RISCV_CNN.xdc
+tb\tb_finalproject.v
+reports\timing_impl.rpt
+reports\timing_synth.rpt
+reports\utilization_impl.rpt
+reports\utilization_synth.rpt
+```
+
+修正內容：
+
+- Top-level clock port 由 `FPGA_clk` 改為 `clk`，對齊 PDF module I/O 要求。
+- XDC clock pin 與 `create_clock` 改為套用在 `[get_ports clk]`。
+- Testbench DUT instantiation 改為 `.clk(FPGA_clk)`，保留 testbench 內部 clock signal 名稱。
+- 助教 `.coe` 檔案已恢復並確認與 `coe備份檔/` 完全一致。
+
+COE SHA256 比對：
+
+```text
+init_rom.coe               7DDF3C7944E2B78F3179FD4862886C3FC4942A3CD58341345B5E6409100FEE2B
+golden_rom.coe             060BBE3730DEBEE894CFB8DC4B87F080470F49E7A7B1E4E2C9573B2DC9162265
+instr_mem_cpucheck.coe     B70B211A9B1577C78695E20AC46439196CB8FD65FFE58707346A0A693797A2E3
+```
+
+RTL simulation：
+
+```text
+vivado.bat -mode batch -source scripts/run_rtl_xsim.tcl -journal tmp/tmp_clkfix_rtl.jou -log tmp/tmp_clkfix_rtl.log
+
+result_valid = 7fff
+result_pass  = 7fff
+cycle_count  = 30712
+addr13       = 00000401
+FINALPROJECT_RTL_PASS
+```
+
+Implementation check：
+
+```text
+vivado.bat -mode batch -source tmp/tmp_clkfix_impl_only.tcl -journal tmp/tmp_clkfix_impl_only_escalated.jou -log tmp/tmp_clkfix_impl_only_escalated.log
+
+route_design completed successfully
+Timing met
+WNS = 0.130 ns
+TNS = 0.000 ns
+fully routed nets = 4083
+routing errors    = 0
+```
+
+Implementation utilization：
+
+```text
+Slice LUTs       = 2195 / 20800  (10.55%)
+Slice Registers  = 1915 / 41600  (4.60%)
+Block RAM Tile   = 15 / 50       (30.00%)
+DSPs             = 2 / 90        (2.22%)
+```
 
 ## 本次優化重點
 

@@ -1,5 +1,5 @@
 module RISCV_CNN(
-    input         FPGA_clk,
+    input         clk,
     input         rstn,
     input  [3:0]  tc,
     input         mode,
@@ -27,7 +27,7 @@ module RISCV_CNN(
     assign cnn_finish_event = cnn_web && (cnn_addr == 10'd13) && cnn_dinb[0];
     
     test_circuit u_test_circuit(
-        .clk(FPGA_clk),
+        .clk(clk),
         .rstn(rstn),
         .sys_rstn(sys_rstn),
         .mem_addr(tc_mem_addr),
@@ -47,7 +47,7 @@ module RISCV_CNN(
     );
 
     Simple_CPU u_cpu(
-        .CLK(FPGA_clk),
+        .CLK(clk),
         .RSTN(sys_rstn),
         .dmem_en(cpu_dmem_en),
         .dmem_we(cpu_dmem_we),
@@ -57,7 +57,7 @@ module RISCV_CNN(
     );
 
     CNN u_cnn(
-        .clk(FPGA_clk),
+        .clk(clk),
         .rstn(sys_rstn),
         .doutb(cnn_doutb),
         .web(cnn_web),
@@ -68,13 +68,13 @@ module RISCV_CNN(
     );
 
     Data_mem u_data_mem(
-        .clka(FPGA_clk),
+        .clka(clk),
         .ena(1'b1),
         .wea(tc_mem_we),
         .addra(tc_mem_addr),
         .dina(tc_mem_wdata),
         .douta(cpu_dmem_rdata),
-        .clkb(FPGA_clk),
+        .clkb(clk),
         .enb(cnn_enb),
         .web(cnn_web),
         .addrb(cnn_addr),
