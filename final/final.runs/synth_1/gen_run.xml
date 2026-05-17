@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenRun Id="synth_1" LaunchPart="xc7a35tcsg324-1" LaunchTime="1778997447" LaunchIncrCheckpoint="$PPRDIR/../../../FinalProject/final/final.srcs/utils_1/imports/synth_1/RISCV_CNN.dcp">
   <File Type="PA-TCL" Name="RISCV_CNN.tcl"/>
-  <File Type="RDS-PROPCONSTRS" Name="RISCV_CNN_drc_synth.rpt"/>
   <File Type="REPORTS-TCL" Name="RISCV_CNN_reports.tcl"/>
   <File Type="RDS-RDS" Name="RISCV_CNN.vds"/>
   <File Type="RDS-UTIL" Name="RISCV_CNN_utilization_synth.rpt"/>
   <File Type="RDS-UTIL-PB" Name="RISCV_CNN_utilization_synth.pb"/>
   <File Type="RDS-DCP" Name="RISCV_CNN.dcp"/>
-  <File Type="VDS-TIMINGSUMMARY" Name="RISCV_CNN_timing_summary_synth.rpt"/>
-  <File Type="VDS-TIMING-PB" Name="RISCV_CNN_timing_summary_synth.pb"/>
   <FileSet Name="sources" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
     <Filter Type="Srcs"/>
     <File Path="$PPRDIR/../test_circuit_bram_ip.v">
@@ -79,7 +76,7 @@
     <Step Id="synth_design"/>
   </Strategy>
   <BlockFileSet Type="BlockSrcs" Name="Data_mem"/>
-  <BlockFileSet Type="BlockSrcs" Name="golden_rom"/>
   <BlockFileSet Type="BlockSrcs" Name="instr_mem"/>
+  <BlockFileSet Type="BlockSrcs" Name="golden_rom"/>
   <BlockFileSet Type="BlockSrcs" Name="init_rom"/>
 </GenRun>

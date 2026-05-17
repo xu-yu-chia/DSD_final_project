@@ -2,8 +2,8 @@
 # xsim v2022.1 (64-bit)
 # SW Build 3526262 on Mon Apr 18 15:48:16 MDT 2022
 # IP Build 3524634 on Mon Apr 18 20:55:01 MDT 2022
-# Start of session at: Sun May 17 13:50:49 2026
-# Process ID: 46708
+# Start of session at: Sun May 17 15:00:02 2026
+# Process ID: 6708
 # Current directory: C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.sim/sim_1/behav/xsim_manual
 # Command line: xsim.exe -mode tcl -source {xsim.dir/tb_finalproject_sim/xsim_script.tcl}
 # Log file: C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.sim/sim_1/behav/xsim_manual/xsim.log
@@ -70,7 +70,7 @@ cycle_count  = 25660
 addr13       = 00000401
 FINALPROJECT_RTL_PASS
 $finish called at time : 11305165 ns : File "C:/Users/User/DSD_Lab/Final/DSD_final_project/tb/tb_finalproject.v" Line 60
-run: Time (s): cpu = 00:00:01 ; elapsed = 00:00:11 . Memory (MB): peak = 1210.754 ; gain = 0.000
+run: Time (s): cpu = 00:00:01 ; elapsed = 00:00:12 . Memory (MB): peak = 1210.766 ; gain = 0.000
 exit
-INFO: xsimkernel Simulation Memory Usage: 11500 KB (Peak: 11500 KB), Simulation CPU Usage: 11030 ms
-INFO: [Common 17-206] Exiting xsim at Sun May 17 13:51:02 2026...
+INFO: xsimkernel Simulation Memory Usage: 11456 KB (Peak: 11456 KB), Simulation CPU Usage: 11921 ms
+INFO: [Common 17-206] Exiting xsim at Sun May 17 15:00:16 2026...
