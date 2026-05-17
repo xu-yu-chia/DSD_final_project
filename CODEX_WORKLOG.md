@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-17 02:59 Asia/Taipei
+最後更新：2026-05-17 14:03 Asia/Taipei
 
 主要工作區：
 
@@ -20,6 +20,8 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 - `v0.3.0` 加入 CNN BRAM read prefetch pipeline，以降低 ranking 用 AT product。
 - RTL simulation 已通過全部 15 個 testcase。
 - Synthesis、placement、routing、post-route timing 皆已完成並通過。
+- 2026-05-17 已將 `Simple_CPU` 與 `CNN` 從 `src/student_fp_core.v` 整合進 `RISCV_CNN.v`；Vivado project 與 Tcl scripts 不再把 `student_fp_core.v` 加入 sources。
+- 整合後 RTL simulation 通過，`cycle_count = 25660`；這是 source 結構維護，未建立新的正式效能版本，速度與面積表仍以 `v0.3.0` 為準。
 - `scripts/run_vivado_checks.tcl` 目前刻意不產生 bitstream。
 - Vivado journal/log 與暫存工作檔集中放在 `tmp/`。
 - 舊的 `FinalProject` 資料夾已刪除；有保留價值的舊檔已搬到 `legacy_artifacts/FinalProject_deprecated/`。
@@ -89,6 +91,59 @@ AT product 以 `Slice LUTs × cycle_count` 作為本專案的簡化比較指標�
 - `v0.3.0` Slice LUTs 比 baseline 增加 99 個，約增加 4.63%；Registers、BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
 - 以 `LUT×cycle` 估算 AT product，`v0.3.0` 比 baseline 改善約 21.22%。
 - 若使用 PDF 官方 area 公式 `Slice LUTs + Slice Registers + F7 Muxes + F8 Muxes + 280 × DSPs`，baseline area = 4912、baseline official AT = 167400960；`v0.3.0` area = 4986、official AT = 127940760，比 baseline 改善約 23.57%。
+
+## 2026-05-17 RTL source 整合
+
+性質：
+
+- 維護變更；不改 CNN/CPU 行為與 ranking 架構，未建立新的正式效能版本。
+- 目的為讓 `RISCV_CNN.v` 成為單一主要 RTL source，下載 GitHub 專案後開 `final/final.xpr` 時不需要另外引入 `src/student_fp_core.v`。
+
+修改檔案：
+
+```text
+RISCV_CNN.v
+src\student_fp_core.v
+final\final.xpr
+scripts\create_final_project.tcl
+scripts\run_rtl_xsim.tcl
+scripts\run_vivado_checks.tcl
+scripts\update_final_project.tcl
+README.md
+CODEX_WORKLOG.md
+```
+
+修正內容：
+
+- 將 `src/student_fp_core.v` 內的 `Simple_CPU` 與 `CNN` module 直接整合到 `RISCV_CNN.v`。
+- 刪除舊的 `src/student_fp_core.v`，避免同名 module 保留兩份後造成同步風險。
+- 從 `final/final.xpr` 的 `sources_1` 移除 `src/student_fp_core.v`。
+- 更新 `create_final_project.tcl`、`run_rtl_xsim.tcl`、`run_vivado_checks.tcl`，讓 build/sim/check flow 只編譯 `RISCV_CNN.v` 與 `test_circuit_bram_ip.v`。
+- 更新 `update_final_project.tcl`，若舊 project 仍包含 `src/student_fp_core.v`，會自動從 sources 移除。
+- 更新 README 的檔案表，標示 CPU/CNN core 已整合在 `RISCV_CNN.v`。
+
+驗證結果：
+
+```text
+vivado.bat -mode batch -source scripts\run_rtl_xsim.tcl -journal tmp\tmp_integrated_rtl.jou -log tmp\tmp_integrated_rtl.log
+
+Analyzing Verilog file ".../RISCV_CNN.v"
+analyzing module RISCV_CNN
+analyzing module Simple_CPU
+analyzing module CNN
+
+result_valid = 7fff
+result_pass  = 7fff
+cycle_count  = 25660
+addr13       = 00000401
+FINALPROJECT_RTL_PASS
+```
+
+速度與面積：
+
+- RTL simulation cycle_count 與 `v0.3.0` 相同，仍為 `25660`。
+- 此次只調整 source 組織與 Vivado source list，未重新建立新的 implementation/timing 正式版本。
+- 速度與面積版本比較表不新增列；正式 comparison 仍以 `v0.3.0` 的 implementation reports 為準。
 
 ## v0.3.0 CNN pipeline ranking 優化
 

@@ -1,0 +1,16 @@
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/Data_mem/sim/Data_mem.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module Data_mem
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/instr_mem/sim/instr_mem.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module instr_mem
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/golden_rom/sim/golden_rom.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module golden_rom
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/init_rom/sim/init_rom.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module init_rom
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/User/DSD_Lab/Final/DSD_final_project/RISCV_CNN.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module RISCV_CNN
+INFO: [VRFC 10-311] analyzing module Simple_CPU
+INFO: [VRFC 10-311] analyzing module CNN
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/User/DSD_Lab/Final/DSD_final_project/test_circuit_bram_ip.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module test_circuit
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/User/DSD_Lab/Final/DSD_final_project/tb/tb_finalproject.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module tb_finalproject

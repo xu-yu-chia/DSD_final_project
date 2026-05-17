@@ -46,7 +46,6 @@ puts [exec -- $xvlog [file join $proj_dir final.gen sources_1 ip instr_mem sim i
 puts [exec -- $xvlog [file join $proj_dir final.gen sources_1 ip init_rom sim init_rom.v]]
 puts [exec -- $xvlog [file join $proj_dir final.gen sources_1 ip golden_rom sim golden_rom.v]]
 puts [exec -- $xvlog [file join $repo_dir test_circuit_bram_ip.v]]
-puts [exec -- $xvlog [file join $repo_dir src student_fp_core.v]]
 puts [exec -- $xvlog [file join $repo_dir RISCV_CNN.v]]
 puts [exec -- $xvlog [file join $repo_dir tb tb_finalproject.v]]
 puts [exec -- $xvlog $glbl]

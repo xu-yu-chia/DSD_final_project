@@ -70,7 +70,6 @@ proc create_report { reportName command } {
   }
 }
 OPTRACE "synth_1" START { ROLLUP_AUTO }
-set_msg_config -id {Common 17-41} -limit 10000000
 OPTRACE "Creating in-memory project" START { }
 create_project -in_memory -part xc7a35tcsg324-1
 
@@ -91,7 +90,6 @@ add_files C:/Users/User/DSD_Lab/Final/DSD_final_project/instr_mem_cpucheck.coe
 add_files C:/Users/User/DSD_Lab/Final/DSD_final_project/init_rom.coe
 add_files C:/Users/User/DSD_Lab/Final/DSD_final_project/golden_rom.coe
 read_verilog -library xil_defaultlib {
-  C:/Users/User/DSD_Lab/Final/DSD_final_project/src/student_fp_core.v
   C:/Users/User/DSD_Lab/Final/DSD_final_project/test_circuit_bram_ip.v
   C:/Users/User/DSD_Lab/Final/DSD_final_project/RISCV_CNN.v
 }
@@ -120,6 +118,8 @@ read_xdc C:/Users/User/DSD_Lab/Final/DSD_final_project/constraints/RISCV_CNN.xdc
 set_property used_in_implementation false [get_files C:/Users/User/DSD_Lab/Final/DSD_final_project/constraints/RISCV_CNN.xdc]
 
 set_param ips.enableIPCacheLiteLoad 1
+
+read_checkpoint -auto_incremental -incremental C:/Users/User/DSD_Lab/FinalProject/final/final.srcs/utils_1/imports/synth_1/RISCV_CNN.dcp
 close [open __synthesis_is_running__ w]
 
 OPTRACE "synth_design" START { }

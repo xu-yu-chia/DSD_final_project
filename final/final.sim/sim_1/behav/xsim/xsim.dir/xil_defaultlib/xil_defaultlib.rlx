@@ -2,12 +2,12 @@
 2020.2
 Apr 18 2022
 16:05:34
-C:/Users/User/DSD_Lab/Final/DSD_final_project/RISCV_CNN.v,1778759973,verilog,,C:/Users/User/DSD_Lab/Final/DSD_final_project/src/student_fp_core.v,,RISCV_CNN,,,,,,,,
+C:/Users/User/DSD_Lab/Final/DSD_final_project/RISCV_CNN.v,1778759973,verilog,,C:/Users/User/DSD_Lab/Final/DSD_final_project/test_circuit_bram_ip.v,,CNN;RISCV_CNN;Simple_CPU,,,,,,,,
 C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/Data_mem/sim/Data_mem.v,1778864395,verilog,,C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/instr_mem/sim/instr_mem.v,,Data_mem,,,,,,,,
 C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/golden_rom/sim/golden_rom.v,1778864398,verilog,,C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/init_rom/sim/init_rom.v,,golden_rom,,,,,,,,
-C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/init_rom/sim/init_rom.v,1778864397,verilog,,C:/Users/User/DSD_Lab/Final/DSD_final_project/RISCV_CNN.v,,init_rom,,,,,,,,
+C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/init_rom/sim/init_rom.v,1778906086,verilog,,C:/Users/User/DSD_Lab/Final/DSD_final_project/RISCV_CNN.v,,init_rom,,,,,,,,
 C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/instr_mem/sim/instr_mem.v,1778864396,verilog,,C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/golden_rom/sim/golden_rom.v,,instr_mem,,,,,,,,
 C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.sim/sim_1/behav/xsim/glbl.v,1649976174,verilog,,,,glbl,,,,,,,,
-C:/Users/User/DSD_Lab/Final/DSD_final_project/src/student_fp_core.v,1778865147,verilog,,C:/Users/User/DSD_Lab/Final/DSD_final_project/test_circuit_bram_ip.v,,CNN;Simple_CPU,,,,,,,,
+,,,,,,,,,,,,,,
 C:/Users/User/DSD_Lab/Final/DSD_final_project/tb/tb_finalproject.v,1778766278,verilog,,,,tb_finalproject,,,,,,,,
 C:/Users/User/DSD_Lab/Final/DSD_final_project/test_circuit_bram_ip.v,1778759974,verilog,,C:/Users/User/DSD_Lab/Final/DSD_final_project/tb/tb_finalproject.v,,test_circuit,,,,,,,,

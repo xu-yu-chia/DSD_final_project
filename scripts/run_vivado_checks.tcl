@@ -51,7 +51,6 @@ foreach ip_name {Data_mem instr_mem init_rom golden_rom} {
 }
 read_verilog [list \
     [file join $repo_dir test_circuit_bram_ip.v] \
-    [file join $repo_dir src student_fp_core.v] \
     [file join $repo_dir RISCV_CNN.v] \
 ]
 read_xdc [file join $repo_dir constraints RISCV_CNN.xdc]

@@ -27,7 +27,6 @@ set_property default_lib xil_defaultlib [current_project]
 add_files -fileset sources_1 [list \
     [file join $repo_dir RISCV_CNN.v] \
     [file join $repo_dir test_circuit_bram_ip.v] \
-    [file join $repo_dir src student_fp_core.v] \
 ]
 add_files -fileset constrs_1 [file join $repo_dir constraints RISCV_CNN.xdc]
 add_files -fileset sim_1 [file join $repo_dir tb tb_finalproject.v]

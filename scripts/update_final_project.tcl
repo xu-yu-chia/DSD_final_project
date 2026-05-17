@@ -46,9 +46,13 @@ proc add_file_once {fileset_name file_path} {
 
 add_file_once sources_1 [file join $repo_dir RISCV_CNN.v]
 add_file_once sources_1 [file join $repo_dir test_circuit_bram_ip.v]
-add_file_once sources_1 [file join $repo_dir src student_fp_core.v]
 add_file_once constrs_1 [file join $repo_dir constraints RISCV_CNN.xdc]
 add_file_once sim_1 [file join $repo_dir tb tb_finalproject.v]
+
+set old_split_core [get_files -quiet [file join $repo_dir src student_fp_core.v]]
+if {[llength $old_split_core] != 0} {
+    remove_files $old_split_core
+}
 
 set_property top RISCV_CNN [get_filesets sources_1]
 set_property top tb_finalproject [get_filesets sim_1]

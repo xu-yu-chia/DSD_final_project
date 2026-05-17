@@ -12,7 +12,7 @@
 | 舊版規格 | `114_DSD_Final_Project_v2.pdf` |
 | 更舊版規格 | `legacy_artifacts/FinalProject_deprecated/114_DSD_Final_Project_v1.pdf` |
 | Top RTL | `RISCV_CNN.v` |
-| CPU/CNN core | `src/student_fp_core.v` |
+| CPU/CNN core | integrated in `RISCV_CNN.v` |
 | Test circuit | `test_circuit_bram_ip.v` |
 | Testbench | `tb/tb_finalproject.v` |
 | Constraints | `constraints/RISCV_CNN.xdc` |

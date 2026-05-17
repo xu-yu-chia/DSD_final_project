@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
-| Date         : Sat May 16 01:42:29 2026
+| Date         : Sun May 17 14:02:44 2026
 | Host         : MSI running 64-bit major release  (build 9200)
 | Command      : report_methodology -file RISCV_CNN_methodology_drc_routed.rpt -pb RISCV_CNN_methodology_drc_routed.pb -rpx RISCV_CNN_methodology_drc_routed.rpx
 | Design       : RISCV_CNN
@@ -23,11 +23,12 @@ Table of Contents
           Floorplan: design_1
       Design limits: <entire design considered>
              Max violations: <unlimited>
-             Violations found: 21
+             Violations found: 22
 +-----------+----------+-------------------------------+------------+
 | Rule      | Severity | Description                   | Violations |
 +-----------+----------+-------------------------------+------------+
 | DPIR-1    | Warning  | Asynchronous driver check     | 2          |
+| SYNTH-12  | Warning  | DSP input not registered      | 1          |
 | SYNTH-13  | Warning  | combinational multiplier      | 1          |
 | TIMING-18 | Warning  | Missing input or output delay | 18         |
 +-----------+----------+-------------------------------+------------+
@@ -42,6 +43,11 @@ Related violations: <none>
 DPIR-1#2 Warning
 Asynchronous driver check  
 DSP total_pixels0 input pin total_pixels0/B[0] is connected to registers with an asynchronous reset. This is preventing the possibility of merging these registers in to the DSP Block since the DSP block registers only possess synchronous reset capability.  It is suggested to recode or change these registers to remove the reset or use a synchronous reset to get the best optimization for performance, power and area.
+Related violations: <none>
+
+SYNTH-12#1 Warning
+DSP input not registered  
+DSP instance total_pixels0 is not fully pipelined on the input side. AREG/BREG/CREG/DREG are not used.
 Related violations: <none>
 
 SYNTH-13#1 Warning

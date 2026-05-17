@@ -1,6 +1,6 @@
 set_property SRC_FILE_INFO {cfile:C:/Users/User/DSD_Lab/Final/DSD_final_project/constraints/RISCV_CNN.xdc rfile:../../../../constraints/RISCV_CNN.xdc id:1} [current_design]
 set_property src_info {type:XDC file:1 line:6 export:INPUT save:INPUT read:READ} [current_design]
-set_property PACKAGE_PIN P17 [get_ports FPGA_clk]
+set_property PACKAGE_PIN P17 [get_ports clk]
 set_property src_info {type:XDC file:1 line:9 export:INPUT save:INPUT read:READ} [current_design]
 set_property PACKAGE_PIN P15 [get_ports rstn]
 set_property src_info {type:XDC file:1 line:10 export:INPUT save:INPUT read:READ} [current_design]
