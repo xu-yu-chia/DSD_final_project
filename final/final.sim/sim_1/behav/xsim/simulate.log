@@ -1,0 +1,58 @@
+Time resolution is 1 ps
+ Block Memory Generator module loading initial data...
+ Block Memory Generator data initialization complete.
+Block Memory Generator module tb_finalproject.dut.u_test_circuit.init_rom_inst.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst  is using a behavioral model for simulation which will not precisely model memory collision behavior.
+ Block Memory Generator module loading initial data...
+ Block Memory Generator data initialization complete.
+Block Memory Generator module tb_finalproject.dut.u_test_circuit.golden_rom_inst.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst  is using a behavioral model for simulation which will not precisely model memory collision behavior.
+ Block Memory Generator module loading initial data...
+ Block Memory Generator data initialization complete.
+Block Memory Generator module tb_finalproject.dut.u_cpu.u_instr_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst  is using a behavioral model for simulation which will not precisely model memory collision behavior.
+Block Memory Generator module tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst  is using a behavioral model for simulation which will not precisely model memory collision behavior.
+blk_mem_gen_v8_4_5 collision detected at time: 10000485000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10010795000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10032445000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10032465000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A read address: 6, B write address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10052975000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10063285000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10084935000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10084955000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A read address: 6, B write address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10117115000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10127425000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10149075000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10149095000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A read address: 6, B write address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10196125000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10206435000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10228085000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10228105000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A read address: 6, B write address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10292745000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10303055000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10324705000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10324725000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A read address: 6, B write address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10410195000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10420505000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10442155000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10442175000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A read address: 6, B write address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10551215000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10561525000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10583175000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10583195000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A read address: 6, B write address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10719025000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10729335000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10750985000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10751005000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A read address: 6, B write address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10916365000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10926675000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10948325000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 10948345000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A read address: 6, B write address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 11146455000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 11156765000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 11178415000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A write address: 6, B  read address: 6
+blk_mem_gen_v8_4_5 collision detected at time: 11178435000, Instance: tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst , A read address: 6, B write address: 6
+result_valid = 7fff
+result_pass  = 7fff
+cycle_count  = 30712
+addr13       = 00000401
+FINALPROJECT_RTL_PASS
+$finish called at time : 11492125 ns : File "C:/Users/User/DSD_Lab/Final/DSD_final_project/tb/tb_finalproject.v" Line 60
+INFO: xsimkernel Simulation Memory Usage: 20844 KB (Peak: 20844 KB), Simulation CPU Usage: 11655 ms

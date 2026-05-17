@@ -1,0 +1,16 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  \
+"../../../../final.gen/sources_1/ip/Data_mem/sim/Data_mem.v" \
+"../../../../final.gen/sources_1/ip/instr_mem/sim/instr_mem.v" \
+"../../../../final.gen/sources_1/ip/golden_rom/sim/golden_rom.v" \
+"../../../../final.gen/sources_1/ip/init_rom/sim/init_rom.v" \
+"../../../../../RISCV_CNN.v" \
+"../../../../../src/student_fp_core.v" \
+"../../../../../test_circuit_bram_ip.v" \
+"../../../../../tb/tb_finalproject.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort
