@@ -118,7 +118,9 @@ PDF AT product = Official Area × Processing Time
 - `v0.5.0` Official Area 比 baseline 增加 512，約增加 10.42%；主要代價是 cache registers 與控制邏輯，BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
 - 以 PDF 官方完整公式計算，`v0.5.0` AT product 比 baseline 改善約 53.82%；相比 `v0.4.0`，PDF AT product 從 `1199998800` 降到 `773028480`，再改善約 35.58%。
 
-## v0.5.0 CNN row-word cache ranking 優化
+## 版本改動詳細部分
+
+### v0.5.0 CNN row-word cache ranking 優化
 
 修改檔案：
 
@@ -181,7 +183,7 @@ F8 Muxes         = 10
 - 採用此版本作為目前正式 ranking 版本，因為 RTL 全測通過、implementation timing 通過，且 PDF AT product 從 `v0.4.0` 的 `1199998800` 降到 `773028480`。
 - 相比 `v0.4.0`，cycle 減少 9724，Official Area 增加 419；PDF AT product 仍改善約 35.58%。
 
-## v0.4.0 CNN finish-cycle ranking 優化
+### v0.4.0 CNN finish-cycle ranking 優化
 
 修改檔案：
 
@@ -232,7 +234,7 @@ F8 Muxes         = 10
 - 採用此版本作為目前正式 ranking 版本，因為 RTL 全測通過、implementation timing 通過，且 PDF AT product 從 `v0.3.0` 的 `1279407600` 降到 `1199998800`。
 - 相比 `v0.3.0`，cycle 減少 1684，Official Area 增加 19；PDF AT product 仍改善約 6.21%。
 
-## 2026-05-17 RTL source 整合
+### RTL source 整合
 
 性質：
 
@@ -285,7 +287,7 @@ FINALPROJECT_RTL_PASS
 - 此次只調整 source 組織與 Vivado source list，未重新建立新的 implementation/timing 正式版本。
 - 速度與面積版本比較表不新增列；正式 comparison 仍以 `v0.3.0` 的 implementation reports 為準。
 
-## v0.3.0 CNN pipeline ranking 優化
+### v0.3.0 CNN pipeline ranking 優化
 
 修改檔案：
 
@@ -324,7 +326,7 @@ Implementation utilization: 2239 Slice LUTs, 1915 registers, 15 BRAM tiles, 2 DS
 
 - 採用此版本作為目前正式版本，因為 RTL 全測通過、implementation timing 通過，且 AT product 相對 `v0.1.2` baseline 明顯改善。
 
-## v0.2.1 PDF clock / COE 修正
+### v0.2.1 PDF clock / COE 修正
 
 修改檔案：
 
@@ -392,7 +394,7 @@ DSPs             = 2 / 90        (2.22%)
 - 採用此版本作為 clock/spec 修正版，因為它不改變 `cycle_count`，但修正 top-level clock port 與 XDC/testbench 對齊 PDF 要求；implementation timing 通過。
 - `scripts/run_vivado_checks.tcl` 曾在 sandbox 內遇到 Vivado `.Xil` 暫存目錄刪除錯誤，改用等效 implementation-only Tcl 重跑並通過，因此保留此版本。
 
-## v0.2.0 CNN row pipeline 優化與工作區整理
+### v0.2.0 CNN row pipeline 優化與工作區整理
 
 修改檔案：
 
@@ -492,7 +494,7 @@ reports\utilization_synth.rpt
 reports\route_status.rpt
 ```
 
-### Script 與工作區整理
+#### Script 與工作區整理
 
 修改檔案：
 
@@ -511,7 +513,7 @@ scripts\update_final_project.tcl
 - `run_vivado_checks.tcl` 的暫存工作目錄從 `codex_temp\vivado_work` 改為 `tmp\vivado_work`。
 - `.gitignore` 新增忽略 `tmp/`。
 
-### 舊檔保存與刪除
+#### 舊檔保存與刪除
 
 刪除舊資料夾前，已將有保留價值的舊檔搬到：
 
@@ -547,7 +549,7 @@ C:\Users\User\DSD_Lab\Final\FinalProject廢棄
 C:\Users\User\DSD_Lab\Final\DSD_final_project
 ```
 
-## v0.1.2 Baseline project / workspace sync
+### v0.1.2 Baseline project / workspace sync
 
 修改檔案：
 
