@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-17 14:03 Asia/Taipei
+最後更新：2026-05-17 22:28 Asia/Taipei
 
 主要工作區：
 
@@ -16,7 +16,8 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前正式版本：`v0.3.0`
+- 目前正式版本：`v0.4.0`
+- `v0.4.0` 將 CNN 最後一個 kernel row 的 accumulate、rounding、packing 合併，移除每個 output pixel 的 `C_FINISH_PIXEL` 額外週期，以降低 ranking 用 AT product。
 - `v0.3.0` 加入 CNN BRAM read prefetch pipeline，以降低 ranking 用 AT product。
 - RTL simulation 已通過全部 15 個 testcase。
 - Synthesis、placement、routing、post-route timing 皆已完成並通過。
@@ -29,11 +30,17 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.4.0` - 2026-05-17 22:28 Asia/Taipei
+  - 在 CNN `C_ACCUM_ROW` 將最後一列累加後的 rounding/packing 提前完成。
+  - 移除不再需要的 `C_FINISH_PIXEL` state，並將 rounding remainder 化簡為 `value[5:0]`。
+  - RTL simulation 通過，`cycle_count = 23976`。
+  - Implementation timing 通過，`WNS = 0.056 ns`。
+  - 相比 `v0.1.2` baseline，PDF 官方 AT product 約改善 28.32%。
 - `v0.3.0` - 2026-05-17 02:48 Asia/Taipei
   - 在 CNN datapath 加入 BRAM read prefetch pipeline。
   - RTL simulation 通過，`cycle_count = 25660`。
   - Implementation timing 通過，`WNS = 0.043 ns`。
-  - 相比 `v0.1.2` baseline，`LUT×cycle AT` 約改善 21.22%。
+  - 相比 `v0.1.2` baseline，PDF 官方 AT product 約改善 23.57%。
 - `v0.2.1` - 2026-05-16 13:04 Asia/Taipei
   - 將 top-level port `FPGA_clk` 改為 PDF 要求的 `clk`。
   - 同步更新 `constraints/RISCV_CNN.xdc` 與 `tb/tb_finalproject.v` 的 clock port 名稱。
@@ -72,25 +79,85 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 速度與面積版本比較
 
-面積主要以 implementation report 的 Slice LUTs、Slice Registers、Block RAM Tile、DSPs 紀錄。  
-AT product 以 `Slice LUTs × cycle_count` 作為本專案的簡化比較指標，數值越低越好。
+面積主要以 implementation report 的 Slice LUTs、Slice Registers、F7/F8 Muxes、Block RAM Tile、DSPs 紀錄。  
+AT product 改用 PDF 官方完整公式，數值越低越好：
 
-| 版本 | 時間 | cycle_count | 速度變化 vs baseline | Slice LUTs | LUT 面積變化 vs baseline | Registers | BRAM Tile | DSP | WNS | LUT×cycle AT | AT 變化 vs baseline |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `v0.1.2` | 2026-05-16 00:46 | 34080 | baseline | 2140 | baseline | 1915 | 15 | 2 | 0.049 ns | 72931200 | baseline |
-| `v0.2.0` | 2026-05-16 01:23 | 30712 | cycles -3368 / -9.88% | 2197 | +57 / +2.66% | 1915 | 15 | 2 | 0.087 ns | 67474264 | -5456936 / -7.48% |
-| `v0.2.1` | 2026-05-16 13:04 | 30712 | cycles -3368 / -9.88% | 2195 | +55 / +2.57% | 1915 | 15 | 2 | 0.130 ns | 67412840 | -5518360 / -7.57% |
-| `v0.3.0` | 2026-05-17 02:48 | 25660 | cycles -8420 / -24.71% | 2239 | +99 / +4.63% | 1915 | 15 | 2 | 0.043 ns | 57452740 | -15478460 / -21.22% |
+```text
+Official Area = Slice LUTs + Slice Registers + F7 Muxes + F8 Muxes + 280 × DSPs
+Processing Time = cycle_count × 10 ns
+PDF AT product = Official Area × Processing Time
+```
+
+| 版本 | 時間 | cycle_count | Processing Time | 速度變化 vs baseline | Official Area | Area 變化 vs baseline | Slice LUTs | Registers | F7 Muxes | F8 Muxes | BRAM Tile | DSP | WNS | PDF AT product | AT 變化 vs baseline |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `v0.1.2` | 2026-05-16 00:46 | 34080 | 340800 ns | baseline | 4912 | baseline | 2140 | 1915 | 287 | 10 | 15 | 2 | 0.049 ns | 1674009600 | baseline |
+| `v0.2.0` | 2026-05-16 01:23 | 30712 | 307120 ns | cycles -3368 / -9.88% | 4944 | +32 / +0.65% | 2197 | 1915 | 262 | 10 | 15 | 2 | 0.087 ns | 1518401280 | -155608320 / -9.30% |
+| `v0.2.1` | 2026-05-16 13:04 | 30712 | 307120 ns | cycles -3368 / -9.88% | 4942 | +30 / +0.61% | 2195 | 1915 | 262 | 10 | 15 | 2 | 0.130 ns | 1517787040 | -156222560 / -9.33% |
+| `v0.3.0` | 2026-05-17 02:48 | 25660 | 256600 ns | cycles -8420 / -24.71% | 4986 | +74 / +1.51% | 2239 | 1915 | 262 | 10 | 15 | 2 | 0.043 ns | 1279407600 | -394602000 / -23.57% |
+| `v0.4.0` | 2026-05-17 22:28 | 23976 | 239760 ns | cycles -10104 / -29.65% | 5005 | +93 / +1.89% | 2258 | 1915 | 262 | 10 | 15 | 2 | 0.056 ns | 1199998800 | -474010800 / -28.32% |
 
 解讀：
 
 - 所有速度、面積與 AT 變化皆固定相對 `v0.1.2` baseline，不使用前一版本作為比較基準。
-- `v0.2.0` cycle 數下降約 9.88%，等效 throughput 約提升 10.97%；LUT 增加 57 個，簡化 `LUT×cycle AT` 改善約 7.48%。
-- `v0.2.1` 只修正 clock port 命名，cycle_count 維持 30712；LUT 比 baseline 增加 55 個，簡化 `LUT×cycle AT` 改善約 7.57%。
+- `v0.2.0` cycle 數下降約 9.88%，等效 throughput 約提升 10.97%；Official Area 比 baseline 增加 32，約增加 0.65%；PDF AT product 改善約 9.30%。
+- `v0.2.1` 只修正 clock port 命名，cycle_count 維持 30712；Official Area 比 baseline 增加 30，約增加 0.61%；PDF AT product 改善約 9.33%。
 - `v0.3.0` 在 CNN datapath 加入 BRAM read prefetch pipeline，cycle_count 比 baseline 少 8420 cycles，約下降 24.71%，等效 throughput 約提升 32.81%。
-- `v0.3.0` Slice LUTs 比 baseline 增加 99 個，約增加 4.63%；Registers、BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
-- 以 `LUT×cycle` 估算 AT product，`v0.3.0` 比 baseline 改善約 21.22%。
-- 若使用 PDF 官方 area 公式 `Slice LUTs + Slice Registers + F7 Muxes + F8 Muxes + 280 × DSPs`，baseline area = 4912、baseline official AT = 167400960；`v0.3.0` area = 4986、official AT = 127940760，比 baseline 改善約 23.57%。
+- `v0.3.0` Official Area 比 baseline 增加 74，約增加 1.51%；Registers、BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
+- 以 PDF 官方完整公式計算，`v0.3.0` AT product 比 baseline 改善約 23.57%。
+- `v0.4.0` 每個 output pixel 少一個 finish/pack cycle，因此最後 testcase 的 `cycle_count` 比 `v0.3.0` 再少 1684 cycles；相比 baseline 少 10104 cycles，約下降 29.65%。
+- `v0.4.0` Official Area 比 baseline 增加 93，約增加 1.89%；Registers、BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
+- 以 PDF 官方完整公式計算，`v0.4.0` AT product 比 baseline 改善約 28.32%。
+
+## v0.4.0 CNN finish-cycle ranking 優化
+
+修改檔案：
+
+```text
+RISCV_CNN.v
+reports\timing_impl.rpt
+reports\timing_synth.rpt
+reports\utilization_impl.rpt
+reports\utilization_synth.rpt
+reports\route_status.rpt
+CODEX_WORKLOG.md
+```
+
+修正內容：
+
+- 在 `C_ACCUM_ROW` 且 `krow == 2` 時，直接使用 `acc_next` 做 round-to-nearest/ties-to-even 與 output packing。
+- 原本每個 output pixel 都需要的 `C_FINISH_PIXEL` state 被移除；flush output word 時仍維持下一個 cycle 進入 `C_WRITE_OUT`，確保 BRAM write enable 與 address/data 穩定。
+- `round_sat_q12_to_q6` 的 remainder 由 `value - (base <<< 6)` 化簡為 `value[5:0]`，保持二補數 arithmetic shift 下的同等語意。
+
+驗證結果：
+
+```text
+vivado.bat -mode batch -source scripts\run_vivado_checks.tcl -journal tmp\tmp_round_rem_checks.jou -log tmp\tmp_round_rem_checks.log
+
+result_valid = 7fff
+result_pass  = 7fff
+cycle_count  = 23976
+addr13       = 00000401
+FINALPROJECT_RTL_PASS
+
+route_design completed successfully
+Post Routing Timing Summary | WNS=0.056 | TNS=0.000 | WHS=0.036 | THS=0.000
+```
+
+Implementation utilization：
+
+```text
+Slice LUTs       = 2258 / 20800  (10.86%)
+Slice Registers  = 1915 / 41600  (4.60%)
+Block RAM Tile   = 15 / 50       (30.00%)
+DSPs             = 2 / 90        (2.22%)
+F7 Muxes         = 262
+F8 Muxes         = 10
+```
+
+採用判定：
+
+- 採用此版本作為目前正式 ranking 版本，因為 RTL 全測通過、implementation timing 通過，且 PDF AT product 從 `v0.3.0` 的 `1279407600` 降到 `1199998800`。
+- 相比 `v0.3.0`，cycle 減少 1684，Official Area 增加 19；PDF AT product 仍改善約 6.21%。
 
 ## 2026-05-17 RTL source 整合
 

@@ -363,7 +363,6 @@ module CNN(
     localparam C_LAYER_NEXT    = 6'd24;
     localparam C_WRITE_DONE    = 6'd25;
     localparam C_FINISHED      = 6'd26;
-    localparam C_FINISH_PIXEL  = 6'd27;
     localparam C_ACCUM_ROW     = 6'd28;
 
     reg [5:0] state;
@@ -403,8 +402,8 @@ module CNN(
     wire signed [7:0] feature2;
     wire signed [31:0] row_sum;
     wire signed [31:0] acc_next;
-    wire signed [7:0] rounded_accum;
-    wire [31:0] pack_finished;
+    wire signed [7:0] rounded_acc_next;
+    wire [31:0] pack_finished_next;
     wire [11:0] in_w_ext = {6'd0, in_w};
     wire [11:0] col_ext = {6'd0, col};
     wire [1:0] next_krow = krow + 2'd1;
@@ -496,7 +495,7 @@ module CNN(
         reg [5:0] rem;
         begin
             base = value >>> 6;
-            rem = value - (base <<< 6);
+            rem = value[5:0];
             if (rem < 6'd32) begin
                 rounded = base;
             end
@@ -572,8 +571,8 @@ module CNN(
                      mul8(feature1, kernel1) +
                      mul8(feature2, kernel2);
     assign acc_next = accum + row_sum_reg;
-    assign rounded_accum = round_sat_q12_to_q6(accum);
-    assign pack_finished = put_lane(pack_word, out_index[1:0], rounded_accum);
+    assign rounded_acc_next = round_sat_q12_to_q6(acc_next);
+    assign pack_finished_next = put_lane(pack_word, out_index[1:0], rounded_acc_next);
 
     always @(posedge clk or negedge rstn) begin
         if (!rstn) begin
@@ -809,33 +808,29 @@ module CNN(
                 C_ACCUM_ROW: begin
                     accum <= acc_next;
                     if (krow == 2'd2) begin
-                        state <= C_FINISH_PIXEL;
+                        if (flush_word) begin
+                            addr <= base_out + out_index[11:2];
+                            dinb <= pack_finished_next;
+                            pack_word <= 32'd0;
+                            state <= C_WRITE_OUT;
+                        end
+                        else begin
+                            pack_word <= pack_finished_next;
+                            if (col == out_w - 6'd1) begin
+                                col <= 6'd0;
+                                row <= row + 6'd1;
+                                row_base <= row_base + {6'd0, in_w};
+                            end
+                            else begin
+                                col <= col + 6'd1;
+                            end
+                            out_index <= out_index + 12'd1;
+                            state <= C_PIXEL_START;
+                        end
                     end
                     else begin
                         krow <= next_krow;
                         state <= C_ROW_CAP_A;
-                    end
-                end
-
-                C_FINISH_PIXEL: begin
-                    if (flush_word) begin
-                        addr <= base_out + out_index[11:2];
-                        dinb <= pack_finished;
-                        pack_word <= 32'd0;
-                        state <= C_WRITE_OUT;
-                    end
-                    else begin
-                        pack_word <= pack_finished;
-                        if (col == out_w - 6'd1) begin
-                            col <= 6'd0;
-                            row <= row + 6'd1;
-                            row_base <= row_base + {6'd0, in_w};
-                        end
-                        else begin
-                            col <= col + 6'd1;
-                        end
-                        out_index <= out_index + 12'd1;
-                        state <= C_PIXEL_START;
                     end
                 end
 
