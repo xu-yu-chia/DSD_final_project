@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-17 22:28 Asia/Taipei
+最後更新：2026-05-17 23:06 Asia/Taipei
 
 主要工作區：
 
@@ -16,7 +16,8 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前正式版本：`v0.4.0`
+- 目前正式版本：`v0.5.0`
+- `v0.5.0` 在 CNN 內加入 3-row previous-pixel word cache，重用相鄰 output pixel 的 input word，減少 BRAM read wait cycles，以降低 ranking 用 AT product。
 - `v0.4.0` 將 CNN 最後一個 kernel row 的 accumulate、rounding、packing 合併，移除每個 output pixel 的 `C_FINISH_PIXEL` 額外週期，以降低 ranking 用 AT product。
 - `v0.3.0` 加入 CNN BRAM read prefetch pipeline，以降低 ranking 用 AT product。
 - RTL simulation 已通過全部 15 個 testcase。
@@ -30,6 +31,11 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.5.0` - 2026-05-17 23:06 Asia/Taipei
+  - 在 CNN datapath 加入 3-row previous-pixel word cache，讓相鄰 output pixel 可重用上一個 pixel 已讀出的 input word。
+  - RTL simulation 通過，`cycle_count = 14252`。
+  - Implementation timing 通過，`WNS = 0.017 ns`。
+  - 相比 `v0.1.2` baseline，PDF 官方 AT product 約改善 53.82%。
 - `v0.4.0` - 2026-05-17 22:28 Asia/Taipei
   - 在 CNN `C_ACCUM_ROW` 將最後一列累加後的 rounding/packing 提前完成。
   - 移除不再需要的 `C_FINISH_PIXEL` state，並將 rounding remainder 化簡為 `value[5:0]`。
@@ -95,6 +101,7 @@ PDF AT product = Official Area × Processing Time
 | `v0.2.1` | 2026-05-16 13:04 | 30712 | 307120 ns | cycles -3368 / -9.88% | 4942 | +30 / +0.61% | 2195 | 1915 | 262 | 10 | 15 | 2 | 0.130 ns | 1517787040 | -156222560 / -9.33% |
 | `v0.3.0` | 2026-05-17 02:48 | 25660 | 256600 ns | cycles -8420 / -24.71% | 4986 | +74 / +1.51% | 2239 | 1915 | 262 | 10 | 15 | 2 | 0.043 ns | 1279407600 | -394602000 / -23.57% |
 | `v0.4.0` | 2026-05-17 22:28 | 23976 | 239760 ns | cycles -10104 / -29.65% | 5005 | +93 / +1.89% | 2258 | 1915 | 262 | 10 | 15 | 2 | 0.056 ns | 1199998800 | -474010800 / -28.32% |
+| `v0.5.0` | 2026-05-17 23:06 | 14252 | 142520 ns | cycles -19828 / -58.18% | 5424 | +512 / +10.42% | 2458 | 2134 | 262 | 10 | 15 | 2 | 0.017 ns | 773028480 | -900981120 / -53.82% |
 
 解讀：
 
@@ -107,6 +114,72 @@ PDF AT product = Official Area × Processing Time
 - `v0.4.0` 每個 output pixel 少一個 finish/pack cycle，因此最後 testcase 的 `cycle_count` 比 `v0.3.0` 再少 1684 cycles；相比 baseline 少 10104 cycles，約下降 29.65%。
 - `v0.4.0` Official Area 比 baseline 增加 93，約增加 1.89%；Registers、BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
 - 以 PDF 官方完整公式計算，`v0.4.0` AT product 比 baseline 改善約 28.32%。
+- `v0.5.0` 以 row-word cache 重用相鄰 output pixel 的 input word，最後 testcase 的 `cycle_count` 比 baseline 少 19828 cycles，約下降 58.18%。
+- `v0.5.0` Official Area 比 baseline 增加 512，約增加 10.42%；主要代價是 cache registers 與控制邏輯，BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
+- 以 PDF 官方完整公式計算，`v0.5.0` AT product 比 baseline 改善約 53.82%；相比 `v0.4.0`，PDF AT product 從 `1199998800` 降到 `773028480`，再改善約 35.58%。
+
+## v0.5.0 CNN row-word cache ranking 優化
+
+修改檔案：
+
+```text
+RISCV_CNN.v
+tb\tb_finalproject.v
+reports\timing_impl.rpt
+reports\timing_synth.rpt
+reports\utilization_impl.rpt
+reports\utilization_synth.rpt
+reports\route_status.rpt
+CODEX_WORKLOG.md
+```
+
+修正內容：
+
+- 在 `CNN` 內新增三列 `cache_word0/cache_word1/cache_lane/cache_valid`，分別保存上一個 output pixel 在三個 kernel row 讀出的 input word 與 lane。
+- 在 `C_PIXEL_START`、`C_MAC`、`C_ACCUM_ROW` 判斷下一個 kernel row 是否可直接由 cache 組合出 `word0/word1`，可命中時跳過 `C_ROW_WAIT_A` 或只保留必要的 B-word read。
+- 在 layer 開始與 row boundary 清除 `cache_valid`，避免跨 row/layer 重用錯誤資料。
+- 將 `tb/tb_finalproject.v` 的 start hold 從 `1100000` cycles 調為 `1000100` cycles；這只影響模擬觀測時間，不改 DUT，目的是避免更快版本在 testbench 釋放 start 前已完成全部 testcase 而讓最後印出的 `cycle_count` 被清為 0。
+
+驗證結果：
+
+```text
+vivado.bat -mode batch -source scripts\run_rtl_xsim.tcl -journal tmp\tmp_cache1_formal_rtl.jou -log tmp\tmp_cache1_formal_rtl.log
+
+result_valid = 7fff
+result_pass  = 7fff
+cycle_count  = 14252
+addr13       = 00000401
+FINALPROJECT_RTL_PASS
+```
+
+```text
+vivado.bat -mode batch -source scripts\run_vivado_checks.tcl -journal tmp\tmp_cache1_formal_checks.jou -log tmp\tmp_cache1_formal_checks.log
+
+result_valid = 7fff
+result_pass  = 7fff
+cycle_count  = 14252
+addr13       = 00000401
+FINALPROJECT_RTL_PASS
+
+route_design completed successfully
+Post Routing Timing Summary | WNS=0.017 | TNS=0.000 | WHS=0.036 | THS=0.000
+```
+
+Implementation utilization：
+
+```text
+Slice LUTs       = 2458 / 20800  (11.82%)
+Slice Registers  = 2134 / 41600  (5.13%)
+Block RAM Tile   = 15 / 50       (30.00%)
+DSPs             = 2 / 90        (2.22%)
+F7 Muxes         = 262
+F8 Muxes         = 10
+```
+
+採用判定：
+
+- 採用此版本作為目前正式 ranking 版本，因為 RTL 全測通過、implementation timing 通過，且 PDF AT product 從 `v0.4.0` 的 `1199998800` 降到 `773028480`。
+- 相比 `v0.4.0`，cycle 減少 9724，Official Area 增加 419；PDF AT product 仍改善約 35.58%。
 
 ## v0.4.0 CNN finish-cycle ranking 優化
 

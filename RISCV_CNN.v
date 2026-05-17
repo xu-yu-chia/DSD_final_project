@@ -394,8 +394,13 @@ module CNN(
     reg signed [7:0] kernel1;
     reg signed [7:0] kernel2;
     reg signed [31:0] row_sum_reg;
+    reg [31:0] cache_word0 [0:2];
+    reg [31:0] cache_word1 [0:2];
+    reg [1:0] cache_lane [0:2];
+    reg [2:0] cache_valid;
 
     integer wi;
+    integer ci;
 
     wire signed [7:0] feature0;
     wire signed [7:0] feature1;
@@ -407,6 +412,7 @@ module CNN(
     wire [11:0] in_w_ext = {6'd0, in_w};
     wire [11:0] col_ext = {6'd0, col};
     wire [1:0] next_krow = krow + 2'd1;
+    wire [1:0] cache_next_krow = (krow == 2'd2) ? 2'd0 : next_krow;
     wire [11:0] kernel_row_offset = kernel_row_offset_for(krow, in_w);
     wire [11:0] next_kernel_row_offset = kernel_row_offset_for(next_krow, in_w);
     wire [11:0] current_feature_index = row_base + kernel_row_offset + col_ext;
@@ -420,6 +426,13 @@ module CNN(
     wire [1:0] first_lane = first_feature_index[1:0];
     wire last_pixel = (out_index == (total_pixels - 12'd1));
     wire flush_word = (out_index[1:0] == 2'd3) || last_pixel;
+    wire first_cache_hit = cache_valid[0] && (cache_lane[0] == (first_lane - 2'd1));
+    wire first_cache_read_b = first_cache_hit && (first_lane == 2'd2);
+    wire first_cache_no_read = first_cache_hit && (first_lane != 2'd2);
+    wire next_cache_hit = (krow != 2'd2) && cache_valid[cache_next_krow] &&
+                          (cache_lane[cache_next_krow] == (next_lane - 2'd1));
+    wire next_cache_read_b = next_cache_hit && (next_lane == 2'd2);
+    wire next_cache_no_read = next_cache_hit && (next_lane != 2'd2);
 
     assign enb = 1'b1;
     assign web = (state == C_CLEAR_CMD) || (state == C_WRITE_OUT) || (state == C_WRITE_DONE);
@@ -485,6 +498,23 @@ module CNN(
                 2'd2: get_feature2 = lane_value(b, 2'd0);
                 default: get_feature2 = lane_value(b, 2'd1);
             endcase
+        end
+    endfunction
+
+    function [31:0] cached_word0_for;
+        input [1:0] lane;
+        input [31:0] prev_word0;
+        input [31:0] prev_word1;
+        begin
+            cached_word0_for = (lane == 2'd0) ? prev_word1 : prev_word0;
+        end
+    endfunction
+
+    function [31:0] cached_word1_for;
+        input [1:0] lane;
+        input [31:0] prev_word1;
+        begin
+            cached_word1_for = (lane == 2'd3) ? prev_word1 : 32'd0;
         end
     endfunction
 
@@ -603,10 +633,16 @@ module CNN(
             kernel1 <= 8'sd0;
             kernel2 <= 8'sd0;
             row_sum_reg <= 32'sd0;
+            cache_valid <= 3'd0;
             bias0 <= 8'sd0;
             bias1 <= 8'sd0;
             for (wi = 0; wi < 18; wi = wi + 1) begin
                 weights[wi] <= 8'sd0;
+            end
+            for (ci = 0; ci < 3; ci = ci + 1) begin
+                cache_word0[ci] <= 32'd0;
+                cache_word1[ci] <= 32'd0;
+                cache_lane[ci] <= 2'd0;
             end
         end
         else begin
@@ -736,6 +772,7 @@ module CNN(
                         row_base <= 12'd0;
                         out_index <= 12'd0;
                         pack_word <= 32'd0;
+                        cache_valid <= 3'd0;
                         state <= C_PIXEL_START;
                     end
                     else begin
@@ -753,8 +790,20 @@ module CNN(
                     kernel0 <= selected_weight(layer, 2'd0, 2'd0);
                     kernel1 <= selected_weight(layer, 2'd0, 2'd1);
                     kernel2 <= selected_weight(layer, 2'd0, 2'd2);
-                    addr <= first_word_addr;
-                    state <= C_ROW_WAIT_A;
+                    if (first_cache_no_read) begin
+                        word0 <= cached_word0_for(first_lane, cache_word0[0], cache_word1[0]);
+                        word1 <= cached_word1_for(first_lane, cache_word1[0]);
+                        state <= C_MAC;
+                    end
+                    else if (first_cache_read_b) begin
+                        word0 <= cache_word0[0];
+                        addr <= first_word_addr + 10'd1;
+                        state <= C_ROW_WAIT_B;
+                    end
+                    else begin
+                        addr <= first_word_addr;
+                        state <= C_ROW_WAIT_A;
+                    end
                 end
 
                 C_ROW_ADDR: begin
@@ -794,13 +843,27 @@ module CNN(
 
                 C_MAC: begin
                     row_sum_reg <= row_sum;
+                    cache_word0[krow] <= word0;
+                    cache_word1[krow] <= word1;
+                    cache_lane[krow] <= req_lane;
+                    cache_valid[krow] <= 1'b1;
                     if (krow != 2'd2) begin
                         req_word_addr <= next_word_addr;
                         req_lane <= next_lane;
                         kernel0 <= selected_weight(layer, next_krow, 2'd0);
                         kernel1 <= selected_weight(layer, next_krow, 2'd1);
                         kernel2 <= selected_weight(layer, next_krow, 2'd2);
-                        addr <= next_word_addr;
+                        if (next_cache_no_read) begin
+                            word0 <= cached_word0_for(next_lane, cache_word0[cache_next_krow], cache_word1[cache_next_krow]);
+                            word1 <= cached_word1_for(next_lane, cache_word1[cache_next_krow]);
+                        end
+                        else if (next_cache_read_b) begin
+                            word0 <= cache_word0[cache_next_krow];
+                            addr <= next_word_addr + 10'd1;
+                        end
+                        else begin
+                            addr <= next_word_addr;
+                        end
                     end
                     state <= C_ACCUM_ROW;
                 end
@@ -820,6 +883,7 @@ module CNN(
                                 col <= 6'd0;
                                 row <= row + 6'd1;
                                 row_base <= row_base + {6'd0, in_w};
+                                cache_valid <= 3'd0;
                             end
                             else begin
                                 col <= col + 6'd1;
@@ -830,7 +894,15 @@ module CNN(
                     end
                     else begin
                         krow <= next_krow;
-                        state <= C_ROW_CAP_A;
+                        if (next_cache_no_read) begin
+                            state <= C_MAC;
+                        end
+                        else if (next_cache_read_b) begin
+                            state <= C_ROW_CAP_B;
+                        end
+                        else begin
+                            state <= C_ROW_CAP_A;
+                        end
                     end
                 end
 
@@ -843,6 +915,7 @@ module CNN(
                             col <= 6'd0;
                             row <= row + 6'd1;
                             row_base <= row_base + {6'd0, in_w};
+                            cache_valid <= 3'd0;
                         end
                         else begin
                             col <= col + 6'd1;
@@ -865,6 +938,7 @@ module CNN(
                         row_base <= 12'd0;
                         out_index <= 12'd0;
                         pack_word <= 32'd0;
+                        cache_valid <= 3'd0;
                         state <= C_PIXEL_START;
                     end
                     else begin

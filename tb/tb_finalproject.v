@@ -36,7 +36,7 @@ module tb_finalproject;
         repeat (20) @(posedge FPGA_clk);
 
         st = 1'b1;
-        repeat (1100000) @(posedge FPGA_clk);
+        repeat (1000100) @(posedge FPGA_clk);
         st = 1'b0;
 
         while ((dut.u_test_circuit.result_valid !== 15'h7fff) && (timeout < 20000000)) begin
