@@ -117,7 +117,7 @@ module Simple_CPU(
     reg [31:0] pc;
     reg [4:0] load_rd;
     reg [31:0] regs [0:31];
-    reg [7:0] imem_addr;
+    reg [9:0] imem_addr;
     reg [31:0] host_word16;
     reg [31:0] host_word17;
     reg [31:0] host_bias1;
@@ -146,9 +146,8 @@ module Simple_CPU(
                      (state == S_HOST_CLR_START) ||
                      (state == S_HOST_START_CNN);
 
-    instr_mem u_instr_mem (
+    Instruction_Memory u_Instruction_Memory (
         .clka(CLK),
-        .ena(1'b1),
         .addra(imem_addr),
         .douta(instr)
     );
@@ -160,7 +159,7 @@ module Simple_CPU(
             load_rd <= 5'd0;
             dmem_addr <= 10'd0;
             dmem_wdata <= 32'd0;
-            imem_addr <= 8'd0;
+            imem_addr <= 10'd0;
             host_word16 <= 32'd0;
             host_word17 <= 32'd0;
             host_bias1 <= 32'd0;

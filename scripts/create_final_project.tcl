@@ -53,21 +53,21 @@ make_bram_ip Data_mem [list \
     CONFIG.Enable_A {Use_ENA_Pin} \
     CONFIG.Enable_B {Use_ENB_Pin} \
     CONFIG.Use_Byte_Write_Enable {false} \
-    CONFIG.Byte_Size {8} \
+    CONFIG.Byte_Size {9} \
     CONFIG.Register_PortA_Output_of_Memory_Primitives {false} \
     CONFIG.Register_PortB_Output_of_Memory_Primitives {false} \
     CONFIG.Use_RSTA_Pin {false} \
     CONFIG.Use_RSTB_Pin {false} \
 ]
 
-make_bram_ip instr_mem [list \
-    CONFIG.Component_Name {instr_mem} \
+make_bram_ip Instruction_Memory [list \
+    CONFIG.Component_Name {Instruction_Memory} \
     CONFIG.Memory_Type {Single_Port_ROM} \
     CONFIG.Write_Width_A {32} \
-    CONFIG.Write_Depth_A {256} \
+    CONFIG.Write_Depth_A {1024} \
     CONFIG.Read_Width_A {32} \
-    CONFIG.Operating_Mode_A {READ_FIRST} \
-    CONFIG.Enable_A {Use_ENA_Pin} \
+    CONFIG.Operating_Mode_A {WRITE_FIRST} \
+    CONFIG.Enable_A {Always_Enabled} \
     CONFIG.Load_Init_File {true} \
     CONFIG.Coe_File [file join $repo_dir instr_mem_cpucheck.coe] \
     CONFIG.Register_PortA_Output_of_Memory_Primitives {false} \
@@ -79,7 +79,7 @@ make_bram_ip init_rom [list \
     CONFIG.Write_Width_A {32} \
     CONFIG.Write_Depth_A {10240} \
     CONFIG.Read_Width_A {32} \
-    CONFIG.Operating_Mode_A {READ_FIRST} \
+    CONFIG.Operating_Mode_A {WRITE_FIRST} \
     CONFIG.Enable_A {Use_ENA_Pin} \
     CONFIG.Load_Init_File {true} \
     CONFIG.Coe_File [file join $repo_dir init_rom.coe] \
@@ -90,9 +90,9 @@ make_bram_ip golden_rom [list \
     CONFIG.Component_Name {golden_rom} \
     CONFIG.Memory_Type {Single_Port_ROM} \
     CONFIG.Write_Width_A {32} \
-    CONFIG.Write_Depth_A {4096} \
+    CONFIG.Write_Depth_A {2156} \
     CONFIG.Read_Width_A {32} \
-    CONFIG.Operating_Mode_A {READ_FIRST} \
+    CONFIG.Operating_Mode_A {WRITE_FIRST} \
     CONFIG.Enable_A {Use_ENA_Pin} \
     CONFIG.Load_Init_File {true} \
     CONFIG.Coe_File [file join $repo_dir golden_rom.coe] \

@@ -11,7 +11,6 @@ foreach candidate [list \
     [file normalize [pwd]] \
     [file normalize [file join [pwd] DSD_final_project]] \
     {C:/Users/User/DSD_Lab/Final/DSD_final_project} \
-    {C:/Users/User/DSD_Lab/FinalProject} \
 ] {
     if {[file exists [file join $candidate RISCV_CNN.v]]} {
         set repo_dir $candidate
@@ -22,33 +21,38 @@ if {$repo_dir eq ""} {
     error "Cannot locate DSD_final_project repo containing RISCV_CNN.v"
 }
 
-set proj_dir [file join $repo_dir final]
-set sim_dir [file join $proj_dir final.sim sim_1 behav xsim_manual]
+set proj_file [file join $repo_dir final final.xpr]
+set sim_dir [file join $repo_dir tmp post_synth_xsim]
+set netlist_file [file join $sim_dir RISCV_CNN_func_synth.v]
 file mkdir $sim_dir
+
+open_project $proj_file
+set_param general.maxThreads 1
+
+if {[get_property PROGRESS [get_runs synth_1]] ne "100%"} {
+    launch_runs synth_1 -jobs 1
+    wait_on_run synth_1
+}
+
+open_run synth_1 -name post_synth_run
+write_verilog -mode funcsim -force -file $netlist_file
+close_project
 
 foreach mif_name {golden_rom init_rom Instruction_Memory} {
     file copy -force \
-        [file join $proj_dir final.gen sources_1 ip $mif_name ${mif_name}.mif] \
+        [file join $repo_dir final final.gen sources_1 ip $mif_name ${mif_name}.mif] \
         [file join $sim_dir ${mif_name}.mif]
 }
 
 cd $sim_dir
 
-set ipstatic [file join $proj_dir final.gen sources_1 ip Data_mem simulation blk_mem_gen_v8_4.v]
-set glbl [file normalize {C:/Xilinx/Vivado/2022.1/data/verilog/src/glbl.v}]
 set xvlog {C:/Xilinx/Vivado/2022.1/bin/xvlog.bat}
 set xelab {C:/Xilinx/Vivado/2022.1/bin/xelab.bat}
 set xsim  {C:/Xilinx/Vivado/2022.1/bin/xsim.bat}
+set glbl [file normalize {C:/Xilinx/Vivado/2022.1/data/verilog/src/glbl.v}]
 
-puts [exec -- $xvlog $ipstatic]
-puts [exec -- $xvlog [file join $proj_dir final.gen sources_1 ip Data_mem sim Data_mem.v]]
-puts [exec -- $xvlog [file join $proj_dir final.gen sources_1 ip Instruction_Memory sim Instruction_Memory.v]]
-puts [exec -- $xvlog [file join $proj_dir final.gen sources_1 ip init_rom sim init_rom.v]]
-puts [exec -- $xvlog [file join $proj_dir final.gen sources_1 ip golden_rom sim golden_rom.v]]
-puts [exec -- $xvlog [file join $repo_dir test_circuit_bram_ip.v]]
-puts [exec -- $xvlog [file join $repo_dir RISCV_CNN.v]]
+puts [exec -- $xvlog $netlist_file]
 puts [exec -- $xvlog [file join $repo_dir tb tb_finalproject.v]]
 puts [exec -- $xvlog $glbl]
-
-puts [exec -- $xelab tb_finalproject glbl --timescale 1ns/1ps -debug typical -s tb_finalproject_sim]
-puts [exec -- $xsim tb_finalproject_sim -runall]
+puts [exec -- $xelab tb_finalproject glbl -L unisims_ver -L unimacro_ver -L secureip --timescale 1ns/1ps -debug typical -s tb_post_synth_func]
+puts [exec -- $xsim tb_post_synth_func -runall]

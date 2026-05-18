@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-17 23:06 Asia/Taipei
+最後更新：2026-05-18 22:26 Asia/Taipei
 
 主要工作區：
 
@@ -16,11 +16,14 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前正式版本：`v0.5.0`
+- 目前正式版本：`v0.6.0`
+- `v0.6.0` 對齊 `Memory_setting.pdf` 的 BRAM IP 名稱與設定，將 instruction ROM component/module 改為 `Instruction_Memory`，並更新 full check route flow 讓 post-route timing 穩定通過。
 - `v0.5.0` 在 CNN 內加入 3-row previous-pixel word cache，重用相鄰 output pixel 的 input word，減少 BRAM read wait cycles，以降低 ranking 用 AT product。
 - `v0.4.0` 將 CNN 最後一個 kernel row 的 accumulate、rounding、packing 合併，移除每個 output pixel 的 `C_FINISH_PIXEL` 額外週期，以降低 ranking 用 AT product。
 - `v0.3.0` 加入 CNN BRAM read prefetch pipeline，以降低 ranking 用 AT product。
 - RTL simulation 已通過全部 15 個 testcase。
+- Testbench 已改成只透過 top-level `seven_seg/anode` 驗證結果，可支援 behavioral 與 post-synthesis/post-implementation netlist 類 simulation。
+- `v0.6.0` 本次正式驗證包含 RTL display-based regression 與 full Vivado synthesis/place/route/timing checks；post-synthesis functional simulation 在推版前被使用者中止，未列為本版通過條件。
 - Synthesis、placement、routing、post-route timing 皆已完成並通過。
 - 2026-05-17 已將 `Simple_CPU` 與 `CNN` 從 `src/student_fp_core.v` 整合進 `RISCV_CNN.v`；Vivado project 與 Tcl scripts 不再把 `student_fp_core.v` 加入 sources。
 - 整合後 RTL simulation 通過，`cycle_count = 25660`；這是 source 結構維護，未建立新的正式效能版本，速度與面積表仍以 `v0.3.0` 為準。
@@ -31,6 +34,24 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.6.0` - 2026-05-18 22:26 Asia/Taipei
+  - 以 `Memory_setting.pdf` 為準整理 BRAM 設定，新增 `MEMORY_SETTING.md`。
+  - 將 instruction ROM 的 Vivado IP/component/module 名稱由舊 `instr_mem` 改為 PDF 指定的 `Instruction_Memory`。
+  - `Instruction_Memory` 設為 Single Port ROM、32-bit width、depth 1024、Write First、Always Enabled；RTL instantiation 已移除 `ena` port。
+  - `Data_mem` 維持 True Dual Port RAM、Read First、Use ENA/ENB Pin，Byte Size 改為 9。
+  - `init_rom` 與 `golden_rom` 改為 Write First；`golden_rom` depth 改為 2156。
+  - `scripts/run_vivado_checks.tcl` 的 route flow 改為 `NoTimingRelaxation` 後再 post-route phys_opt/route，讓此版本 full check timing pass。
+  - RTL display-based regression 通過：`score_bcd = 0100`，15 個 testcase status display 皆為 pass，`FINALPROJECT_SIM_PASS`。
+  - Full Vivado checks 通過：route 0 errors，post-route `WNS = 0.010 ns`、`TNS = 0.000 ns`、`WHS = 0.108 ns`。
+  - Post-synthesis functional simulation 在建立此版本前被使用者中止，因此不列為 `v0.6.0` 通過條件。
+- 2026-05-18 display-based testbench 補強
+  - 不建立新效能版本；未修改 `RISCV_CNN.v` datapath/CPU/CNN 行為。
+  - 將 `tb/tb_finalproject.v` 改為單一路徑 display-based checker，只由 top-level `seven_seg/anode` 讀回 score/status，不再讀 `dut.u_test_circuit.*` 內部 RTL reg，避免 post-synth/post-impl netlist 中階層名稱被最佳化後無法 elaboration。
+  - 此 TB 不使用 compile-time macro；Vivado GUI 五種 simulation mode 皆可編譯同一份 testbench。
+  - RTL regression：
+    `vivado.bat -mode batch -source scripts\run_rtl_xsim.tcl -journal tmp\tmp_unified_tb_rtl.jou -log tmp\tmp_unified_tb_rtl.log`
+    結果：`score_bcd = 0100`，15 個 testcase status display 皆為 pass，`FINALPROJECT_SIM_PASS`。
+  - 新增 `scripts\run_post_synth_xsim.tcl` 作為 post-synthesis functional simulation helper；`v0.6.0` 推版前該 simulation 被中止，未作為本版驗證結果。
 - `v0.5.0` - 2026-05-17 23:06 Asia/Taipei
   - 在 CNN datapath 加入 3-row previous-pixel word cache，讓相鄰 output pixel 可重用上一個 pixel 已讀出的 input word。
   - RTL simulation 通過，`cycle_count = 14252`。
@@ -102,6 +123,7 @@ PDF AT product = Official Area × Processing Time
 | `v0.3.0` | 2026-05-17 02:48 | 25660 | 256600 ns | cycles -8420 / -24.71% | 4986 | +74 / +1.51% | 2239 | 1915 | 262 | 10 | 15 | 2 | 0.043 ns | 1279407600 | -394602000 / -23.57% |
 | `v0.4.0` | 2026-05-17 22:28 | 23976 | 239760 ns | cycles -10104 / -29.65% | 5005 | +93 / +1.89% | 2258 | 1915 | 262 | 10 | 15 | 2 | 0.056 ns | 1199998800 | -474010800 / -28.32% |
 | `v0.5.0` | 2026-05-17 23:06 | 14252 | 142520 ns | cycles -19828 / -58.18% | 5424 | +512 / +10.42% | 2458 | 2134 | 262 | 10 | 15 | 2 | 0.017 ns | 773028480 | -900981120 / -53.82% |
+| `v0.6.0` | 2026-05-18 22:26 | 14252 | 142520 ns | cycles -19828 / -58.18% | 5458 | +546 / +11.12% | 2489 | 2137 | 262 | 10 | 14 | 2 | 0.010 ns | 777874160 | -896135440 / -53.53% |
 
 解讀：
 
@@ -117,8 +139,74 @@ PDF AT product = Official Area × Processing Time
 - `v0.5.0` 以 row-word cache 重用相鄰 output pixel 的 input word，最後 testcase 的 `cycle_count` 比 baseline 少 19828 cycles，約下降 58.18%。
 - `v0.5.0` Official Area 比 baseline 增加 512，約增加 10.42%；主要代價是 cache registers 與控制邏輯，BRAM、DSP 維持不變，implementation timing 仍通過 10 ns clock。
 - 以 PDF 官方完整公式計算，`v0.5.0` AT product 比 baseline 改善約 53.82%；相比 `v0.4.0`，PDF AT product 從 `1199998800` 降到 `773028480`，再改善約 35.58%。
+- `v0.6.0` 不改 CNN datapath，cycle_count 沿用 `v0.5.0`；此版本主要是 BRAM IP 設定與名稱對齊 PDF。
+- `v0.6.0` Official Area 比 baseline 增加 546，約增加 11.12%；相比 `v0.5.0` 增加 34，但 Block RAM Tile 從 15 降到 14。
+- 以 PDF 官方完整公式計算，`v0.6.0` AT product 比 baseline 改善約 53.53%；相比 `v0.5.0` 因 Official Area 稍增，AT product 小幅變差約 0.63%。
 
 ## 版本改動詳細部分
+
+### v0.6.0 Memory_setting.pdf BRAM 對齊版
+
+修改檔案：
+
+```text
+RISCV_CNN.v
+tb\tb_finalproject.v
+MEMORY_SETTING.md
+final\final.xpr
+final\final.srcs\sources_1\ip\Instruction_Memory\Instruction_Memory.xci
+final\final.srcs\sources_1\ip\golden_rom\golden_rom.xci
+scripts\create_final_project.tcl
+scripts\run_rtl_xsim.tcl
+scripts\run_vivado_checks.tcl
+scripts\update_final_project.tcl
+reports\timing_impl.rpt
+reports\timing_synth.rpt
+reports\utilization_impl.rpt
+reports\utilization_synth.rpt
+reports\route_status.rpt
+```
+
+修正內容：
+
+- 新增 `MEMORY_SETTING.md`，保存 `Memory_setting.pdf` 可見的 Vivado Block Memory Generator 設定。
+- 將 instruction memory IP/module 名稱改為 `Instruction_Memory`，並從 `RISCV_CNN.v` 移除舊 `instr_mem` instance 的 `.ena(1'b1)`。
+- `Instruction_Memory` 設為 Always Enabled，因此產生的 wrapper ports 為 `clka/addra/douta`，沒有 `ena`。
+- 將 instruction address 改為 10-bit，對應 PDF depth 1024。
+- `Data_mem` Byte Size 設為 9，Port A/B 保留 Use ENA/ENB Pin 與 Read First。
+- `init_rom`、`golden_rom` 設為 Write First，`golden_rom` depth 設為 2156。
+- `run_vivado_checks.tcl` route flow 改成 `NoTimingRelaxation`、post-route `phys_opt_design`、再 `NoTimingRelaxation`，讓此版本 full check 可穩定 meet timing。
+
+驗證結果：
+
+```text
+vivado.bat -mode batch -source scripts\run_vivado_checks.tcl -journal tmp\v060_full_checks_final.jou -log tmp\v060_full_checks_final.log
+
+score_bcd = 0100
+tc = 0..e all pass by display BCD
+FINALPROJECT_SIM_PASS
+
+route_design completed successfully
+Post Routing Timing Summary | WNS=0.010 | TNS=0.000 | WHS=0.108 | THS=0.000
+Route status: fully routed nets = 4608, routing errors = 0
+```
+
+Implementation utilization：
+
+```text
+Slice LUTs       = 2489 / 20800  (11.97%)
+Slice Registers  = 2137 / 41600  (5.14%)
+Block RAM Tile   = 14 / 50       (28.00%)
+DSPs             = 2 / 90        (2.22%)
+F7 Muxes         = 262
+F8 Muxes         = 10
+```
+
+採用判定：
+
+- 採用此版本作為 PDF memory setting 對齊版，因為 RTL display-based regression 通過、implementation route/timing 通過，且 Vivado IP 名稱已對齊 `Memory_setting.pdf`。
+- 此版本沒有新增 CNN ranking datapath 優化；cycle_count 沿用 `v0.5.0`。
+- Post-synthesis functional simulation 曾啟動但在使用者要求先推版本時中止，因此未列入此版本通過條件。
 
 ### v0.5.0 CNN row-word cache ranking 優化
 
@@ -590,7 +678,6 @@ Top 與核心 RTL：
 
 ```text
 RISCV_CNN.v
-src\student_fp_core.v
 test_circuit_bram_ip.v
 ```
 
@@ -611,7 +698,7 @@ Vivado project 與 IP：
 ```text
 final\final.xpr
 final\final.srcs\sources_1\ip\Data_mem\Data_mem.xci
-final\final.srcs\sources_1\ip\instr_mem\instr_mem.xci
+final\final.srcs\sources_1\ip\Instruction_Memory\Instruction_Memory.xci
 final\final.srcs\sources_1\ip\init_rom\init_rom.xci
 final\final.srcs\sources_1\ip\golden_rom\golden_rom.xci
 ```
@@ -629,7 +716,7 @@ instr_mem_cpucheck.coe
 ```text
 114_DSD_Final_Project_v2.pdf
 114_DSD_Final_Project_v3.pdf
+MEMORY_SETTING.md
 README.md
 CODEX_WORKLOG.md
 ```
-

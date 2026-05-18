@@ -50,11 +50,10 @@
 -- The following code must appear in the VHDL architecture header.
 
 ------------- Begin Cut here for COMPONENT Declaration ------ COMP_TAG
-COMPONENT instr_mem
+COMPONENT Instruction_Memory
   PORT (
     clka : IN STD_LOGIC;
-    ena : IN STD_LOGIC;
-    addra : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    addra : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
     douta : OUT STD_LOGIC_VECTOR(31 DOWNTO 0) 
   );
 END COMPONENT;
@@ -64,17 +63,16 @@ END COMPONENT;
 -- body. Substitute your own instance name and net names.
 
 ------------- Begin Cut here for INSTANTIATION Template ----- INST_TAG
-your_instance_name : instr_mem
+your_instance_name : Instruction_Memory
   PORT MAP (
     clka => clka,
-    ena => ena,
     addra => addra,
     douta => douta
   );
 -- INST_TAG_END ------ End INSTANTIATION Template ---------
 
--- You must compile the wrapper file instr_mem.vhd when simulating
--- the core, instr_mem. When compiling the wrapper file, be sure to
+-- You must compile the wrapper file Instruction_Memory.vhd when simulating
+-- the core, Instruction_Memory. When compiling the wrapper file, be sure to
 -- reference the VHDL simulation library.
 
 

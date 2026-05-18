@@ -54,15 +54,14 @@
 // (in parentheses) to your own signal names.
 
 //----------- Begin Cut here for INSTANTIATION Template ---// INST_TAG
-instr_mem your_instance_name (
+Instruction_Memory your_instance_name (
   .clka(clka),    // input wire clka
-  .ena(ena),      // input wire ena
-  .addra(addra),  // input wire [7 : 0] addra
+  .addra(addra),  // input wire [9 : 0] addra
   .douta(douta)  // output wire [31 : 0] douta
 );
 // INST_TAG_END ------ End INSTANTIATION Template ---------
 
-// You must compile the wrapper file instr_mem.v when simulating
-// the core, instr_mem. When compiling the wrapper file, be sure to
+// You must compile the wrapper file Instruction_Memory.v when simulating
+// the core, Instruction_Memory. When compiling the wrapper file, be sure to
 // reference the Verilog simulation library.
 

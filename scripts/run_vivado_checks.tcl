@@ -40,13 +40,13 @@ cd $work_dir
 set part_name xc7a35tcsg324-1
 set_param general.maxThreads 1
 set ip_gen_dir [file join $repo_dir final final.gen sources_1 ip]
-foreach mif_name {golden_rom init_rom instr_mem} {
+foreach mif_name {golden_rom init_rom Instruction_Memory} {
     file copy -force \
         [file join $ip_gen_dir $mif_name ${mif_name}.mif] \
         [file join $work_dir ${mif_name}.mif]
 }
 read_vhdl -library blk_mem_gen_v8_4_5 [file join $ip_gen_dir Data_mem hdl blk_mem_gen_v8_4_vhsyn_rfs.vhd]
-foreach ip_name {Data_mem instr_mem init_rom golden_rom} {
+foreach ip_name {Data_mem Instruction_Memory init_rom golden_rom} {
     read_vhdl [file join $ip_gen_dir $ip_name synth ${ip_name}.vhd]
 }
 read_verilog [list \
@@ -61,7 +61,9 @@ report_timing_summary -file [file join $report_dir timing_synth.rpt]
 opt_design
 place_design -directive Explore
 phys_opt_design -directive AggressiveExplore
-route_design -directive Explore
+route_design -directive NoTimingRelaxation
+phys_opt_design -directive AggressiveExplore
+route_design -directive NoTimingRelaxation
 report_utilization -file [file join $report_dir utilization_impl.rpt]
 report_timing_summary -file [file join $report_dir timing_impl.rpt]
 report_route_status -file [file join $report_dir route_status.rpt]

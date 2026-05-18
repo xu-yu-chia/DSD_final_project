@@ -2,7 +2,7 @@
 <spirit:component xmlns:xilinx="http://www.xilinx.com" xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <spirit:vendor>xilinx.com</spirit:vendor>
   <spirit:library>customized_ip</spirit:library>
-  <spirit:name>instr_mem</spirit:name>
+  <spirit:name>Instruction_Memory</spirit:name>
   <spirit:version>1.0</spirit:version>
   <spirit:busInterfaces>
     <spirit:busInterface>
@@ -1475,11 +1475,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Fri May 15 16:59:56 UTC 2026</spirit:value>
+            <spirit:value>Mon May 18 13:31:21 UTC 2026</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:9391cda1</spirit:value>
+            <spirit:value>9:f7e14d7a</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1495,11 +1495,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Fri May 15 16:59:56 UTC 2026</spirit:value>
+            <spirit:value>Mon May 18 13:31:21 UTC 2026</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:9391cda1</spirit:value>
+            <spirit:value>9:f7e14d7a</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1510,7 +1510,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:9391cda1</spirit:value>
+            <spirit:value>9:f7e14d7a</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1519,18 +1519,18 @@
         <spirit:displayName>VHDL Synthesis Wrapper</spirit:displayName>
         <spirit:envIdentifier>vhdlSource:vivado.xilinx.com:synthesis.wrapper</spirit:envIdentifier>
         <spirit:language>vhdl</spirit:language>
-        <spirit:modelName>instr_mem</spirit:modelName>
+        <spirit:modelName>Instruction_Memory</spirit:modelName>
         <spirit:fileSetRef>
           <spirit:localName>xilinx_vhdlsynthesiswrapper_view_fileset</spirit:localName>
         </spirit:fileSetRef>
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Fri May 15 16:59:56 UTC 2026</spirit:value>
+            <spirit:value>Mon May 18 13:31:21 UTC 2026</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:9391cda1</spirit:value>
+            <spirit:value>9:f7e14d7a</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1545,11 +1545,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Fri May 15 16:59:56 UTC 2026</spirit:value>
+            <spirit:value>Mon May 18 13:31:22 UTC 2026</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:b3d4d55f</spirit:value>
+            <spirit:value>9:5d757d6b</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1558,18 +1558,18 @@
         <spirit:displayName>Verilog Simulation Wrapper</spirit:displayName>
         <spirit:envIdentifier>verilogSource:vivado.xilinx.com:simulation.wrapper</spirit:envIdentifier>
         <spirit:language>verilog</spirit:language>
-        <spirit:modelName>instr_mem</spirit:modelName>
+        <spirit:modelName>Instruction_Memory</spirit:modelName>
         <spirit:fileSetRef>
           <spirit:localName>xilinx_verilogsimulationwrapper_view_fileset</spirit:localName>
         </spirit:fileSetRef>
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Fri May 15 16:59:56 UTC 2026</spirit:value>
+            <spirit:value>Mon May 18 13:31:22 UTC 2026</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:b3d4d55f</spirit:value>
+            <spirit:value>9:5d757d6b</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1583,11 +1583,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Fri May 15 16:59:56 UTC 2026</spirit:value>
+            <spirit:value>Mon May 18 13:31:22 UTC 2026</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:9391cda1</spirit:value>
+            <spirit:value>9:f7e14d7a</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1601,29 +1601,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Fri May 15 16:59:56 UTC 2026</spirit:value>
+            <spirit:value>Mon May 18 13:31:22 UTC 2026</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:9391cda1</spirit:value>
-          </spirit:parameter>
-        </spirit:parameters>
-      </spirit:view>
-      <spirit:view>
-        <spirit:name>xilinx_externalfiles</spirit:name>
-        <spirit:displayName>External Files</spirit:displayName>
-        <spirit:envIdentifier>:vivado.xilinx.com:external.files</spirit:envIdentifier>
-        <spirit:fileSetRef>
-          <spirit:localName>xilinx_externalfiles_view_fileset</spirit:localName>
-        </spirit:fileSetRef>
-        <spirit:parameters>
-          <spirit:parameter>
-            <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Fri May 15 17:35:05 UTC 2026</spirit:value>
-          </spirit:parameter>
-          <spirit:parameter>
-            <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:9391cda1</spirit:value>
+            <spirit:value>9:f7e14d7a</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1693,7 +1675,7 @@
         <spirit:vendorExtensions>
           <xilinx:portInfo>
             <xilinx:enablement>
-              <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="PORT_ENABLEMENT.ena" xilinx:dependency="((spirit:decode(id(&apos;MODELPARAM_VALUE.C_HAS_ENA&apos;)) != 0) and (spirit:decode(id(&apos;MODELPARAM_VALUE.C_INTERFACE_TYPE&apos;)) != 1))">true</xilinx:isEnabled>
+              <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="PORT_ENABLEMENT.ena" xilinx:dependency="((spirit:decode(id(&apos;MODELPARAM_VALUE.C_HAS_ENA&apos;)) != 0) and (spirit:decode(id(&apos;MODELPARAM_VALUE.C_INTERFACE_TYPE&apos;)) != 1))">false</xilinx:isEnabled>
             </xilinx:enablement>
           </xilinx:portInfo>
         </spirit:vendorExtensions>
@@ -1753,7 +1735,7 @@
         <spirit:wire>
           <spirit:direction>in</spirit:direction>
           <spirit:vector>
-            <spirit:left spirit:format="long" spirit:resolve="dependent" spirit:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.C_ADDRA_WIDTH&apos;))-1">7</spirit:left>
+            <spirit:left spirit:format="long" spirit:resolve="dependent" spirit:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.C_ADDRA_WIDTH&apos;))-1">9</spirit:left>
             <spirit:right spirit:format="long">0</spirit:right>
           </spirit:vector>
           <spirit:wireTypeDefs>
@@ -1950,7 +1932,7 @@
         <spirit:wire>
           <spirit:direction>in</spirit:direction>
           <spirit:vector>
-            <spirit:left spirit:format="long" spirit:resolve="dependent" spirit:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.C_ADDRB_WIDTH&apos;))-1">7</spirit:left>
+            <spirit:left spirit:format="long" spirit:resolve="dependent" spirit:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.C_ADDRB_WIDTH&apos;))-1">9</spirit:left>
             <spirit:right spirit:format="long">0</spirit:right>
           </spirit:vector>
           <spirit:wireTypeDefs>
@@ -2137,7 +2119,7 @@
         <spirit:wire>
           <spirit:direction>out</spirit:direction>
           <spirit:vector>
-            <spirit:left spirit:format="long" spirit:resolve="dependent" spirit:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.C_ADDRB_WIDTH&apos;))-1">7</spirit:left>
+            <spirit:left spirit:format="long" spirit:resolve="dependent" spirit:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.C_ADDRB_WIDTH&apos;))-1">9</spirit:left>
             <spirit:right spirit:format="long">0</spirit:right>
           </spirit:vector>
           <spirit:wireTypeDefs>
@@ -3104,7 +3086,7 @@
         <spirit:wire>
           <spirit:direction>out</spirit:direction>
           <spirit:vector>
-            <spirit:left spirit:format="long" spirit:resolve="dependent" spirit:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.C_ADDRB_WIDTH&apos;))-1">7</spirit:left>
+            <spirit:left spirit:format="long" spirit:resolve="dependent" spirit:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.C_ADDRB_WIDTH&apos;))-1">9</spirit:left>
             <spirit:right spirit:format="long">0</spirit:right>
           </spirit:vector>
           <spirit:wireTypeDefs>
@@ -3191,11 +3173,11 @@
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="STRING">
         <spirit:name>C_INIT_FILE_NAME</spirit:name>
-        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_INIT_FILE_NAME">instr_mem.mif</spirit:value>
+        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_INIT_FILE_NAME">Instruction_Memory.mif</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="STRING">
         <spirit:name>C_INIT_FILE</spirit:name>
-        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_INIT_FILE">instr_mem.mem</spirit:value>
+        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_INIT_FILE">Instruction_Memory.mem</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_USE_DEFAULT_DATA</spirit:name>
@@ -3223,7 +3205,7 @@
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_HAS_ENA</spirit:name>
-        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_HAS_ENA">1</spirit:value>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_HAS_ENA">0</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_HAS_REGCEA</spirit:name>
@@ -3251,15 +3233,15 @@
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_WRITE_DEPTH_A</spirit:name>
-        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_WRITE_DEPTH_A">256</spirit:value>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_WRITE_DEPTH_A">1024</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_READ_DEPTH_A</spirit:name>
-        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_READ_DEPTH_A">256</spirit:value>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_READ_DEPTH_A">1024</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_ADDRA_WIDTH</spirit:name>
-        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_ADDRA_WIDTH">8</spirit:value>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_ADDRA_WIDTH">10</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_HAS_RSTB</spirit:name>
@@ -3307,15 +3289,15 @@
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_WRITE_DEPTH_B</spirit:name>
-        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_WRITE_DEPTH_B">256</spirit:value>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_WRITE_DEPTH_B">1024</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_READ_DEPTH_B</spirit:name>
-        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_READ_DEPTH_B">256</spirit:value>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_READ_DEPTH_B">1024</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_ADDRB_WIDTH</spirit:name>
-        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_ADDRB_WIDTH">8</spirit:value>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_ADDRB_WIDTH">10</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="INTEGER">
         <spirit:name>C_HAS_MEM_OUTPUT_REGS_A</spirit:name>
@@ -3415,15 +3397,15 @@
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="STRING">
         <spirit:name>C_COUNT_36K_BRAM</spirit:name>
-        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_COUNT_36K_BRAM">0</spirit:value>
+        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_COUNT_36K_BRAM">1</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="STRING">
         <spirit:name>C_COUNT_18K_BRAM</spirit:name>
-        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_COUNT_18K_BRAM">1</spirit:value>
+        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_COUNT_18K_BRAM">0</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="STRING">
         <spirit:name>C_EST_POWER_SUMMARY</spirit:name>
-        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_EST_POWER_SUMMARY">Estimated Power for IP     :     3.375199 mW</spirit:value>
+        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_EST_POWER_SUMMARY">Estimated Power for IP     :     2.622 mW</spirit:value>
       </spirit:modelParameter>
     </spirit:modelParameters>
   </spirit:model>
@@ -3563,25 +3545,25 @@
     <spirit:fileSet>
       <spirit:name>xilinx_veriloginstantiationtemplate_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>instr_mem.vho</spirit:name>
+        <spirit:name>Instruction_Memory.vho</spirit:name>
         <spirit:userFileType>vhdlTemplate</spirit:userFileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>instr_mem.veo</spirit:name>
+        <spirit:name>Instruction_Memory.veo</spirit:name>
         <spirit:userFileType>verilogTemplate</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
       <spirit:name>xilinx_vhdlsynthesis_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>instr_mem_ooc.xdc</spirit:name>
+        <spirit:name>Instruction_Memory_ooc.xdc</spirit:name>
         <spirit:userFileType>xdc</spirit:userFileType>
         <spirit:userFileType>USED_IN_implementation</spirit:userFileType>
         <spirit:userFileType>USED_IN_out_of_context</spirit:userFileType>
         <spirit:userFileType>USED_IN_synthesis</spirit:userFileType>
       </spirit:file>
       <spirit:file>
-        <spirit:name>instr_mem.mif</spirit:name>
+        <spirit:name>Instruction_Memory.mif</spirit:name>
         <spirit:userFileType>mif</spirit:userFileType>
       </spirit:file>
       <spirit:file>
@@ -3593,7 +3575,7 @@
     <spirit:fileSet>
       <spirit:name>xilinx_vhdlsynthesiswrapper_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>synth/instr_mem.vhd</spirit:name>
+        <spirit:name>synth/Instruction_Memory.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
@@ -3601,7 +3583,7 @@
     <spirit:fileSet>
       <spirit:name>xilinx_anylanguagebehavioralsimulation_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>instr_mem.mif</spirit:name>
+        <spirit:name>Instruction_Memory.mif</spirit:name>
         <spirit:userFileType>mif</spirit:userFileType>
       </spirit:file>
       <spirit:file>
@@ -3615,7 +3597,7 @@
     <spirit:fileSet>
       <spirit:name>xilinx_verilogsimulationwrapper_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>sim/instr_mem.v</spirit:name>
+        <spirit:name>sim/Instruction_Memory.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
@@ -3638,48 +3620,12 @@
         <spirit:userFileType>text</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
-    <spirit:fileSet>
-      <spirit:name>xilinx_externalfiles_view_fileset</spirit:name>
-      <spirit:file>
-        <spirit:name>instr_mem.dcp</spirit:name>
-        <spirit:userFileType>dcp</spirit:userFileType>
-        <spirit:userFileType>USED_IN_implementation</spirit:userFileType>
-        <spirit:userFileType>USED_IN_synthesis</spirit:userFileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>instr_mem_stub.v</spirit:name>
-        <spirit:fileType>verilogSource</spirit:fileType>
-        <spirit:userFileType>USED_IN_synth_blackbox_stub</spirit:userFileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>instr_mem_stub.vhdl</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:userFileType>USED_IN_synth_blackbox_stub</spirit:userFileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>instr_mem_sim_netlist.v</spirit:name>
-        <spirit:fileType>verilogSource</spirit:fileType>
-        <spirit:userFileType>USED_IN_simulation</spirit:userFileType>
-        <spirit:userFileType>USED_IN_single_language</spirit:userFileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>instr_mem_sim_netlist.vhdl</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:userFileType>USED_IN_simulation</spirit:userFileType>
-        <spirit:userFileType>USED_IN_single_language</spirit:userFileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
-      </spirit:file>
-    </spirit:fileSet>
   </spirit:fileSets>
   <spirit:description>The Xilinx LogiCORE IP Block Memory Generator replaces the Dual Port Block Memory and Single Port Block Memory LogiCOREs, but is not a direct drop-in replacement.  It should be used in all new Xilinx designs. The core supports RAM and ROM functions over a wide range of widths and depths. Use this core to generate block memories with symmetric or asymmetric read and write port widths, as well as cores which can perform simultaneous write operations to separate locations, and simultaneous read operations from the same location. For more information on differences in interface and feature support between this core and the Dual Port Block Memory and Single Port Block Memory LogiCOREs, please consult the data sheet.</spirit:description>
   <spirit:parameters>
     <spirit:parameter>
       <spirit:name>Component_Name</spirit:name>
-      <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.Component_Name" spirit:order="1">instr_mem</spirit:value>
+      <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.Component_Name" spirit:order="1">Instruction_Memory</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
@@ -3965,7 +3911,7 @@
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>Write_Depth_A</spirit:name>
-      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.Write_Depth_A" spirit:order="19" spirit:minimum="2" spirit:maximum="1048576" spirit:rangeType="long">256</spirit:value>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.Write_Depth_A" spirit:order="19" spirit:minimum="2" spirit:maximum="1048576" spirit:rangeType="long">1024</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
@@ -3998,7 +3944,7 @@
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>Enable_A</spirit:name>
-      <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.Enable_A" spirit:choiceRef="choice_pairs_3949ecbf" spirit:order="24">Use_ENA_Pin</spirit:value>
+      <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.Enable_A" spirit:choiceRef="choice_pairs_3949ecbf" spirit:order="24">Always_Enabled</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
