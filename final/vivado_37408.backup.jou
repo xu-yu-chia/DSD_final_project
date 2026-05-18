@@ -1,0 +1,28 @@
+#-----------------------------------------------------------
+# Vivado v2022.1 (64-bit)
+# SW Build 3526262 on Mon Apr 18 15:48:16 MDT 2022
+# IP Build 3524634 on Mon Apr 18 20:55:01 MDT 2022
+# Start of session at: Mon May 18 16:14:10 2026
+# Process ID: 37408
+# Current directory: C:/Users/User/DSD_Lab/Final/DSD_final_project/final
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent19652 C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
+# Log file: C:/Users/User/DSD_Lab/Final/DSD_final_project/final/vivado.log
+# Journal file: C:/Users/User/DSD_Lab/Final/DSD_final_project/final\vivado.jou
+# Running On: MSI, OS: Windows, CPU Frequency: 1797 MHz, CPU Physical cores: 16, Host memory: 33677 MB
+#-----------------------------------------------------------
+start_gui
+open_project C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.xpr
+update_compile_order -fileset sources_1
+launch_simulation
+source tb_finalproject.tcl
+launch_simulation -mode post-synthesis -type timing
+source tb_finalproject.tcl
+reset_run synth_1
+launch_runs synth_1 -jobs 16
+close_sim
+close_sim
+launch_runs synth_1 -jobs 16
+close_design
+launch_runs synth_1 -jobs 16
+launch_runs synth_1 -jobs 16
+launch_runs synth_1 -jobs 16

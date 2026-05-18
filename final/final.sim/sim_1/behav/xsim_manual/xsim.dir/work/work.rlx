@@ -2,12 +2,12 @@
 2020.2
 Apr 18 2022
 16:05:34
-C:/Users/User/DSD_Lab/Final/DSD_final_project/RISCV_CNN.v,1778996946,verilog,,,,CNN;RISCV_CNN;Simple_CPU,,,,,,,,
-C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/Data_mem/sim/Data_mem.v,1778864395,verilog,,,,Data_mem,,,,,,,,
-C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/Data_mem/simulation/blk_mem_gen_v8_4.v,1778864395,verilog,,,,STATE_LOGIC_v8_4;beh_vlog_ff_ce_clr_v8_4;beh_vlog_ff_clr_v8_4;beh_vlog_ff_pre_v8_4;beh_vlog_muxf7_v8_4;blk_mem_axi_read_wrapper_beh_v8_4;blk_mem_axi_regs_fwd_v8_4;blk_mem_axi_write_wrapper_beh_v8_4;blk_mem_gen_v8_4_5;blk_mem_gen_v8_4_5_mem_module;blk_mem_gen_v8_4_5_output_stage;blk_mem_gen_v8_4_5_softecc_output_reg_stage;read_netlist_v8_4;write_netlist_v8_4,,,,,,,,
-C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/golden_rom/sim/golden_rom.v,1778864398,verilog,,,,golden_rom,,,,,,,,
-C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/init_rom/sim/init_rom.v,1778906086,verilog,,,,init_rom,,,,,,,,
-C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/instr_mem/sim/instr_mem.v,1778864396,verilog,,,,instr_mem,,,,,,,,
-C:/Users/User/DSD_Lab/Final/DSD_final_project/tb/tb_finalproject.v,1778905719,verilog,,,,tb_finalproject,,,,,,,,
-C:/Users/User/DSD_Lab/Final/DSD_final_project/test_circuit_bram_ip.v,1778759974,verilog,,,,test_circuit,,,,,,,,
+C:/Users/User/DSD_Lab/Final/DSD_final_project/RISCV_CNN.v,1779111048,verilog,,,,CNN;RISCV_CNN;Simple_CPU,,,,,,,,
+C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/Data_mem/sim/Data_mem.v,1779109699,verilog,,,,Data_mem,,,,,,,,
+C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/Data_mem/simulation/blk_mem_gen_v8_4.v,1779109699,verilog,,,,STATE_LOGIC_v8_4;beh_vlog_ff_ce_clr_v8_4;beh_vlog_ff_clr_v8_4;beh_vlog_ff_pre_v8_4;beh_vlog_muxf7_v8_4;blk_mem_axi_read_wrapper_beh_v8_4;blk_mem_axi_regs_fwd_v8_4;blk_mem_axi_write_wrapper_beh_v8_4;blk_mem_gen_v8_4_5;blk_mem_gen_v8_4_5_mem_module;blk_mem_gen_v8_4_5_output_stage;blk_mem_gen_v8_4_5_softecc_output_reg_stage;read_netlist_v8_4;write_netlist_v8_4,,,,,,,,
+C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/Instruction_Memory/sim/Instruction_Memory.v,1779111082,verilog,,,,Instruction_Memory,,,,,,,,
+C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/golden_rom/sim/golden_rom.v,1779110532,verilog,,,,golden_rom,,,,,,,,
+C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.gen/sources_1/ip/init_rom/sim/init_rom.v,1779109699,verilog,,,,init_rom,,,,,,,,
+C:/Users/User/DSD_Lab/Final/DSD_final_project/tb/tb_finalproject.v,1779091713,verilog,,,,tb_finalproject,,,,,,,,
+C:/Users/User/DSD_Lab/Final/DSD_final_project/test_circuit_bram_ip.v,1779109699,verilog,,,,test_circuit,,,,,,,,
 C:/Xilinx/Vivado/2022.1/data/verilog/src/glbl.v,1649976174,verilog,,,,glbl,,,,,,,,

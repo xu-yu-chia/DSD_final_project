@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<GenRun Id="impl_1" LaunchPart="xc7a35tcsg324-1" LaunchTime="1778997607">
+<GenRun Id="impl_1" LaunchPart="xc7a35tcsg324-1" LaunchTime="1779109020">
   <File Type="ROUTE-PWR" Name="RISCV_CNN_power_routed.rpt"/>
   <File Type="PA-TCL" Name="RISCV_CNN.tcl"/>
   <File Type="ROUTE-PWR-SUM" Name="RISCV_CNN_power_summary_routed.pb"/>
@@ -17,6 +17,7 @@
   <File Type="BITSTR-MMI" Name="RISCV_CNN.mmi"/>
   <File Type="ROUTE-METHODOLOGY-DRC" Name="RISCV_CNN_methodology_drc_routed.rpt"/>
   <File Type="BITSTR-SYSDEF" Name="RISCV_CNN.sysdef"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-PB" Name="RISCV_CNN_methodology_drc_routed.pb"/>
   <File Type="BITSTR-LTX" Name="debug_nets.ltx"/>
   <File Type="BITSTR-LTX" Name="RISCV_CNN.ltx"/>
   <File Type="WBT-USG" Name="usage_statistics_webtalk.html"/>
@@ -25,8 +26,11 @@
   <File Type="PLACE-IO" Name="RISCV_CNN_io_placed.rpt"/>
   <File Type="PLACE-UTIL" Name="RISCV_CNN_utilization_placed.rpt"/>
   <File Type="PLACE-UTIL-PB" Name="RISCV_CNN_utilization_placed.pb"/>
+  <File Type="ROUTE-RQS" Name="RISCV_CNN_routed.rqs"/>
   <File Type="PLACE-CTRL" Name="RISCV_CNN_control_sets_placed.rpt"/>
+  <File Type="ROUTE-RQS-RPT" Name="route_report_qor_suggestions_0.rpt"/>
   <File Type="PLACE-PRE-SIMILARITY" Name="RISCV_CNN_incremental_reuse_pre_placed.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-RQS-RPT" Name="postroute_physopt_report_qor_suggestions_0.rpt"/>
   <File Type="ROUTE-DRC" Name="RISCV_CNN_drc_routed.rpt"/>
   <File Type="ROUTE-DRC-PB" Name="RISCV_CNN_drc_routed.pb"/>
   <File Type="ROUTE-PWR-RPX" Name="RISCV_CNN_power_routed.rpx"/>
@@ -48,7 +52,6 @@
   <File Type="PHYSOPT-DCP" Name="RISCV_CNN_physopt.dcp"/>
   <File Type="POSTROUTE-PHYSOPT-DCP" Name="RISCV_CNN_postroute_physopt.dcp"/>
   <File Type="POSTROUTE-PHYSOPT-BLACKBOX-DCP" Name="RISCV_CNN_postroute_physopt_bb.dcp"/>
-  <File Type="ROUTE-METHODOLOGY-DRC-PB" Name="RISCV_CNN_methodology_drc_routed.pb"/>
   <File Type="ROUTE-DRC-RPX" Name="RISCV_CNN_drc_routed.rpx"/>
   <File Type="ROUTE-METHODOLOGY-DRC-RPX" Name="RISCV_CNN_methodology_drc_routed.rpx"/>
   <File Type="PDI-FILE" Name="RISCV_CNN.pdi"/>
@@ -57,10 +60,7 @@
   <File Type="RNPI_FILE" Name="RISCV_CNN.rnpi"/>
   <File Type="NPI_FILE" Name="RISCV_CNN.npi"/>
   <File Type="RBD_FILE" Name="RISCV_CNN.rbd"/>
-  <File Type="ROUTE-RQS" Name="RISCV_CNN_routed.rqs"/>
   <File Type="POSTROUTE-PHYSOPT-RQS" Name="RISCV_CNN_postroute_physopted.rqs"/>
-  <File Type="ROUTE-RQS-RPT" Name="route_report_qor_suggestions_0.rpt"/>
-  <File Type="POSTROUTE-PHYSOPT-RQS-RPT" Name="postroute_physopt_report_qor_suggestions_0.rpt"/>
   <FileSet Name="sources" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
     <Filter Type="Srcs"/>
     <File Path="$PPRDIR/../test_circuit_bram_ip.v">
@@ -114,14 +114,6 @@
   </FileSet>
   <FileSet Name="utils" Type="Utils" RelSrcDir="$PSRCDIR/utils_1">
     <Filter Type="Utils"/>
-    <File Path="$PPRDIR/../../../FinalProject/final/final.srcs/utils_1/imports/synth_1/RISCV_CNN.dcp">
-      <FileInfo>
-        <Attr Name="UsedIn" Val="synthesis"/>
-        <Attr Name="UsedIn" Val="implementation"/>
-        <Attr Name="UsedInSteps" Val="synth_1"/>
-        <Attr Name="AutoDcp" Val="1"/>
-      </FileInfo>
-    </File>
     <Config>
       <Option Name="TopAutoSet" Val="TRUE"/>
     </Config>
@@ -137,9 +129,10 @@
     <Step Id="route_design"/>
     <Step Id="post_route_phys_opt_design"/>
     <Step Id="write_bitstream"/>
+    <Step Id="write_device_image"/>
   </Strategy>
   <BlockFileSet Type="BlockSrcs" Name="Data_mem"/>
-  <BlockFileSet Type="BlockSrcs" Name="instr_mem"/>
   <BlockFileSet Type="BlockSrcs" Name="golden_rom"/>
+  <BlockFileSet Type="BlockSrcs" Name="instr_mem"/>
   <BlockFileSet Type="BlockSrcs" Name="init_rom"/>
 </GenRun>

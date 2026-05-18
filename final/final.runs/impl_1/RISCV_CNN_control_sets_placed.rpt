@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 --------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
-| Date         : Sun May 17 14:01:44 2026
+| Date         : Mon May 18 20:43:05 2026
 | Host         : MSI running 64-bit major release  (build 9200)
 | Command      : report_control_sets -verbose -file RISCV_CNN_control_sets_placed.rpt
 | Design       : RISCV_CNN
@@ -23,11 +23,11 @@ Table of Contents
 +----------------------------------------------------------+-------+
 |                          Status                          | Count |
 +----------------------------------------------------------+-------+
-| Total control sets                                       |    74 |
-|    Minimum number of control sets                        |    74 |
+| Total control sets                                       |    77 |
+|    Minimum number of control sets                        |    77 |
 |    Addition due to synthesis replication                 |     0 |
 |    Addition due to physical synthesis replication        |     0 |
-| Unused register locations in slices containing registers |    93 |
+| Unused register locations in slices containing registers |   106 |
 +----------------------------------------------------------+-------+
 * Control sets can be merged at opt_design using control_set_merge or merge_equivalent_drivers
 ** Run report_qor_suggestions for automated merging and remapping suggestions
@@ -39,15 +39,15 @@ Table of Contents
 +--------------------+-------+
 |       Fanout       | Count |
 +--------------------+-------+
-| Total control sets |    74 |
+| Total control sets |    77 |
 | >= 0 to < 4        |     0 |
-| >= 4 to < 6        |     6 |
-| >= 6 to < 8        |     1 |
+| >= 4 to < 6        |     5 |
+| >= 6 to < 8        |     2 |
 | >= 8 to < 10       |     7 |
 | >= 10 to < 12      |     5 |
 | >= 12 to < 14      |     1 |
 | >= 14 to < 16      |     1 |
-| >= 16              |    53 |
+| >= 16              |    56 |
 +--------------------+-------+
 * Control sets can be remapped at either synth_design or opt_design
 
@@ -59,10 +59,10 @@ Table of Contents
 | Clock Enable | Synchronous Set/Reset | Asynchronous Set/Reset | Total Registers | Total Slices |
 +--------------+-----------------------+------------------------+-----------------+--------------+
 | No           | No                    | No                     |               4 |            3 |
-| No           | No                    | Yes                    |             141 |           49 |
+| No           | No                    | Yes                    |             144 |           51 |
 | No           | Yes                   | No                     |               0 |            0 |
 | Yes          | No                    | No                     |               0 |            0 |
-| Yes          | No                    | Yes                    |            1770 |          670 |
+| Yes          | No                    | Yes                    |            1986 |          752 |
 | Yes          | Yes                   | No                     |               0 |            0 |
 +--------------+-----------------------+------------------------+-----------------+--------------+
 
@@ -75,78 +75,81 @@ Table of Contents
 +----------------+------------------------------------------+------------------------------------+------------------+----------------+--------------+
 |  clk_IBUF_BUFG |                                          |                                    |                3 |              4 |         1.33 |
 |  clk_IBUF_BUFG | u_cnn/load_idx[3]_i_1_n_0                | u_test_circuit/sys_rstn            |                1 |              4 |         4.00 |
-|  clk_IBUF_BUFG | u_test_circuit/test_id                   | u_test_circuit/start_sync0_i_1_n_0 |                3 |              4 |         1.33 |
 |  clk_IBUF_BUFG | u_test_circuit/selected_tc[3]_i_1_n_0    | u_test_circuit/start_sync0_i_1_n_0 |                4 |              4 |         1.00 |
-|  clk_IBUF_BUFG | u_cnn/state[4]_i_1__0_n_0                | u_test_circuit/sys_rstn            |                5 |              5 |         1.00 |
+|  clk_IBUF_BUFG | u_test_circuit/test_id                   | u_test_circuit/start_sync0_i_1_n_0 |                1 |              4 |         4.00 |
 |  clk_IBUF_BUFG | u_cpu/FSM_onehot_state[4]_i_1_n_0        | u_test_circuit/sys_rstn            |                2 |              5 |         2.50 |
-|  clk_IBUF_BUFG | u_cnn/fmap_size[5]_i_1_n_0               | u_test_circuit/sys_rstn            |                4 |              6 |         1.50 |
-|  clk_IBUF_BUFG | u_cnn/weights[8][7]_i_1_n_0              | u_test_circuit/sys_rstn            |                3 |              8 |         2.67 |
-|  clk_IBUF_BUFG | u_cnn/bias0[7]_i_1_n_0                   | u_test_circuit/sys_rstn            |                3 |              8 |         2.67 |
-|  clk_IBUF_BUFG | u_cnn/weights[17][7]_i_1_n_0             | u_test_circuit/sys_rstn            |                3 |              8 |         2.67 |
-|  clk_IBUF_BUFG | u_test_circuit/ofmap_idx_q[7]_i_1_n_0    | u_test_circuit/start_sync0_i_1_n_0 |                2 |              8 |         4.00 |
-|  clk_IBUF_BUFG | u_cpu/imem_addr                          | u_test_circuit/sys_rstn            |                3 |              8 |         2.67 |
-|  clk_IBUF_BUFG | u_test_circuit/ofmap_idx[7]_i_1_n_0      | u_test_circuit/start_sync0_i_1_n_0 |                2 |              8 |         4.00 |
+|  clk_IBUF_BUFG | u_cnn/fmap_size[5]_i_1_n_0               | u_test_circuit/sys_rstn            |                2 |              6 |         3.00 |
+|  clk_IBUF_BUFG | u_cnn/state[4]_i_1__0_n_0                | u_test_circuit/sys_rstn            |                5 |              7 |         1.40 |
+|  clk_IBUF_BUFG | u_cnn/bias0[7]_i_1_n_0                   | u_test_circuit/sys_rstn            |                4 |              8 |         2.00 |
 |  clk_IBUF_BUFG | u_cnn/bias1[7]_i_1_n_0                   | u_test_circuit/sys_rstn            |                3 |              8 |         2.67 |
-|  clk_IBUF_BUFG | u_cpu/dmem_addr[9]_i_1_n_0               | u_test_circuit/sys_rstn            |                4 |             10 |         2.50 |
-|  clk_IBUF_BUFG | u_test_circuit/captured_ofmap_start      | u_test_circuit/start_sync0_i_1_n_0 |                3 |             10 |         3.33 |
-|  clk_IBUF_BUFG | u_test_circuit/addr_counter[9]_i_1_n_0   | u_test_circuit/start_sync0_i_1_n_0 |                5 |             10 |         2.00 |
-|  clk_IBUF_BUFG | u_test_circuit/addr_counter_q[9]_i_1_n_0 | u_test_circuit/start_sync0_i_1_n_0 |                3 |             10 |         3.33 |
-|  clk_IBUF_BUFG | u_cnn/addr[9]_i_1_n_0                    | u_test_circuit/sys_rstn            |                6 |             10 |         1.67 |
-|  clk_IBUF_BUFG | u_cnn/row_base_1                         | u_test_circuit/sys_rstn            |                3 |             12 |         4.00 |
-|  clk_IBUF_BUFG | u_cnn/layer                              | u_test_circuit/sys_rstn            |                8 |             14 |         1.75 |
-|  clk_IBUF_BUFG | u_cnn/word1[31]_i_1_n_0                  | u_test_circuit/sys_rstn            |                7 |             16 |         2.29 |
+|  clk_IBUF_BUFG | u_cnn/weights[17][7]_i_1_n_0             | u_test_circuit/sys_rstn            |                5 |              8 |         1.60 |
+|  clk_IBUF_BUFG | u_cnn/weights[8][7]_i_1_n_0              | u_test_circuit/sys_rstn            |                6 |              8 |         1.33 |
+|  clk_IBUF_BUFG | u_test_circuit/ofmap_idx_q[7]_i_1_n_0    | u_test_circuit/start_sync0_i_1_n_0 |                2 |              8 |         4.00 |
+|  clk_IBUF_BUFG | u_test_circuit/ofmap_idx[7]_i_1_n_0      | u_test_circuit/start_sync0_i_1_n_0 |                3 |              8 |         2.67 |
+|  clk_IBUF_BUFG | u_cpu/imem_addr                          | u_test_circuit/sys_rstn            |                2 |              8 |         4.00 |
+|  clk_IBUF_BUFG | u_test_circuit/addr_counter[9]_i_1_n_0   | u_test_circuit/start_sync0_i_1_n_0 |                7 |             10 |         1.43 |
+|  clk_IBUF_BUFG | u_cnn/addr[9]_i_1_n_0                    | u_test_circuit/sys_rstn            |                7 |             10 |         1.43 |
+|  clk_IBUF_BUFG | u_test_circuit/addr_counter_q[9]_i_1_n_0 | u_test_circuit/start_sync0_i_1_n_0 |                4 |             10 |         2.50 |
+|  clk_IBUF_BUFG | u_test_circuit/captured_ofmap_start      | u_test_circuit/start_sync0_i_1_n_0 |                4 |             10 |         2.50 |
+|  clk_IBUF_BUFG | u_cpu/dmem_addr[9]_i_1_n_0               | u_test_circuit/sys_rstn            |                3 |             10 |         3.33 |
+|  clk_IBUF_BUFG | u_cnn/row_base                           | u_test_circuit/sys_rstn            |                6 |             12 |         2.00 |
+|  clk_IBUF_BUFG | u_cnn/in_w                               | u_test_circuit/sys_rstn            |                7 |             14 |         2.00 |
+|  clk_IBUF_BUFG | u_cnn/col                                | u_test_circuit/sys_rstn            |                8 |             18 |         2.25 |
 |  clk_IBUF_BUFG | u_cnn/row_sum_reg[17]_i_1_n_0            | u_test_circuit/sys_rstn            |                5 |             18 |         3.60 |
-|  clk_IBUF_BUFG | u_cnn/col                                | u_test_circuit/sys_rstn            |                5 |             18 |         3.60 |
-|  clk_IBUF_BUFG |                                          | u_test_circuit/sys_rstn            |                7 |             19 |         2.71 |
-|  clk_IBUF_BUFG | u_test_circuit/ofmap_word_count_q        | u_test_circuit/start_sync0_i_1_n_0 |                4 |             19 |         4.75 |
-|  clk_IBUF_BUFG | u_cpu/pc                                 | u_test_circuit/sys_rstn            |                5 |             31 |         6.20 |
-|  clk_IBUF_BUFG | u_cpu/regs[9][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               15 |             32 |         2.13 |
-|  clk_IBUF_BUFG | u_cpu/regs[6][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_cpu/regs[31][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               20 |             32 |         1.60 |
-|  clk_IBUF_BUFG | u_cpu/regs[3][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_cpu/regs[4][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               14 |             32 |         2.29 |
-|  clk_IBUF_BUFG | u_cpu/host_bias1                         | u_test_circuit/sys_rstn            |                6 |             32 |         5.33 |
+|  clk_IBUF_BUFG | u_test_circuit/ofmap_word_count_q        | u_test_circuit/start_sync0_i_1_n_0 |                5 |             19 |         3.80 |
+|  clk_IBUF_BUFG |                                          | u_test_circuit/sys_rstn            |               10 |             22 |         2.20 |
+|  clk_IBUF_BUFG | u_cpu/pc                                 | u_test_circuit/sys_rstn            |                4 |             31 |         7.75 |
+|  clk_IBUF_BUFG | u_cpu/regs[28][31]_i_1_n_0               | u_test_circuit/sys_rstn            |                7 |             32 |         4.57 |
+|  clk_IBUF_BUFG | u_cpu/regs[27][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               10 |             32 |         3.20 |
+|  clk_IBUF_BUFG | u_cpu/regs[2][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
+|  clk_IBUF_BUFG | u_cpu/regs[4][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               15 |             32 |         2.13 |
 |  clk_IBUF_BUFG | u_cpu/regs[5][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
-|  clk_IBUF_BUFG | u_cpu/regs[7][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               15 |             32 |         2.13 |
-|  clk_IBUF_BUFG | u_cpu/regs[30][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               13 |             32 |         2.46 |
-|  clk_IBUF_BUFG | u_cpu/dmem_wdata[31]_i_1_n_0             | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_cpu/host_word17                        | u_test_circuit/sys_rstn            |               10 |             32 |         3.20 |
-|  clk_IBUF_BUFG | u_cpu/regs[27][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
-|  clk_IBUF_BUFG | u_cpu/regs[25][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_cpu/regs[28][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               13 |             32 |         2.46 |
-|  clk_IBUF_BUFG | u_cpu/regs[2][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               14 |             32 |         2.29 |
-|  clk_IBUF_BUFG | u_cpu/regs[29][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               14 |             32 |         2.29 |
-|  clk_IBUF_BUFG | u_cpu/regs[22][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_cpu/regs[20][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
+|  clk_IBUF_BUFG | u_cpu/regs[8][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
+|  clk_IBUF_BUFG | u_cpu/regs[6][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               15 |             32 |         2.13 |
+|  clk_IBUF_BUFG | u_cpu/regs[30][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               14 |             32 |         2.29 |
+|  clk_IBUF_BUFG | u_cpu/regs[7][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               18 |             32 |         1.78 |
+|  clk_IBUF_BUFG | u_cpu/regs[31][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | u_cpu/regs[9][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | u_cpu/regs[3][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               13 |             32 |         2.46 |
+|  clk_IBUF_BUFG | u_cnn/accum[31]_i_1_n_0                  | u_test_circuit/sys_rstn            |               10 |             32 |         3.20 |
+|  clk_IBUF_BUFG | u_cpu/regs[10][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               13 |             32 |         2.46 |
 |  clk_IBUF_BUFG | u_cnn/dinb[31]_i_1_n_0                   | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
-|  clk_IBUF_BUFG | u_cpu/regs[26][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_cpu/regs[18][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_cnn/pack_word_0                        | u_test_circuit/sys_rstn            |               13 |             32 |         2.46 |
+|  clk_IBUF_BUFG | u_cpu/regs[11][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               13 |             32 |         2.46 |
+|  clk_IBUF_BUFG | u_cpu/regs[13][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               10 |             32 |         3.20 |
+|  clk_IBUF_BUFG | u_cnn/pack_word                          | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
+|  clk_IBUF_BUFG | u_cpu/regs[21][31]_i_1_n_0               | u_test_circuit/sys_rstn            |                7 |             32 |         4.57 |
+|  clk_IBUF_BUFG | u_cpu/regs[22][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               15 |             32 |         2.13 |
+|  clk_IBUF_BUFG | u_cpu/regs[23][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               13 |             32 |         2.46 |
+|  clk_IBUF_BUFG | u_cnn/weights[0][7]_i_1_n_0              | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
+|  clk_IBUF_BUFG | u_cnn/weights[15][7]_i_1_n_0             | u_test_circuit/sys_rstn            |               14 |             32 |         2.29 |
+|  clk_IBUF_BUFG | u_cpu/regs[18][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               10 |             32 |         3.20 |
 |  clk_IBUF_BUFG | u_cnn/weights[6][7]_i_1_n_0              | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
-|  clk_IBUF_BUFG | u_cpu/regs[13][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               15 |             32 |         2.13 |
-|  clk_IBUF_BUFG | u_cpu/regs[10][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_cnn/weights[15][7]_i_1_n_0             | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
-|  clk_IBUF_BUFG | u_cpu/regs[16][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_cnn/weights[0][7]_i_1_n_0              | u_test_circuit/sys_rstn            |               14 |             32 |         2.29 |
-|  clk_IBUF_BUFG | u_cpu/regs[21][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
+|  clk_IBUF_BUFG | u_cpu/regs[15][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
+|  clk_IBUF_BUFG | u_cnn/word0                              | u_test_circuit/sys_rstn            |               23 |             32 |         1.39 |
+|  clk_IBUF_BUFG | u_cnn/weights[9][7]_i_1_n_0              | u_test_circuit/sys_rstn            |               14 |             32 |         2.29 |
 |  clk_IBUF_BUFG | u_cpu/regs[12][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               13 |             32 |         2.46 |
-|  clk_IBUF_BUFG | u_cpu/regs[17][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
-|  clk_IBUF_BUFG | u_cnn/weights[9][7]_i_1_n_0              | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_cnn/word0[31]_i_1_n_0                  | u_test_circuit/sys_rstn            |                9 |             32 |         3.56 |
-|  clk_IBUF_BUFG | u_cpu/regs[24][31]_i_1_n_0               | u_test_circuit/sys_rstn            |                8 |             32 |         4.00 |
-|  clk_IBUF_BUFG | u_cnn/accum[31]_i_1_n_0                  | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
-|  clk_IBUF_BUFG | u_cpu/regs[1][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               10 |             32 |         3.20 |
+|  clk_IBUF_BUFG | u_cnn/word1                              | u_test_circuit/sys_rstn            |               24 |             32 |         1.33 |
+|  clk_IBUF_BUFG | u_cpu/regs[16][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
+|  clk_IBUF_BUFG | u_cpu/regs[20][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
+|  clk_IBUF_BUFG | u_test_circuit/cycle_counter             | u_test_circuit/start_sync0_i_1_n_0 |                9 |             32 |         3.56 |
+|  clk_IBUF_BUFG | u_cpu/regs[24][31]_i_1_n_0               | u_test_circuit/sys_rstn            |                9 |             32 |         3.56 |
+|  clk_IBUF_BUFG | u_cpu/regs[17][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               10 |             32 |         3.20 |
+|  clk_IBUF_BUFG | u_cpu/regs[25][31]_i_1_n_0               | u_test_circuit/sys_rstn            |                9 |             32 |         3.56 |
+|  clk_IBUF_BUFG | u_cpu/regs[26][31]_i_1_n_0               | u_test_circuit/sys_rstn            |                9 |             32 |         3.56 |
+|  clk_IBUF_BUFG | u_cpu/regs[1][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
+|  clk_IBUF_BUFG | u_cpu/host_word16                        | u_test_circuit/sys_rstn            |                9 |             32 |         3.56 |
+|  clk_IBUF_BUFG | u_cpu/host_word17                        | u_test_circuit/sys_rstn            |                9 |             32 |         3.56 |
+|  clk_IBUF_BUFG | u_cpu/regs[14][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
 |  clk_IBUF_BUFG | u_cpu/regs[19][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               10 |             32 |         3.20 |
-|  clk_IBUF_BUFG | u_cpu/regs[23][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               18 |             32 |         1.78 |
-|  clk_IBUF_BUFG | u_cpu/regs[15][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               16 |             32 |         2.00 |
-|  clk_IBUF_BUFG | u_cpu/regs[14][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               10 |             32 |         3.20 |
-|  clk_IBUF_BUFG | u_cpu/regs[11][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               11 |             32 |         2.91 |
-|  clk_IBUF_BUFG | u_cpu/host_word16                        | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
-|  clk_IBUF_BUFG | u_test_circuit/cycle_counter             | u_test_circuit/start_sync0_i_1_n_0 |                7 |             32 |         4.57 |
-|  clk_IBUF_BUFG | u_cpu/regs[8][31]_i_1_n_0                | u_test_circuit/sys_rstn            |               15 |             32 |         2.13 |
-|  clk_IBUF_BUFG | u_cnn/req_lane[1]_i_1_n_0                | u_test_circuit/sys_rstn            |               28 |             36 |         1.29 |
-|  clk_IBUF_BUFG | u_test_circuit/golden_word_q             | u_test_circuit/start_sync0_i_1_n_0 |               12 |             64 |         5.33 |
-|  clk_IBUF_BUFG |                                          | u_test_circuit/start_sync0_i_1_n_0 |               42 |            122 |         2.90 |
+|  clk_IBUF_BUFG | u_cpu/regs[29][31]_i_1_n_0               | u_test_circuit/sys_rstn            |               12 |             32 |         2.67 |
+|  clk_IBUF_BUFG | u_cpu/dmem_wdata[31]_i_1_n_0             | u_test_circuit/sys_rstn            |               10 |             32 |         3.20 |
+|  clk_IBUF_BUFG | u_cpu/host_bias1                         | u_test_circuit/sys_rstn            |                5 |             32 |         6.40 |
+|  clk_IBUF_BUFG | u_cnn/req_lane[1]_i_1_n_0                | u_test_circuit/sys_rstn            |               23 |             36 |         1.57 |
+|  clk_IBUF_BUFG | u_test_circuit/golden_word_q             | u_test_circuit/start_sync0_i_1_n_0 |               10 |             64 |         6.40 |
+|  clk_IBUF_BUFG | u_cnn/cache_lane[1][1]_i_1_n_0           | u_test_circuit/sys_rstn            |               25 |             66 |         2.64 |
+|  clk_IBUF_BUFG | u_cnn/cache_lane[0][1]_i_1_n_0           | u_test_circuit/sys_rstn            |               26 |             66 |         2.54 |
+|  clk_IBUF_BUFG | u_cnn/cache_lane[2][1]_i_1_n_0           | u_test_circuit/sys_rstn            |               27 |             66 |         2.44 |
+|  clk_IBUF_BUFG |                                          | u_test_circuit/start_sync0_i_1_n_0 |               41 |            122 |         2.98 |
 +----------------+------------------------------------------+------------------------------------+------------------+----------------+--------------+
 
 

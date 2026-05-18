@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<GenRun Id="golden_rom_synth_1" LaunchPart="xc7a35tcsg324-1" LaunchTime="1778866407">
+<GenRun Id="golden_rom_synth_1" LaunchPart="xc7a35tcsg324-1" LaunchTime="1779111354">
   <File Type="PA-TCL" Name="golden_rom.tcl"/>
+  <File Type="RDS-PROPCONSTRS" Name="golden_rom_drc_synth.rpt"/>
   <File Type="REPORTS-TCL" Name="golden_rom_reports.tcl"/>
   <File Type="RDS-RDS" Name="golden_rom.vds"/>
   <File Type="RDS-UTIL" Name="golden_rom_utilization_synth.rpt"/>
   <File Type="RDS-UTIL-PB" Name="golden_rom_utilization_synth.pb"/>
   <File Type="RDS-DCP" Name="golden_rom.dcp"/>
+  <File Type="VDS-TIMINGSUMMARY" Name="golden_rom_timing_summary_synth.rpt"/>
+  <File Type="VDS-TIMING-PB" Name="golden_rom_timing_summary_synth.pb"/>
   <FileSet Name="sources" Type="BlockSrcs" RelSrcDir="$PSRCDIR/golden_rom">
     <File Path="$PSRCDIR/sources_1/ip/golden_rom/golden_rom.xci">
       <FileInfo>
