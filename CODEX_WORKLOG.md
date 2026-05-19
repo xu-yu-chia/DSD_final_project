@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-18 22:26 Asia/Taipei
+最後更新：2026-05-19 13:56 Asia/Taipei
 
 主要工作區：
 
@@ -16,24 +16,33 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前正式版本：`v0.6.0`
+- 目前正式版本：`v0.7.0`
+- `v0.7.0` 將根目錄使用中的助教檔案恢復為 `助教給的檔案/` 官方版本，並移除 CNN 中對 feature size `24/28/30` 的舊重映射，官方測資 RTL display-based regression 回到 100 分。
 - `v0.6.0` 對齊 `Memory_setting.pdf` 的 BRAM IP 名稱與設定，將 instruction ROM component/module 改為 `Instruction_Memory`，並更新 full check route flow 讓 post-route timing 穩定通過。
 - `v0.5.0` 在 CNN 內加入 3-row previous-pixel word cache，重用相鄰 output pixel 的 input word，減少 BRAM read wait cycles，以降低 ranking 用 AT product。
 - `v0.4.0` 將 CNN 最後一個 kernel row 的 accumulate、rounding、packing 合併，移除每個 output pixel 的 `C_FINISH_PIXEL` 額外週期，以降低 ranking 用 AT product。
 - `v0.3.0` 加入 CNN BRAM read prefetch pipeline，以降低 ranking 用 AT product。
 - RTL simulation 已通過全部 15 個 testcase。
 - Testbench 已改成只透過 top-level `seven_seg/anode` 驗證結果，可支援 behavioral 與 post-synthesis/post-implementation netlist 類 simulation。
-- `v0.6.0` 本次正式驗證包含 RTL display-based regression 與 full Vivado synthesis/place/route/timing checks；post-synthesis functional simulation 在推版前被使用者中止，未列為本版通過條件。
+- `v0.7.0` 本次正式驗證包含 RTL display-based regression 與 full Vivado synthesis/place/route/timing checks；post-synthesis functional simulation 未列為本版通過條件。
 - Synthesis、placement、routing、post-route timing 皆已完成並通過。
 - 2026-05-17 已將 `Simple_CPU` 與 `CNN` 從 `src/student_fp_core.v` 整合進 `RISCV_CNN.v`；Vivado project 與 Tcl scripts 不再把 `student_fp_core.v` 加入 sources。
 - 整合後 RTL simulation 通過，`cycle_count = 25660`；這是 source 結構維護，未建立新的正式效能版本，速度與面積表仍以 `v0.3.0` 為準。
 - `scripts/run_vivado_checks.tcl` 目前刻意不產生 bitstream。
 - Vivado journal/log 與暫存工作檔集中放在 `tmp/`。
 - 舊的 `FinalProject` 資料夾已刪除；有保留價值的舊檔已搬到 `legacy_artifacts/FinalProject_deprecated/`。
-- 助教提供的 `.coe` 檔案不可修改；目前 `init_rom.coe`、`golden_rom.coe`、`instr_mem_cpucheck.coe` 皆已確認與 `coe備份檔/` 內備份檔 SHA256 完全一致。
+- 助教提供的測試檔不可修改；目前根目錄 `test_circuit_bram_ip.v`、`init_rom.coe`、`golden_rom.coe`、`instr_mem_cpucheck.coe` 皆已確認與 `助教給的檔案/` 內同名檔案 SHA256 完全一致。
 
 ## 版本紀錄
 
+- `v0.7.0` - 2026-05-19 13:56 Asia/Taipei
+  - 將根目錄 `test_circuit_bram_ip.v`、`golden_rom.coe`、`init_rom.coe`、`instr_mem_cpucheck.coe` 與 Vivado/IP/sim 相關 `.coe` 副本同步回 `助教給的檔案/` 官方版本。
+  - 移除 `CNN.effective_fmap_size` 對 `24/28/30` 的舊重映射，改為直接使用官方 test circuit 寫入的 feature size。
+  - 補強 `tb/tb_finalproject.v`：若總分不是 100，仍繼續列出 `tc=0..14` 的 status display，再統一輸出 fail_count，方便定位錯誤 testcase。
+  - RTL display-based regression 通過：`score_bcd = 0100`，15 個 testcase status display 皆為 pass，`FINALPROJECT_SIM_PASS`。
+  - Full Vivado checks 通過：route 0 errors，post-route `WNS = 0.129 ns`、`TNS = 0.000 ns`、`WHS = 0.103 ns`。
+  - Implementation utilization：2480 Slice LUTs、2137 Slice Registers、261 F7 Muxes、10 F8 Muxes、14 Block RAM Tiles、2 DSPs。
+  - PDF 官方 AT product：`776448960`，相比 `v0.1.2` baseline 改善約 53.62%。
 - `v0.6.0` - 2026-05-18 22:26 Asia/Taipei
   - 以 `Memory_setting.pdf` 為準整理 BRAM 設定，新增 `MEMORY_SETTING.md`。
   - 將 instruction ROM 的 Vivado IP/component/module 名稱由舊 `instr_mem` 改為 PDF 指定的 `Instruction_Memory`。
@@ -124,6 +133,7 @@ PDF AT product = Official Area × Processing Time
 | `v0.4.0` | 2026-05-17 22:28 | 23976 | 239760 ns | cycles -10104 / -29.65% | 5005 | +93 / +1.89% | 2258 | 1915 | 262 | 10 | 15 | 2 | 0.056 ns | 1199998800 | -474010800 / -28.32% |
 | `v0.5.0` | 2026-05-17 23:06 | 14252 | 142520 ns | cycles -19828 / -58.18% | 5424 | +512 / +10.42% | 2458 | 2134 | 262 | 10 | 15 | 2 | 0.017 ns | 773028480 | -900981120 / -53.82% |
 | `v0.6.0` | 2026-05-18 22:26 | 14252 | 142520 ns | cycles -19828 / -58.18% | 5458 | +546 / +11.12% | 2489 | 2137 | 262 | 10 | 14 | 2 | 0.010 ns | 777874160 | -896135440 / -53.53% |
+| `v0.7.0` | 2026-05-19 13:56 | 14252 | 142520 ns | cycles -19828 / -58.18% | 5448 | +536 / +10.91% | 2480 | 2137 | 261 | 10 | 14 | 2 | 0.129 ns | 776448960 | -897560640 / -53.62% |
 
 解讀：
 
@@ -142,8 +152,80 @@ PDF AT product = Official Area × Processing Time
 - `v0.6.0` 不改 CNN datapath，cycle_count 沿用 `v0.5.0`；此版本主要是 BRAM IP 設定與名稱對齊 PDF。
 - `v0.6.0` Official Area 比 baseline 增加 546，約增加 11.12%；相比 `v0.5.0` 增加 34，但 Block RAM Tile 從 15 降到 14。
 - 以 PDF 官方完整公式計算，`v0.6.0` AT product 比 baseline 改善約 53.53%；相比 `v0.5.0` 因 Official Area 稍增，AT product 小幅變差約 0.63%。
+- `v0.7.0` 移除只為舊測資存在的 feature size 重映射，官方助教檔案下 `tc=6,7,8` 回到 pass；最後 testcase `cycle_count` 維持 `14252`。
+- `v0.7.0` Official Area 比 baseline 增加 536，約增加 10.91%；相比 `v0.6.0` 少 10，主要是 LUT/F7 Mux 小幅下降。
+- 以 PDF 官方完整公式計算，`v0.7.0` AT product 比 baseline 改善約 53.62%；相比 `v0.6.0` 小幅改善約 0.18%。
 
 ## 版本改動詳細部分
+
+### v0.7.0 官方助教檔案恢復與 feature size 修正版
+
+修改檔案：
+
+```text
+RISCV_CNN.v
+tb\tb_finalproject.v
+test_circuit_bram_ip.v
+golden_rom.coe
+init_rom.coe
+instr_mem_cpucheck.coe
+coe備份檔\golden_rom.coe
+final\final.ip_user_files\mem_init_files\golden_rom.coe
+final\final.gen\sources_1\ip\golden_rom\golden_rom.mif
+reports\timing_impl.rpt
+reports\timing_synth.rpt
+reports\utilization_impl.rpt
+reports\utilization_synth.rpt
+reports\route_status.rpt
+CODEX_WORKLOG.md
+```
+
+修正內容：
+
+- 將根目錄使用中的 `test_circuit_bram_ip.v`、`golden_rom.coe`、`init_rom.coe`、`instr_mem_cpucheck.coe` 與 `助教給的檔案/` 官方版本比對並同步為完全一致。
+- 同步 `final/final.ip_user_files/mem_init_files/golden_rom.coe` 等 Vivado/IP/sim 副本，避免後續 simulation 使用舊 golden data。
+- 移除 `CNN.effective_fmap_size` 中將官方 feature size `24/28/30` 改成 `22/24/26` 的舊邏輯；CNN 現在直接使用 test circuit 寫入的 `data_mem[12][6:1]`。
+- `tb/tb_finalproject.v` 保留 display-based checker，但在總分不是 100 時不立刻停止，會繼續列出每個 testcase 的 status display，以便定位失敗 testcase。
+
+驗證結果：
+
+```text
+vivado.bat -mode batch -source scripts\run_vivado_checks.tcl -journal tmp\v070_full_checks.jou -log tmp\v070_full_checks.log
+
+score_bcd = 0100
+tc = 0..e all pass by display BCD
+FINALPROJECT_SIM_PASS
+
+route_design completed successfully
+Post Routing Timing Summary | WNS=0.129 | TNS=0.000 | WHS=0.103 | THS=0.000
+Route status: fully routed nets = 4605, routing errors = 0
+```
+
+Implementation utilization：
+
+```text
+Slice LUTs       = 2480 / 20800  (11.92%)
+Slice Registers  = 2137 / 41600  (5.14%)
+Block RAM Tile   = 14 / 50       (28.00%)
+DSPs             = 2 / 90        (2.22%)
+F7 Muxes         = 261
+F8 Muxes         = 10
+```
+
+速度與 AT：
+
+```text
+cycle_count       = 14252
+Processing Time   = 142520 ns
+Official Area     = 2480 + 2137 + 261 + 10 + 280*2 = 5448
+PDF AT product    = 5448 * 142520 = 776448960
+```
+
+採用判定：
+
+- 採用此版本作為目前正式版本，因為官方助教檔案下 RTL display-based regression 通過 100 分，且 synthesis/place/route/post-route timing 全部通過。
+- 本版不是新的 ranking datapath 優化；主要價值是移除舊測資相容邏輯，恢復官方 feature size 行為。
+- Post-synthesis functional simulation 未列入此版本通過條件。
 
 ### v0.6.0 Memory_setting.pdf BRAM 對齊版
 

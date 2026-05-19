@@ -703,9 +703,9 @@ always @(*) begin
         4'd3: feature_size = 6'd16;
         4'd4: feature_size = 6'd18;
         4'd5: feature_size = 6'd20;
-        4'd6: feature_size = 6'd22;
-        4'd7: feature_size = 6'd24;
-        4'd8: feature_size = 6'd26;
+        4'd6: feature_size = 6'd24;
+        4'd7: feature_size = 6'd28;
+        4'd8: feature_size = 6'd30;
         4'd9: feature_size = 6'd32;
         default: feature_size = 6'd10;
     endcase

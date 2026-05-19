@@ -11,6 +11,7 @@ module tb_finalproject;
 
     integer timeout_cycles;
     integer tc_idx;
+    integer fail_count;
     reg [15:0] display_bcd;
     reg score_seen;
 
@@ -105,6 +106,7 @@ module tb_finalproject;
         tc = 4'd15;
         mode = 1'b0;
         st = 1'b0;
+        fail_count = 0;
         score_seen = 1'b0;
 
         repeat (20) @(posedge FPGA_clk);
@@ -128,7 +130,7 @@ module tb_finalproject;
         $display("score_bcd = %h", display_bcd);
         if (!score_seen) begin
             $display("FINALPROJECT_SIM_FAIL score did not reach 0100");
-            $fatal;
+            fail_count = fail_count + 1;
         end
 
         mode = 1'b0;
@@ -139,11 +141,16 @@ module tb_finalproject;
             if (display_bcd !== expected_status_bcd(tc_idx)) begin
                 $display("FINALPROJECT_SIM_FAIL tc = %h expected %h got %h",
                          tc, expected_status_bcd(tc_idx), display_bcd);
-                $fatal;
+                fail_count = fail_count + 1;
             end
         end
 
-        $display("FINALPROJECT_SIM_PASS");
+        if (fail_count == 0) begin
+            $display("FINALPROJECT_SIM_PASS");
+        end else begin
+            $display("FINALPROJECT_SIM_FAIL fail_count = %0d", fail_count);
+            $fatal;
+        end
         $finish;
     end
 endmodule

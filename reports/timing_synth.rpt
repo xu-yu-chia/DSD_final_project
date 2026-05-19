@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 --------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
-| Date         : Mon May 18 22:06:55 2026
+| Date         : Tue May 19 13:47:16 2026
 | Host         : MSI running 64-bit major release  (build 9200)
 | Command      : report_timing_summary -file C:/Users/User/DSD_Lab/Final/DSD_final_project/reports/timing_synth.rpt
 | Design       : RISCV_CNN
@@ -241,7 +241,7 @@ Slack (MET) :             0.140ns  (required time - arrival time)
                          net (fo=1, unplaced)         0.009     6.654    u_cnn/row_sum_reg_reg[3]_i_22_n_0
                          CARRY4 (Prop_carry4_CI_O[1])
                                                       0.348     7.002 r  u_cnn/row_sum_reg_reg[17]_i_45/O[1]
-                         net (fo=3, unplaced)         0.629     7.631    u_cnn_n_52
+                         net (fo=3, unplaced)         0.629     7.631    u_cnn_n_95
                          LUT3 (Prop_lut3_I2_O)        0.306     7.937 r  row_sum_reg[17]_i_27/O
                          net (fo=1, unplaced)         0.639     8.576    row_sum_reg[17]_i_27_n_0
                          CARRY4 (Prop_carry4_DI[1]_CO[3])

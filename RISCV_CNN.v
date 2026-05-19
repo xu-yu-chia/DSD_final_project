@@ -573,12 +573,7 @@ module CNN(
     function [5:0] effective_fmap_size;
         input [5:0] raw_size;
         begin
-            case (raw_size)
-                6'd24: effective_fmap_size = 6'd22;
-                6'd28: effective_fmap_size = 6'd24;
-                6'd30: effective_fmap_size = 6'd26;
-                default: effective_fmap_size = raw_size;
-            endcase
+            effective_fmap_size = raw_size;
         end
     endfunction
 
