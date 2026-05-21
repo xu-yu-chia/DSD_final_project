@@ -26,13 +26,18 @@ set sim_dir [file join $repo_dir tmp post_synth_xsim]
 set netlist_file [file join $sim_dir RISCV_CNN_func_synth.v]
 file mkdir $sim_dir
 
+set checks_script_dir $script_dir
+set checks_repo_dir $repo_dir
+source [file join $repo_dir scripts update_final_project.tcl]
+set script_dir $checks_script_dir
+set repo_dir $checks_repo_dir
+
 open_project $proj_file
 set_param general.maxThreads 1
 
-if {[get_property PROGRESS [get_runs synth_1]] ne "100%"} {
-    launch_runs synth_1 -jobs 1
-    wait_on_run synth_1
-}
+reset_run synth_1
+launch_runs synth_1 -jobs 1
+wait_on_run synth_1
 
 open_run synth_1 -name post_synth_run
 write_verilog -mode funcsim -force -file $netlist_file

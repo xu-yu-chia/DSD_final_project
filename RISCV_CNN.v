@@ -26,11 +26,27 @@ module RISCV_CNN(
     wire [31:0] cnn_dinb, cnn_doutb;
     
     wire cnn_finish_event;
+    reg rstn_sync0;
+    reg rstn_sync1;
+    wire test_rstn;
+
     assign cnn_finish_event = cnn_web && (cnn_addr == 10'd13) && cnn_dinb[0];
+    assign test_rstn = rstn_sync1;
+
+    always @(posedge clk or negedge rstn) begin
+        if (!rstn) begin
+            rstn_sync0 <= 1'b0;
+            rstn_sync1 <= 1'b0;
+        end
+        else begin
+            rstn_sync0 <= 1'b1;
+            rstn_sync1 <= rstn_sync0;
+        end
+    end
     
     test_circuit u_test_circuit(
         .clk(clk),
-        .rstn(rstn),
+        .rstn(test_rstn),
         .sys_rstn(sys_rstn),
         .mem_addr(tc_mem_addr),
         .mem_wdata(tc_mem_wdata),
@@ -100,27 +116,12 @@ module Simple_CPU(
     localparam S_LOAD_WAIT       = 5'd3;
     localparam S_LOAD_WB         = 5'd4;
     localparam S_STORE           = 5'd5;
-    localparam S_HOST_R16_ADDR   = 5'd6;
-    localparam S_HOST_R16_WAIT   = 5'd7;
-    localparam S_HOST_R16_CAP    = 5'd8;
-    localparam S_HOST_R17_WAIT   = 5'd9;
-    localparam S_HOST_R17_CAP    = 5'd10;
-    localparam S_HOST_R18_WAIT   = 5'd11;
-    localparam S_HOST_R18_CAP    = 5'd12;
-    localparam S_HOST_W14        = 5'd13;
-    localparam S_HOST_W15        = 5'd14;
-    localparam S_HOST_CLR_START  = 5'd15;
-    localparam S_HOST_START_CNN  = 5'd16;
-    localparam S_HOST_DONE       = 5'd17;
 
     reg [4:0] state;
     reg [31:0] pc;
     reg [4:0] load_rd;
     reg [31:0] regs [0:31];
     reg [9:0] imem_addr;
-    reg [31:0] host_word16;
-    reg [31:0] host_word17;
-    reg [31:0] host_bias1;
     integer i;
 
     wire [31:0] instr;
@@ -140,11 +141,7 @@ module Simple_CPU(
     wire [31:0] store_byte_addr = regs[rs1] + imm_s;
 
     assign dmem_en = 1'b1;
-    assign dmem_we = (state == S_STORE) ||
-                     (state == S_HOST_W14) ||
-                     (state == S_HOST_W15) ||
-                     (state == S_HOST_CLR_START) ||
-                     (state == S_HOST_START_CNN);
+    assign dmem_we = (state == S_STORE);
 
     Instruction_Memory u_Instruction_Memory (
         .clka(CLK),
@@ -152,7 +149,7 @@ module Simple_CPU(
         .douta(instr)
     );
 
-    always @(posedge CLK or negedge RSTN) begin
+    always @(posedge CLK) begin
         if (!RSTN) begin
             state <= S_FETCH_ADDR;
             pc <= 32'd0;
@@ -160,9 +157,6 @@ module Simple_CPU(
             dmem_addr <= 10'd0;
             dmem_wdata <= 32'd0;
             imem_addr <= 10'd0;
-            host_word16 <= 32'd0;
-            host_word17 <= 32'd0;
-            host_bias1 <= 32'd0;
             for (i = 0; i < 32; i = i + 1) begin
                 regs[i] <= 32'd0;
             end
@@ -170,13 +164,8 @@ module Simple_CPU(
         else begin
             case (state)
                 S_FETCH_ADDR: begin
-                    if (pc >= 32'd144) begin
-                        state <= S_HOST_R16_ADDR;
-                    end
-                    else begin
-                        imem_addr <= pc[9:2];
-                        state <= S_FETCH_WAIT;
-                    end
+                    imem_addr <= pc[9:2];
+                    state <= S_FETCH_WAIT;
                 end
 
                 S_FETCH_WAIT: begin
@@ -248,72 +237,9 @@ module Simple_CPU(
                 end
 
                 S_STORE: begin
+                    dmem_addr <= 10'd0;
+                    dmem_wdata <= 32'd0;
                     state <= S_FETCH_ADDR;
-                end
-
-                S_HOST_R16_ADDR: begin
-                    dmem_addr <= 10'd16;
-                    state <= S_HOST_R16_WAIT;
-                end
-
-                S_HOST_R16_WAIT: begin
-                    state <= S_HOST_R16_CAP;
-                end
-
-                S_HOST_R16_CAP: begin
-                    host_word16 <= dmem_rdata;
-                    dmem_addr <= 10'd17;
-                    state <= S_HOST_R17_WAIT;
-                end
-
-                S_HOST_R17_WAIT: begin
-                    state <= S_HOST_R17_CAP;
-                end
-
-                S_HOST_R17_CAP: begin
-                    host_word17 <= dmem_rdata;
-                    dmem_addr <= 10'd18;
-                    state <= S_HOST_R18_WAIT;
-                end
-
-                S_HOST_R18_WAIT: begin
-                    state <= S_HOST_R18_CAP;
-                end
-
-                S_HOST_R18_CAP: begin
-                    host_bias1 <= ($signed(host_word17) < $signed(host_word16)) ?
-                                  (host_word16 - host_word17 + 32'd1) :
-                                  32'hfffffff1;
-                    dmem_addr <= 10'd14;
-                    dmem_wdata <= host_word16 + host_word17 + dmem_rdata;
-                    state <= S_HOST_W14;
-                end
-
-                S_HOST_W14: begin
-                    dmem_addr <= 10'd15;
-                    dmem_wdata <= host_bias1;
-                    state <= S_HOST_W15;
-                end
-
-                S_HOST_W15: begin
-                    dmem_addr <= 10'd11;
-                    dmem_wdata <= 32'd0;
-                    state <= S_HOST_CLR_START;
-                end
-
-                S_HOST_CLR_START: begin
-                    dmem_addr <= 10'd6;
-                    dmem_wdata <= 32'd1;
-                    state <= S_HOST_START_CNN;
-                end
-
-                S_HOST_START_CNN: begin
-                    dmem_wdata <= 32'd0;
-                    state <= S_HOST_DONE;
-                end
-
-                S_HOST_DONE: begin
-                    state <= S_HOST_DONE;
                 end
 
                 default: begin
@@ -598,7 +524,7 @@ module CNN(
     assign rounded_acc_next = round_sat_q12_to_q6(acc_next);
     assign pack_finished_next = put_lane(pack_word, out_index[1:0], rounded_acc_next);
 
-    always @(posedge clk or negedge rstn) begin
+    always @(posedge clk) begin
         if (!rstn) begin
             state <= C_IDLE;
             addr <= 10'd6;
