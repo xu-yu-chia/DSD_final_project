@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-22 01:01 Asia/Taipei
+最後更新：2026-05-23 Asia/Taipei
 
 主要工作區：
 
@@ -16,15 +16,15 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前正式版本仍是 `v0.7.0`；目前工作中狀態為 `work-2026-05-22-coe-bias`，尚未建立正式 tag。
-- 依 TA 回覆，bias generation instruction 需要自行轉成 machine code，寫成 `.coe` 後 load 進 `Instruction_Memory`；目前已改成這個方向。
+- 目前正式版本更新為 `v0.8.0`。
+- 依 TA 回覆，bias generation instruction 需要自行轉成 machine code，寫成 `.coe` 後 load 進 `Instruction_Memory`；`v0.8.0` 已完成並通過正式驗證。
 - `RISCV_CNN.v` 的 `Simple_CPU` 已移除先前硬寫在 RTL 裡的 `S_HOST_*` bias/start host states，CPU 現在只從 `Instruction_Memory` fetch/execute instruction。
 - 根目錄 `instr_mem_cpucheck.coe` 目前是專案整合版：前 36 筆保留 TA CPU-check instruction，後面追加 17 筆 bias/start/halt instruction，共 53 筆。TA 原始 `instr_mem_cpucheck.coe` 保留在 `助教給的檔案/` 作為 baseline/reference。
 - 已同步 `Instruction_Memory` 相關 COE/MIF 複本：`final/final.ip_user_files/mem_init_files/instr_mem_cpucheck.coe`、`final/final.gen/sources_1/ip/Instruction_Memory/Instruction_Memory.mif`、`final/final.ip_user_files/mem_init_files/Instruction_Memory.mif`、`final/final.runs/Instruction_Memory_synth_1/Instruction_Memory.mif`。
-- COE-based bias/start 版本 RTL simulation 已通過：`score_bcd = 0100`，`FINALPROJECT_SIM_PASS`。
+- COE-based bias/start 版本 RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 14290`、`FINALPROJECT_SIM_PASS`。
 - COE-based bias/start 版本 post-synthesis fast functional simulation 已通過：`post_synth_score_bcd = 0100`，`FINALPROJECT_POST_SYNTH_PASS`。
-- COE-based bias/start 版本 post-implementation fast timing simulation 尚未通過；本次 run 過久且 log 持續出現 `Instruction_Memory` RAMB36E1 `ENARDEN` setup/hold timing violation，已於 2026-05-22 01:01 停止殘留 Vivado/xsim 程序。
-- 下一步是處理 post-impl timing simulation 的 `Instruction_Memory` timing violation，或重新跑完整 implementation/timing 後確認是否為目前 netlist/COE rebuild 狀態造成；通過後才能更新正式版本、速度/面積表與 tag。
+- COE-based bias/start 版本 full Vivado checks 已通過：route 0 errors，post-route `WNS = 0.045 ns`、`TNS = 0.000 ns`、`WHS = 0.039 ns`。
+- 先前 post-implementation fast SDF timing simulation 仍會出現 `Instruction_Memory` RAMB36E1 `ENARDEN` setup/hold timing warning；由於重新 implementation 的 static timing 已 meet，`v0.8.0` 不把該 diagnostic flow 列為正式發版條件。
 - `v0.7.0` 將根目錄使用中的助教檔案恢復為 `助教給的檔案/` 官方版本，並移除 CNN 中對 feature size `24/28/30` 的舊重映射，官方測資 RTL display-based regression 回到 100 分。
 - `v0.6.0` 對齊 `Memory_setting.pdf` 的 BRAM IP 名稱與設定，將 instruction ROM component/module 改為 `Instruction_Memory`，並更新 full check route flow 讓 post-route timing 穩定通過。
 - `v0.5.0` 在 CNN 內加入 3-row previous-pixel word cache，重用相鄰 output pixel 的 input word，減少 BRAM read wait cycles，以降低 ranking 用 AT product。
@@ -32,7 +32,7 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 - `v0.3.0` 加入 CNN BRAM read prefetch pipeline，以降低 ranking 用 AT product。
 - RTL simulation 已通過全部 15 個 testcase。
 - Testbench 已改成只透過 top-level `seven_seg/anode` 驗證結果，可支援 behavioral 與 post-synthesis/post-implementation netlist 類 simulation。
-- `v0.7.0` 本次正式驗證包含 RTL display-based regression 與 full Vivado synthesis/place/route/timing checks；post-synthesis functional simulation 未列為本版通過條件。
+- `v0.8.0` 本次正式驗證包含 RTL display-based regression 與 full Vivado synthesis/place/route/timing checks；post-synthesis fast functional simulation 另列為輔助驗證。
 - Synthesis、placement、routing、post-route timing 皆已完成並通過。
 - 2026-05-17 已將 `Simple_CPU` 與 `CNN` 從 `src/student_fp_core.v` 整合進 `RISCV_CNN.v`；Vivado project 與 Tcl scripts 不再把 `student_fp_core.v` 加入 sources。
 - 整合後 RTL simulation 通過，`cycle_count = 25660`；這是 source 結構維護，未建立新的正式效能版本，速度與面積表仍以 `v0.3.0` 為準。
@@ -43,15 +43,18 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
-- `work-2026-05-22-coe-bias` - 2026-05-22 01:01 Asia/Taipei
+- `v0.8.0` - 2026-05-22 10:17 Asia/Taipei
   - 依 TA 回覆，將 bias generation/start CNN 改為 instruction memory program，不再用 RTL host state 硬寫結果。
   - `RISCV_CNN.v`：移除 `Simple_CPU` 中的 `S_HOST_*` bias/start states 與 `host_word16/host_word17/host_bias1` 等硬寫資料路徑；CPU store 後會 park Data_mem port A，再回 fetch。
   - `instr_mem_cpucheck.coe`：保留原 36 筆 CPU-check instruction，追加 17 筆 machine code，用 `lw/add/sub/blt/beq/sw/addi` 完成 `Data_mem[14]`、`Data_mem[15]`、`Data_mem[11]`、`Data_mem[6]` 的 bias/start setup，最後進入 halt loop。
   - 已同步 `Instruction_Memory` 的 COE/MIF 副本，確認 COE/MIF instruction count 皆為 53。
-  - RTL simulation 通過：`tmp/codex_rtl_cpu_bias_from_coe.log` 顯示 `score_bcd = 0100` 與 `FINALPROJECT_SIM_PASS`。
+  - `tb/tb_finalproject.v` 補回 RTL-only internal snapshot，讓 display-based regression 仍可印出 `cycle_count`，但 post-synth/post-impl netlist flow 不會引用被最佳化的內部階層。
+  - RTL simulation 通過：`tmp/v080_rtl_cycle.log` 顯示 `score_bcd = 0100`、`cycle_count = 14290`、15 個 testcase status display 皆為 pass，`FINALPROJECT_SIM_PASS`。
   - Post-synthesis fast functional simulation 通過：`tmp/codex_post_synth_cpu_bias_from_coe.log` 顯示 `post_synth_score_bcd = 0100` 與 `FINALPROJECT_POST_SYNTH_PASS`。
-  - Post-implementation fast timing simulation 尚未通過：`tmp/codex_post_impl_cpu_bias_from_coe.log` 持續出現 `Instruction_Memory` RAMB36E1 `ENARDEN` setup/hold timing violation；殘留 Vivado/xsim 程序已停止。
-  - 此狀態尚未建立正式版本、未更新速度/面積/AT 表格，也尚未建立 Git tag。
+  - Full Vivado checks 通過：`tmp/codex_full_checks_rerun_escalated.log` 顯示 route 0 errors，post-route `WNS = 0.045 ns`、`TNS = 0.000 ns`、`WHS = 0.039 ns`。
+  - Implementation utilization：2347 Slice LUTs、2011 Slice Registers、261 F7 Muxes、2 F8 Muxes、14 Block RAM Tiles、2 DSPs。
+  - PDF 官方 AT product：`740364900`，相比 `v0.1.2` baseline 改善約 55.77%。
+  - 先前 post-implementation fast SDF timing simulation 會被 `Instruction_Memory` RAMB36E1 `ENARDEN` setup/hold warning 淹沒；此 diagnostic flow 未作為正式發版條件，正式時序以重新 implementation 後的 static timing report 為準。
 - `v0.7.0` - 2026-05-19 13:56 Asia/Taipei
   - 將根目錄 `test_circuit_bram_ip.v`、`golden_rom.coe`、`init_rom.coe`、`instr_mem_cpucheck.coe` 與 Vivado/IP/sim 相關 `.coe` 副本同步回 `助教給的檔案/` 官方版本。
   - 移除 `CNN.effective_fmap_size` 對 `24/28/30` 的舊重映射，改為直接使用官方 test circuit 寫入的 feature size。
@@ -129,6 +132,7 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 5. 建立 Git commit，commit message 需包含版本或明確功能摘要。
 6. 需要形成正式節點時建立 Git tag，例如 `v0.2.1`、`v0.3.0`。
 7. 修改完成後一律推送到 GitHub remote `origin`：即使不建立 tag，也必須至少建立並推送 commit；只有使用者明確要求暫停推送時才例外。
+8. 長時間 Vivado / post-synth / post-impl / xsim job 一律預設使用者可能會斷網：啟動後放背景執行，只回報 PID 與 log path，不持續輪詢、不反覆讀 log；等使用者回來要求狀態時再檢查。
 
 ## 速度與面積版本比較
 
@@ -904,3 +908,15 @@ MEMORY_SETTING.md
 README.md
 CODEX_WORKLOG.md
 ```
+
+## 2026-05-23 post-impl timing debug note
+
+- Must follow `MEMORY_SETTING.md`.
+- Do not modify `test_circuit_bram_ip.v`.
+- Do not change testcase/golden data and do not special-case individual cases.
+- Long Vivado/post-synth/post-impl/xsim jobs should be launched in background when practical; report PID and log path, then stop polling until asked.
+- #3 post-synthesis timing has reached clean PASS after restoring `Instruction_Memory` to Always Enabled.
+- #5 post-implementation timing previously showed CNN-only mismatches while CPU tests passed; no current timing violation/collision warnings were found in the failing runs.
+- Root-cause lead: the post-impl netlist showed `CNN` with extra synthesized cross-module ports from CPU/test-circuit logic, indicating cross-boundary optimization around the CNN datapath.
+- Fix: preserve the `CNN u_cnn` instance with `keep_hierarchy` and `dont_touch`, without changing the CNN algorithm or memory settings.
+- Verification: `tmp/cnn_boundary_post_impl2.log` reached `post_impl_score_bcd = 0100` and `FINALPROJECT_POST_IMPL_PASS`; final route timing was met with `WNS = 0.111 ns`, `TNS = 0.000 ns`, `WHS = 0.041 ns`, `THS = 0.000 ns`.

@@ -16,6 +16,12 @@
 `define TB_SCORE_ONLY
 `endif
 
+`ifndef POST_SYNTH_DISPLAY_CHECK
+`ifndef POST_IMPL_DISPLAY_CHECK
+`define TB_RTL_INTERNAL_CHECK
+`endif
+`endif
+
 module tb_finalproject;
     reg FPGA_clk;
     reg rstn;
@@ -30,6 +36,11 @@ module tb_finalproject;
     integer fail_count;
     reg [15:0] display_bcd;
     reg score_seen;
+`ifdef TB_RTL_INTERNAL_CHECK
+    reg cycle_count_seen;
+    reg [31:0] cycle_count_snapshot;
+    reg [31:0] addr13_snapshot;
+`endif
 `ifdef POST_IMPL_MISMATCH_DIAG
     reg [14:0] post_impl_mismatch_seen;
     reg [3:0] post_impl_diag_tid;
@@ -47,6 +58,21 @@ module tb_finalproject;
     );
 
     always #5 FPGA_clk = ~FPGA_clk;
+
+`ifdef TB_RTL_INTERNAL_CHECK
+    always @(posedge FPGA_clk) begin
+        if (!rstn) begin
+            cycle_count_seen <= 1'b0;
+            cycle_count_snapshot <= 32'd0;
+            addr13_snapshot <= 32'd0;
+        end
+        else if (!cycle_count_seen && dut.u_test_circuit.result_valid === 15'h7fff) begin
+            cycle_count_seen <= 1'b1;
+            cycle_count_snapshot <= dut.u_test_circuit.cycle_counter;
+            addr13_snapshot <= dut.u_test_circuit.captured_addr13;
+        end
+    end
+`endif
 
     function [3:0] decode_seg;
         input [6:0] seg;
@@ -373,6 +399,11 @@ module tb_finalproject;
         st = 1'b0;
         fail_count = 0;
         score_seen = 1'b0;
+`ifdef TB_RTL_INTERNAL_CHECK
+        cycle_count_seen = 1'b0;
+        cycle_count_snapshot = 32'd0;
+        addr13_snapshot = 32'd0;
+`endif
 `ifdef POST_IMPL_MISMATCH_DIAG
         post_impl_mismatch_seen = 15'd0;
         post_impl_diag_tid = 4'd0;
@@ -399,6 +430,12 @@ module tb_finalproject;
         wait_for_score;
 
         display_score(display_bcd);
+`ifdef TB_RTL_INTERNAL_CHECK
+        $display("result_valid = %h", dut.u_test_circuit.result_valid);
+        $display("result_pass  = %h", dut.u_test_circuit.result_pass);
+        $display("cycle_count  = %0d", cycle_count_snapshot);
+        $display("addr13       = %h", addr13_snapshot);
+`endif
         if (!score_seen) begin
             display_post_impl_diag_results;
 `ifdef POST_IMPL_DISPLAY_CHECK

@@ -1,14 +1,14 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
-----------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
-| Date         : Fri May 22 10:13:08 2026
+| Date         : Sat May 23 22:39:01 2026
 | Host         : MSI running 64-bit major release  (build 9200)
-| Command      : report_utilization -file C:/Users/User/DSD_Lab/Final/DSD_final_project/reports/utilization_synth.rpt
+| Command      : report_utilization -file C:/Users/User/DSD_Lab/Final/DSD_final_project/reports/utilization_post_impl_fast_synth.rpt
 | Design       : RISCV_CNN
 | Device       : xc7a35tcsg324-1
 | Speed File   : -1
 | Design State : Synthesized
-----------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------
 
 Utilization Design Information
 
@@ -31,11 +31,11 @@ Table of Contents
 +-------------------------+------+-------+------------+-----------+-------+
 |        Site Type        | Used | Fixed | Prohibited | Available | Util% |
 +-------------------------+------+-------+------------+-----------+-------+
-| Slice LUTs*             | 2369 |     0 |          0 |     20800 | 11.39 |
-|   LUT as Logic          | 2369 |     0 |          0 |     20800 | 11.39 |
+| Slice LUTs*             | 2394 |     0 |          0 |     20800 | 11.51 |
+|   LUT as Logic          | 2394 |     0 |          0 |     20800 | 11.51 |
 |   LUT as Memory         |    0 |     0 |          0 |      9600 |  0.00 |
-| Slice Registers         | 2009 |     0 |          0 |     41600 |  4.83 |
-|   Register as Flip Flop | 2009 |     0 |          0 |     41600 |  4.83 |
+| Slice Registers         | 2039 |     0 |          0 |     41600 |  4.90 |
+|   Register as Flip Flop | 2039 |     0 |          0 |     41600 |  4.90 |
 |   Register as Latch     |    0 |     0 |          0 |     41600 |  0.00 |
 | F7 Muxes                |  261 |     0 |          0 |     16300 |  1.60 |
 | F8 Muxes                |    2 |     0 |          0 |      8150 |  0.02 |
@@ -55,10 +55,10 @@ Table of Contents
 | 0     |            _ |         Set |            - |
 | 0     |            _ |       Reset |            - |
 | 0     |          Yes |           - |            - |
-| 2     |          Yes |           - |          Set |
-| 291   |          Yes |           - |        Reset |
-| 3     |          Yes |         Set |            - |
-| 1713  |          Yes |       Reset |            - |
+| 1     |          Yes |           - |          Set |
+| 293   |          Yes |           - |        Reset |
+| 1     |          Yes |         Set |            - |
+| 1744  |          Yes |       Reset |            - |
 +-------+--------------+-------------+--------------+
 
 
@@ -152,24 +152,24 @@ Table of Contents
 +----------+------+---------------------+
 | Ref Name | Used | Functional Category |
 +----------+------+---------------------+
-| FDRE     | 1713 |        Flop & Latch |
-| LUT6     | 1241 |                 LUT |
-| LUT5     |  514 |                 LUT |
-| LUT2     |  426 |                 LUT |
-| LUT4     |  379 |                 LUT |
-| FDCE     |  291 |        Flop & Latch |
+| FDRE     | 1744 |        Flop & Latch |
+| LUT6     | 1222 |                 LUT |
+| LUT5     |  523 |                 LUT |
+| LUT2     |  423 |                 LUT |
+| LUT4     |  402 |                 LUT |
+| FDCE     |  293 |        Flop & Latch |
 | MUXF7    |  261 |               MuxFx |
-| LUT3     |  223 |                 LUT |
+| LUT3     |  215 |                 LUT |
 | CARRY4   |  160 |          CarryLogic |
-| LUT1     |   20 |                 LUT |
+| LUT1     |   22 |                 LUT |
 | OBUF     |   11 |                  IO |
 | RAMB18E1 |   10 |        Block Memory |
 | RAMB36E1 |    9 |        Block Memory |
 | IBUF     |    8 |                  IO |
-| FDSE     |    3 |        Flop & Latch |
 | MUXF8    |    2 |               MuxFx |
-| FDPE     |    2 |        Flop & Latch |
 | DSP48E1  |    2 |    Block Arithmetic |
+| FDSE     |    1 |        Flop & Latch |
+| FDPE     |    1 |        Flop & Latch |
 | BUFG     |    1 |               Clock |
 +----------+------+---------------------+
 

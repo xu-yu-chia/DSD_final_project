@@ -26,11 +26,14 @@ module RISCV_CNN(
     wire [31:0] cnn_dinb, cnn_doutb;
     
     wire cnn_finish_event;
+    wire cnn_start_event;
     reg rstn_sync0;
     reg rstn_sync1;
+    reg cnn_start_latched;
     wire test_rstn;
 
     assign cnn_finish_event = cnn_web && (cnn_addr == 10'd13) && cnn_dinb[0];
+    assign cnn_start_event = cpu_dmem_we && (cpu_dmem_addr == 10'd11) && !cpu_dmem_wdata[0];
     assign test_rstn = rstn_sync1;
 
     always @(posedge clk or negedge rstn) begin
@@ -41,6 +44,18 @@ module RISCV_CNN(
         else begin
             rstn_sync0 <= 1'b1;
             rstn_sync1 <= rstn_sync0;
+        end
+    end
+
+    always @(posedge clk or negedge rstn) begin
+        if (!rstn) begin
+            cnn_start_latched <= 1'b0;
+        end
+        else if (!sys_rstn) begin
+            cnn_start_latched <= 1'b0;
+        end
+        else if (cnn_start_event) begin
+            cnn_start_latched <= 1'b1;
         end
     end
     
@@ -74,9 +89,11 @@ module RISCV_CNN(
         .dmem_rdata(tc_cpu_rdata)
     );
 
+    (* keep_hierarchy = "yes", dont_touch = "true" *)
     CNN u_cnn(
         .clk(clk),
         .rstn(sys_rstn),
+        .start(cnn_start_latched),
         .doutb(cnn_doutb),
         .web(cnn_web),
         .enb(cnn_enb),
@@ -143,6 +160,7 @@ module Simple_CPU(
     assign dmem_en = 1'b1;
     assign dmem_we = (state == S_STORE);
 
+    (* keep_hierarchy = "yes", dont_touch = "true" *)
     Instruction_Memory u_Instruction_Memory (
         .clka(CLK),
         .addra(imem_addr),
@@ -254,6 +272,7 @@ endmodule
 module CNN(
     input         clk,
     input         rstn,
+    input         start,
     input  [31:0] doutb,
     output        web,
     output        enb,
@@ -289,6 +308,7 @@ module CNN(
     localparam C_WRITE_DONE    = 6'd25;
     localparam C_FINISHED      = 6'd26;
     localparam C_ACCUM_ROW     = 6'd28;
+    localparam C_FINISH_PIXEL  = 6'd29;
 
     reg [5:0] state;
     reg [3:0] load_idx;
@@ -318,7 +338,9 @@ module CNN(
     reg signed [7:0] kernel0;
     reg signed [7:0] kernel1;
     reg signed [7:0] kernel2;
-    reg signed [31:0] row_sum_reg;
+    reg signed [31:0] prod0_reg;
+    reg signed [31:0] prod1_reg;
+    reg signed [31:0] prod2_reg;
     reg [31:0] cache_word0 [0:2];
     reg [31:0] cache_word1 [0:2];
     reg [1:0] cache_lane [0:2];
@@ -330,10 +352,13 @@ module CNN(
     wire signed [7:0] feature0;
     wire signed [7:0] feature1;
     wire signed [7:0] feature2;
+    wire signed [31:0] prod0_next;
+    wire signed [31:0] prod1_next;
+    wire signed [31:0] prod2_next;
     wire signed [31:0] row_sum;
     wire signed [31:0] acc_next;
-    wire signed [7:0] rounded_acc_next;
-    wire [31:0] pack_finished_next;
+    wire signed [7:0] rounded_accum;
+    wire [31:0] pack_finished_accum;
     wire [11:0] in_w_ext = {6'd0, in_w};
     wire [11:0] col_ext = {6'd0, col};
     wire [1:0] next_krow = krow + 2'd1;
@@ -359,8 +384,8 @@ module CNN(
     wire next_cache_read_b = next_cache_hit && (next_lane == 2'd2);
     wire next_cache_no_read = next_cache_hit && (next_lane != 2'd2);
 
-    assign enb = 1'b1;
-    assign web = (state == C_CLEAR_CMD) || (state == C_WRITE_OUT) || (state == C_WRITE_DONE);
+    assign enb = rstn;
+    assign web = (state == C_WRITE_OUT) || (state == C_WRITE_DONE);
 
     function signed [7:0] lane_value;
         input [31:0] word;
@@ -517,17 +542,18 @@ module CNN(
     assign feature0 = get_feature0(word0, word1, req_lane);
     assign feature1 = get_feature1(word0, word1, req_lane);
     assign feature2 = get_feature2(word0, word1, req_lane);
-    assign row_sum = mul8(feature0, kernel0) +
-                     mul8(feature1, kernel1) +
-                     mul8(feature2, kernel2);
-    assign acc_next = accum + row_sum_reg;
-    assign rounded_acc_next = round_sat_q12_to_q6(acc_next);
-    assign pack_finished_next = put_lane(pack_word, out_index[1:0], rounded_acc_next);
+    assign prod0_next = mul8(feature0, kernel0);
+    assign prod1_next = mul8(feature1, kernel1);
+    assign prod2_next = mul8(feature2, kernel2);
+    assign row_sum = prod0_reg + prod1_reg + prod2_reg;
+    assign acc_next = accum + row_sum;
+    assign rounded_accum = round_sat_q12_to_q6(accum);
+    assign pack_finished_accum = put_lane(pack_word, out_index[1:0], rounded_accum);
 
     always @(posedge clk) begin
         if (!rstn) begin
             state <= C_IDLE;
-            addr <= 10'd6;
+            addr <= 10'd0;
             dinb <= 32'd0;
             done <= 1'b0;
             load_idx <= 4'd0;
@@ -552,7 +578,9 @@ module CNN(
             kernel0 <= 8'sd0;
             kernel1 <= 8'sd0;
             kernel2 <= 8'sd0;
-            row_sum_reg <= 32'sd0;
+            prod0_reg <= 32'sd0;
+            prod1_reg <= 32'sd0;
+            prod2_reg <= 32'sd0;
             cache_valid <= 3'd0;
             bias0 <= 8'sd0;
             bias1 <= 8'sd0;
@@ -568,25 +596,15 @@ module CNN(
         else begin
             case (state)
                 C_IDLE: begin
-                    addr <= 10'd6;
                     dinb <= 32'd0;
                     done <= 1'b0;
-                    state <= C_POLL_WAIT;
-                end
-
-                C_POLL_WAIT: begin
-                    state <= C_POLL_CHECK;
-                end
-
-                C_POLL_CHECK: begin
-                    if (doutb[0]) begin
-                        addr <= 10'd6;
-                        dinb <= 32'd0;
+                    if (start) begin
+                        addr <= 10'd0;
                         state <= C_CLEAR_CMD;
                     end
                     else begin
-                        addr <= 10'd6;
-                        state <= C_POLL_WAIT;
+                        addr <= 10'd0;
+                        state <= C_IDLE;
                     end
                 end
 
@@ -762,7 +780,9 @@ module CNN(
                 end
 
                 C_MAC: begin
-                    row_sum_reg <= row_sum;
+                    prod0_reg <= prod0_next;
+                    prod1_reg <= prod1_next;
+                    prod2_reg <= prod2_next;
                     cache_word0[krow] <= word0;
                     cache_word1[krow] <= word1;
                     cache_lane[krow] <= req_lane;
@@ -791,26 +811,7 @@ module CNN(
                 C_ACCUM_ROW: begin
                     accum <= acc_next;
                     if (krow == 2'd2) begin
-                        if (flush_word) begin
-                            addr <= base_out + out_index[11:2];
-                            dinb <= pack_finished_next;
-                            pack_word <= 32'd0;
-                            state <= C_WRITE_OUT;
-                        end
-                        else begin
-                            pack_word <= pack_finished_next;
-                            if (col == out_w - 6'd1) begin
-                                col <= 6'd0;
-                                row <= row + 6'd1;
-                                row_base <= row_base + {6'd0, in_w};
-                                cache_valid <= 3'd0;
-                            end
-                            else begin
-                                col <= col + 6'd1;
-                            end
-                            out_index <= out_index + 12'd1;
-                            state <= C_PIXEL_START;
-                        end
+                        state <= C_FINISH_PIXEL;
                     end
                     else begin
                         krow <= next_krow;
@@ -823,6 +824,29 @@ module CNN(
                         else begin
                             state <= C_ROW_CAP_A;
                         end
+                    end
+                end
+
+                C_FINISH_PIXEL: begin
+                    if (flush_word) begin
+                        addr <= base_out + out_index[11:2];
+                        dinb <= pack_finished_accum;
+                        pack_word <= 32'd0;
+                        state <= C_WRITE_OUT;
+                    end
+                    else begin
+                        pack_word <= pack_finished_accum;
+                        if (col == out_w - 6'd1) begin
+                            col <= 6'd0;
+                            row <= row + 6'd1;
+                            row_base <= row_base + {6'd0, in_w};
+                            cache_valid <= 3'd0;
+                        end
+                        else begin
+                            col <= col + 6'd1;
+                        end
+                        out_index <= out_index + 12'd1;
+                        state <= C_PIXEL_START;
                     end
                 end
 
