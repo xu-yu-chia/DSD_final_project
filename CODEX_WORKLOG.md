@@ -16,15 +16,15 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前正式版本更新為 `v0.8.0`。
-- 依 TA 回覆，bias generation instruction 需要自行轉成 machine code，寫成 `.coe` 後 load 進 `Instruction_Memory`；`v0.8.0` 已完成並通過正式驗證。
-- `RISCV_CNN.v` 的 `Simple_CPU` 已移除先前硬寫在 RTL 裡的 `S_HOST_*` bias/start host states，CPU 現在只從 `Instruction_Memory` fetch/execute instruction。
+- 目前正式版本更新為 `v0.9.0`。
+- `v0.9.0` 修正 post-implementation timing simulation：CPU instruction fetch 改為 register capture、CNN `web` 改為 registered pulse、finish event 改用 registered `done`，並停用 post-impl timing 下會造成 CNN mismatch 的 row-cache reuse path。
+- `RISCV_CNN.v` 的 `Simple_CPU` 已移除先前硬寫在 RTL 裡的 `S_HOST_*` bias/start host states，CPU 現在只從 `Instruction_Memory` fetch/execute instruction；bias/start machine code 仍由 `.coe` load 進 `Instruction_Memory`。
 - 根目錄 `instr_mem_cpucheck.coe` 目前是專案整合版：前 36 筆保留 TA CPU-check instruction，後面追加 17 筆 bias/start/halt instruction，共 53 筆。TA 原始 `instr_mem_cpucheck.coe` 保留在 `助教給的檔案/` 作為 baseline/reference。
 - 已同步 `Instruction_Memory` 相關 COE/MIF 複本：`final/final.ip_user_files/mem_init_files/instr_mem_cpucheck.coe`、`final/final.gen/sources_1/ip/Instruction_Memory/Instruction_Memory.mif`、`final/final.ip_user_files/mem_init_files/Instruction_Memory.mif`、`final/final.runs/Instruction_Memory_synth_1/Instruction_Memory.mif`。
-- COE-based bias/start 版本 RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 14290`、`FINALPROJECT_SIM_PASS`。
+- `v0.9.0` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 25746`、`FINALPROJECT_SIM_PASS`。
 - COE-based bias/start 版本 post-synthesis fast functional simulation 已通過：`post_synth_score_bcd = 0100`，`FINALPROJECT_POST_SYNTH_PASS`。
-- COE-based bias/start 版本 full Vivado checks 已通過：route 0 errors，post-route `WNS = 0.045 ns`、`TNS = 0.000 ns`、`WHS = 0.039 ns`。
-- 先前 post-implementation fast SDF timing simulation 仍會出現 `Instruction_Memory` RAMB36E1 `ENARDEN` setup/hold timing warning；由於重新 implementation 的 static timing 已 meet，`v0.8.0` 不把該 diagnostic flow 列為正式發版條件。
+- `v0.9.0` full #5 post-implementation timing simulation 已通過：`post_impl_score_bcd = 0100`、`FINALPROJECT_POST_IMPL_PASS`。
+- `v0.9.0` full Vivado implementation timing 已通過：route 0 errors，post-route `WNS = 0.731 ns`、`TNS = 0.000 ns`、`WHS = 0.033 ns`。
 - `v0.7.0` 將根目錄使用中的助教檔案恢復為 `助教給的檔案/` 官方版本，並移除 CNN 中對 feature size `24/28/30` 的舊重映射，官方測資 RTL display-based regression 回到 100 分。
 - `v0.6.0` 對齊 `Memory_setting.pdf` 的 BRAM IP 名稱與設定，將 instruction ROM component/module 改為 `Instruction_Memory`，並更新 full check route flow 讓 post-route timing 穩定通過。
 - `v0.5.0` 在 CNN 內加入 3-row previous-pixel word cache，重用相鄰 output pixel 的 input word，減少 BRAM read wait cycles，以降低 ranking 用 AT product。
@@ -43,6 +43,18 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.9.0` - 2026-05-24 15:22 Asia/Taipei
+  - 修正 #5 post-implementation timing simulation：full fast timing sim 達到 `post_impl_score_bcd = 0100` 與 `FINALPROJECT_POST_IMPL_PASS`。
+  - `Simple_CPU` instruction fetch 增加 `S_FETCH_CAP`，將 `Instruction_Memory` 輸出先 capture 到 `instr_reg` 再 decode，避免 timing netlist 直接組合 decode。
+  - `CNN.web` 改為 registered pulse，`cnn_finish_event` 改用 registered `cnn_done`，讓 Data_mem write enable/data/address 與 finish event 在 timing sim 下對齊。
+  - 停用 CNN row-cache reuse fast path；focused post-impl 診斷顯示該 path 會在 timing netlist 造成中間 feature word mismatch，改回穩定 BRAM read path。這是 general datapath 修正，不改 testcase、不改 golden data、也不做特定 case 特判。
+  - 維持 `MEMORY_SETTING.md` 要求：`Instruction_Memory` 為 Always Enabled，RTL 不接 `.ena(1'b1)`；`Data_mem` 維持 ENA/ENB pin。
+  - RTL simulation 通過：`score_bcd = 0100`、`cycle_count = 25746`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
+  - Focused post-impl timing TC0/TC1/TC5/TC9 通過：皆為 `valid=1`、`pass=1`、`mismatches=0`。
+  - Full #5 post-impl timing simulation 通過：`tmp/full5_post_impl_fast_fresh_bg.log` 顯示 `post_impl_score_bcd = 0100`、`FINALPROJECT_POST_IMPL_PASS`，wrapper exit code `0`。
+  - Implementation utilization：2154 Slice LUTs、1862 Slice Registers、261 F7 Muxes、2 F8 Muxes、14 Block RAM Tiles、2 DSPs。
+  - Implementation timing：`WNS = 0.731 ns`、`TNS = 0.000 ns`、`WHS = 0.033 ns`、`THS = 0.000 ns`。
+  - PDF 官方 AT product：`1245848940`，相比 `v0.1.2` baseline 改善約 25.58%；因停用 row-cache reuse，效能低於 `v0.8.0`，但此版是目前 clean post-impl timing PASS 的正式版本。
 - `v0.8.0` - 2026-05-22 10:17 Asia/Taipei
   - 依 TA 回覆，將 bias generation/start CNN 改為 instruction memory program，不再用 RTL host state 硬寫結果。
   - `RISCV_CNN.v`：移除 `Simple_CPU` 中的 `S_HOST_*` bias/start states 與 `host_word16/host_word17/host_bias1` 等硬寫資料路徑；CPU store 後會 park Data_mem port A，再回 fetch。
@@ -155,6 +167,8 @@ PDF AT product = Official Area × Processing Time
 | `v0.5.0` | 2026-05-17 23:06 | 14252 | 142520 ns | cycles -19828 / -58.18% | 5424 | +512 / +10.42% | 2458 | 2134 | 262 | 10 | 15 | 2 | 0.017 ns | 773028480 | -900981120 / -53.82% |
 | `v0.6.0` | 2026-05-18 22:26 | 14252 | 142520 ns | cycles -19828 / -58.18% | 5458 | +546 / +11.12% | 2489 | 2137 | 262 | 10 | 14 | 2 | 0.010 ns | 777874160 | -896135440 / -53.53% |
 | `v0.7.0` | 2026-05-19 13:56 | 14252 | 142520 ns | cycles -19828 / -58.18% | 5448 | +536 / +10.91% | 2480 | 2137 | 261 | 10 | 14 | 2 | 0.129 ns | 776448960 | -897560640 / -53.62% |
+| `v0.8.0` | 2026-05-22 10:17 | 14290 | 142900 ns | cycles -19790 / -58.07% | 5181 | +269 / +5.48% | 2347 | 2011 | 261 | 2 | 14 | 2 | 0.045 ns | 740364900 | -933644700 / -55.77% |
+| `v0.9.0` | 2026-05-24 15:22 | 25746 | 257460 ns | cycles -8334 / -24.45% | 4839 | -73 / -1.49% | 2154 | 1862 | 261 | 2 | 14 | 2 | 0.731 ns | 1245848940 | -428160660 / -25.58% |
 
 解讀：
 
@@ -176,16 +190,82 @@ PDF AT product = Official Area × Processing Time
 - `v0.7.0` 移除只為舊測資存在的 feature size 重映射，官方助教檔案下 `tc=6,7,8` 回到 pass；最後 testcase `cycle_count` 維持 `14252`。
 - `v0.7.0` Official Area 比 baseline 增加 536，約增加 10.91%；相比 `v0.6.0` 少 10，主要是 LUT/F7 Mux 小幅下降。
 - 以 PDF 官方完整公式計算，`v0.7.0` AT product 比 baseline 改善約 53.62%；相比 `v0.6.0` 小幅改善約 0.18%。
+- `v0.8.0` 將 bias/start setup 改由 `Instruction_Memory` 中的 machine code 執行，移除 RTL host state；AT product 比 baseline 改善約 55.77%，但當時 post-impl timing diagnostic flow 仍未 clean pass。
+- `v0.9.0` 修正 #5 post-impl timing simulation，full timing sim 達到 `post_impl_score_bcd = 0100`；因停用 row-cache reuse，cycle_count 回升到 25746，但 Official Area 低於 baseline 73。
+- 以 PDF 官方完整公式計算，`v0.9.0` AT product 為 `1245848940`，比 baseline 改善約 25.58%；這版優先作為 clean post-impl timing PASS 的正式提交版本。
 
 ## 版本改動詳細部分
+
+### v0.9.0 post-impl timing clean PASS 修正版
+
+修改檔案：
+
+```text
+RISCV_CNN.v
+CODEX_WORKLOG.md
+```
+
+修正內容：
+
+- `Simple_CPU` 增加 `S_FETCH_CAP`，將 `Instruction_Memory` 輸出先 register 到 `instr_reg` 再 decode。
+- `CNN.web` 由組合 assign 改為 registered pulse；`cnn_finish_event` 改用 `cnn_done`。
+- 停用 CNN row-cache reuse path，讓 timing netlist 回到穩定 BRAM read path；focused post-impl 診斷確認舊 cache path 會造成 CNN 中間 feature word mismatch。
+- 保持 `Instruction_Memory` Always Enabled，不在 RTL 加 `.ena(1'b1)`；未修改 `test_circuit_bram_ip.v`、testcase 或 golden data。
+
+驗證結果：
+
+```text
+RTL simulation: PASS
+score_bcd: 0100
+cycle_count: 25746
+result_valid: 7fff
+result_pass: 7fff
+
+Focused post-impl timing:
+TC0/TC1/TC5/TC9 all valid=1, pass=1, mismatches=0
+
+Full #5 post-impl timing:
+post_impl_score_bcd = 0100
+FINALPROJECT_POST_IMPL_PASS
+```
+
+Implementation 結果：
+
+```text
+Slice LUTs:      2154
+Registers:       1862
+F7 Muxes:         261
+F8 Muxes:           2
+Block RAM Tile:    14
+DSPs:               2
+WNS:         0.731 ns
+TNS:         0.000 ns
+WHS:         0.033 ns
+THS:         0.000 ns
+```
+
+PDF 官方 AT product：
+
+```text
+cycle_count       = 25746
+Processing Time   = 257460 ns
+Official Area     = 2154 + 1862 + 261 + 2 + 280*2 = 4839
+PDF AT product    = 4839 * 257460 = 1245848940
+vs baseline       = -428160660 / -25.58%
+```
+
+採用判定：
+
+- 採用此版本作為目前正式版本，因為 RTL、focused post-impl timing 與完整 #5 post-impl timing 都 clean PASS。
+- 此版 AT product 比 `v0.8.0` 變差，原因是停用 row-cache reuse；但 `v0.8.0` 的 post-impl timing diagnostic flow 不 clean，因此 `v0.9.0` 是目前可交付的 timing-correct 版本。
 
 ### work-2026-05-22 COE bias-generation integration
 
 狀態：
 
-- 工作中，尚未正式發版。
-- RTL 與 post-synthesis fast functional simulation 已通過。
-- Post-implementation fast timing simulation 尚未通過，不能更新正式 AT/面積/版本表。
+- 已收斂為 `v0.8.0` / `v0.9.0` 正式版本紀錄。
+- RTL 與 post-synthesis fast functional simulation 已通過；完整 #5 post-implementation timing simulation 在 `v0.9.0` 達到 clean PASS。
+- 本小節保留為 COE bias-generation integration 的過程紀錄；正式 AT/面積以 `v0.9.0` 表格列為準。
 
 修改檔案：
 
@@ -261,8 +341,7 @@ Instruction_Memory RAMB36E1 ENARDEN setup/hold
 
 未完成事項：
 
-- 需要修正或釐清 post-impl timing simulation 的 `Instruction_Memory` RAMB36E1 `ENARDEN` setup/hold violation。
-- 需要在 post-impl 通過後重新整理 utilization/timing/cycle_count，再決定是否建立正式 `v0.8.0`、更新 AT 表格與 Git tag。
+- 無；post-impl timing clean PASS 已由 `v0.9.0` 補齊。
 
 ### v0.7.0 官方助教檔案恢復與 feature size 修正版
 
@@ -923,4 +1002,5 @@ CODEX_WORKLOG.md
   - RTL full simulation: `score_bcd = 0100`, `result_valid = 7fff`, `result_pass = 7fff`, `cycle_count = 25746`, `FINALPROJECT_SIM_PASS`.
   - Focused post-impl timing TC0: `valid=1`, `pass=1`, `mismatches=0`; formerly bad words now match (`addr=281 din=27859626`, `addr=516 din=7f7e7f80`).
   - Focused post-impl timing TC1/TC5/TC9: all `valid=1`, `pass=1`, `mismatches=0`.
+  - Full #5 post-impl timing simulation: `tmp/full5_post_impl_fast_fresh_bg.log` reached `post_impl_score_bcd = 0100` and `FINALPROJECT_POST_IMPL_PASS`; wrapper exit code `0`.
   - Focused post-impl timing report met timing: `WNS = 0.731 ns`, `TNS = 0.000 ns`, `WHS = 0.033 ns`, `THS = 0.000 ns`.
