@@ -16,7 +16,8 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前正式版本更新為 `v0.9.0`。
+- 目前正式版本更新為 `v0.9.1`。
+- `v0.9.1` 補上 Vivado GUI simulation compatibility：testbench 預設不再讀 post-synth/post-impl timing netlist 中可能被最佳化掉的 RTL internal signals；RTL batch flow 需要 cycle_count 時改由 `RTL_INTERNAL_CHECK` 明確啟用。
 - `v0.9.0` 修正 post-implementation timing simulation：CPU instruction fetch 改為 register capture、CNN `web` 改為 registered pulse、finish event 改用 registered `done`，並停用 post-impl timing 下會造成 CNN mismatch 的 row-cache reuse path。
 - `RISCV_CNN.v` 的 `Simple_CPU` 已移除先前硬寫在 RTL 裡的 `S_HOST_*` bias/start host states，CPU 現在只從 `Instruction_Memory` fetch/execute instruction；bias/start machine code 仍由 `.coe` load 進 `Instruction_Memory`。
 - 根目錄 `instr_mem_cpucheck.coe` 目前是專案整合版：前 36 筆保留 TA CPU-check instruction，後面追加 17 筆 bias/start/halt instruction，共 53 筆。TA 原始 `instr_mem_cpucheck.coe` 保留在 `助教給的檔案/` 作為 baseline/reference。
@@ -43,6 +44,12 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.9.1` - 2026-05-24 15:52 Asia/Taipei
+  - 修正 Vivado GUI `Run Post-Synthesis Timing Simulation` elaborate failure：GUI 不會帶 batch script 的 `POST_SYNTH_DISPLAY_CHECK` macro，原 testbench 因此嘗試讀取 `dut.u_test_circuit.captured_addr13`，但該 internal reg 在 timing netlist 中可能被最佳化/改名。
+  - `tb/tb_finalproject.v`：RTL-only internal snapshot 改為只在明確定義 `RTL_INTERNAL_CHECK` 時啟用；GUI behavioral/post-synth/post-impl 預設只透過 top-level `seven_seg/anode` 檢查分數。
+  - `scripts/run_rtl_xsim.tcl`：batch RTL regression 明確加上 `-d RTL_INTERNAL_CHECK`，保留 `cycle_count` 與 internal pass bitmap 輸出。
+  - GUI post-synthesis timing elaborate 已驗證通過：`final/final.sim/sim_1/synth/timing/xsim/elaborate.log` 顯示 `Built simulation snapshot tb_finalproject_time_synth`。
+  - 此版本不修改 RTL datapath，不影響 synthesis/implementation utilization、WNS 或 AT product；速度與面積沿用 `v0.9.0`。
 - `v0.9.0` - 2026-05-24 15:22 Asia/Taipei
   - 修正 #5 post-implementation timing simulation：full fast timing sim 達到 `post_impl_score_bcd = 0100` 與 `FINALPROJECT_POST_IMPL_PASS`。
   - `Simple_CPU` instruction fetch 增加 `S_FETCH_CAP`，將 `Instruction_Memory` 輸出先 capture 到 `instr_reg` 再 decode，避免 timing netlist 直接組合 decode。
@@ -169,6 +176,7 @@ PDF AT product = Official Area × Processing Time
 | `v0.7.0` | 2026-05-19 13:56 | 14252 | 142520 ns | cycles -19828 / -58.18% | 5448 | +536 / +10.91% | 2480 | 2137 | 261 | 10 | 14 | 2 | 0.129 ns | 776448960 | -897560640 / -53.62% |
 | `v0.8.0` | 2026-05-22 10:17 | 14290 | 142900 ns | cycles -19790 / -58.07% | 5181 | +269 / +5.48% | 2347 | 2011 | 261 | 2 | 14 | 2 | 0.045 ns | 740364900 | -933644700 / -55.77% |
 | `v0.9.0` | 2026-05-24 15:22 | 25746 | 257460 ns | cycles -8334 / -24.45% | 4839 | -73 / -1.49% | 2154 | 1862 | 261 | 2 | 14 | 2 | 0.731 ns | 1245848940 | -428160660 / -25.58% |
+| `v0.9.1` | 2026-05-24 15:52 | 25746 | 257460 ns | cycles -8334 / -24.45% | 4839 | -73 / -1.49% | 2154 | 1862 | 261 | 2 | 14 | 2 | 0.731 ns | 1245848940 | -428160660 / -25.58% |
 
 解讀：
 
@@ -193,8 +201,36 @@ PDF AT product = Official Area × Processing Time
 - `v0.8.0` 將 bias/start setup 改由 `Instruction_Memory` 中的 machine code 執行，移除 RTL host state；AT product 比 baseline 改善約 55.77%，但當時 post-impl timing diagnostic flow 仍未 clean pass。
 - `v0.9.0` 修正 #5 post-impl timing simulation，full timing sim 達到 `post_impl_score_bcd = 0100`；因停用 row-cache reuse，cycle_count 回升到 25746，但 Official Area 低於 baseline 73。
 - 以 PDF 官方完整公式計算，`v0.9.0` AT product 為 `1245848940`，比 baseline 改善約 25.58%；這版優先作為 clean post-impl timing PASS 的正式提交版本。
+- `v0.9.1` 只修正 Vivado GUI simulation elaborate compatibility，不修改 RTL datapath；AT product、area 與 timing 數字沿用 `v0.9.0`。
 
 ## 版本改動詳細部分
+
+### v0.9.1 Vivado GUI simulation compatibility 修正版
+
+修改檔案：
+
+```text
+tb\tb_finalproject.v
+scripts\run_rtl_xsim.tcl
+CODEX_WORKLOG.md
+```
+
+修正內容：
+
+- 原 testbench 預設啟用 RTL-only internal check；Vivado GUI post-synth/post-impl timing simulation 不會自動帶 `POST_SYNTH_DISPLAY_CHECK` / `POST_IMPL_DISPLAY_CHECK` macro，因此會在 timing netlist elaborate 時讀到不存在的 `dut.u_test_circuit.captured_addr13`。
+- 改成只有明確定義 `RTL_INTERNAL_CHECK` 時才啟用 internal snapshot；GUI simulation 預設走 top-level display checker。
+- Batch RTL regression script 加上 `-d RTL_INTERNAL_CHECK`，保留 RTL regression 的 `cycle_count` 輸出。
+
+驗證結果：
+
+```text
+GUI-generated post-synthesis timing elaborate:
+Built simulation snapshot tb_finalproject_time_synth
+```
+
+採用判定：
+
+- 採用此版本作為目前正式版本，因為它保留 `v0.9.0` 的 clean post-impl timing 修正，同時讓 Vivado GUI post-synthesis timing simulation 可 elaborate。
 
 ### v0.9.0 post-impl timing clean PASS 修正版
 

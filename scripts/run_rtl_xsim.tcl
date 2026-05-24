@@ -47,7 +47,7 @@ puts [exec -- $xvlog [file join $proj_dir final.gen sources_1 ip init_rom sim in
 puts [exec -- $xvlog [file join $proj_dir final.gen sources_1 ip golden_rom sim golden_rom.v]]
 puts [exec -- $xvlog [file join $repo_dir test_circuit_bram_ip.v]]
 puts [exec -- $xvlog [file join $repo_dir RISCV_CNN.v]]
-puts [exec -- $xvlog [file join $repo_dir tb tb_finalproject.v]]
+puts [exec -- $xvlog -d RTL_INTERNAL_CHECK [file join $repo_dir tb tb_finalproject.v]]
 puts [exec -- $xvlog $glbl]
 
 puts [exec -- $xelab tb_finalproject glbl --timescale 1ns/1ps -debug typical -s tb_finalproject_sim]

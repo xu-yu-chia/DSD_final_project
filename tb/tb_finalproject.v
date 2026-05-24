@@ -16,10 +16,8 @@
 `define TB_SCORE_ONLY
 `endif
 
-`ifndef POST_SYNTH_DISPLAY_CHECK
-`ifndef POST_IMPL_DISPLAY_CHECK
+`ifdef RTL_INTERNAL_CHECK
 `define TB_RTL_INTERNAL_CHECK
-`endif
 `endif
 
 module tb_finalproject;
