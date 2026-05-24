@@ -917,6 +917,10 @@ CODEX_WORKLOG.md
 - Long Vivado/post-synth/post-impl/xsim jobs should be launched in background when practical; report PID and log path, then stop polling until asked.
 - #3 post-synthesis timing has reached clean PASS after restoring `Instruction_Memory` to Always Enabled.
 - #5 post-implementation timing previously showed CNN-only mismatches while CPU tests passed; no current timing violation/collision warnings were found in the failing runs.
-- Root-cause lead: the post-impl netlist showed `CNN` with extra synthesized cross-module ports from CPU/test-circuit logic, indicating cross-boundary optimization around the CNN datapath.
-- Fix: preserve the `CNN u_cnn` instance with `keep_hierarchy` and `dont_touch`, without changing the CNN algorithm or memory settings.
-- Verification: `tmp/cnn_boundary_post_impl2.log` reached `post_impl_score_bcd = 0100` and `FINALPROJECT_POST_IMPL_PASS`; final route timing was met with `WNS = 0.111 ns`, `TNS = 0.000 ns`, `WHS = 0.041 ns`, `THS = 0.000 ns`.
+- The temporary `keep_hierarchy` / `dont_touch` workaround was removed and should not be used as the final fix.
+- Current fix direction: register CPU instruction fetch output, use the CNN registered `done` event for finish, pulse CNN `web` from a register, and disable the CNN row-cache reuse path that diverged after post-impl timing.
+- Verification after disabling cache reuse:
+  - RTL full simulation: `score_bcd = 0100`, `result_valid = 7fff`, `result_pass = 7fff`, `cycle_count = 25746`, `FINALPROJECT_SIM_PASS`.
+  - Focused post-impl timing TC0: `valid=1`, `pass=1`, `mismatches=0`; formerly bad words now match (`addr=281 din=27859626`, `addr=516 din=7f7e7f80`).
+  - Focused post-impl timing TC1/TC5/TC9: all `valid=1`, `pass=1`, `mismatches=0`.
+  - Focused post-impl timing report met timing: `WNS = 0.731 ns`, `TNS = 0.000 ns`, `WHS = 0.033 ns`, `THS = 0.000 ns`.

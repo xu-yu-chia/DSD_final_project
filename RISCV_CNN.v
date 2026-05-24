@@ -32,7 +32,7 @@ module RISCV_CNN(
     reg cnn_start_latched;
     wire test_rstn;
 
-    assign cnn_finish_event = cnn_web && (cnn_addr == 10'd13) && cnn_dinb[0];
+    assign cnn_finish_event = cnn_done;
     assign cnn_start_event = cpu_dmem_we && (cpu_dmem_addr == 10'd11) && !cpu_dmem_wdata[0];
     assign test_rstn = rstn_sync1;
 
@@ -89,7 +89,6 @@ module RISCV_CNN(
         .dmem_rdata(tc_cpu_rdata)
     );
 
-    (* keep_hierarchy = "yes", dont_touch = "true" *)
     CNN u_cnn(
         .clk(clk),
         .rstn(sys_rstn),
@@ -133,26 +132,28 @@ module Simple_CPU(
     localparam S_LOAD_WAIT       = 5'd3;
     localparam S_LOAD_WB         = 5'd4;
     localparam S_STORE           = 5'd5;
+    localparam S_FETCH_CAP       = 5'd6;
 
     reg [4:0] state;
     reg [31:0] pc;
     reg [4:0] load_rd;
     reg [31:0] regs [0:31];
     reg [9:0] imem_addr;
+    reg [31:0] instr_reg;
     integer i;
 
     wire [31:0] instr;
-    wire [6:0] opcode = instr[6:0];
-    wire [4:0] rd     = instr[11:7];
-    wire [2:0] funct3 = instr[14:12];
-    wire [4:0] rs1    = instr[19:15];
-    wire [4:0] rs2    = instr[24:20];
-    wire [6:0] funct7 = instr[31:25];
+    wire [6:0] opcode = instr_reg[6:0];
+    wire [4:0] rd     = instr_reg[11:7];
+    wire [2:0] funct3 = instr_reg[14:12];
+    wire [4:0] rs1    = instr_reg[19:15];
+    wire [4:0] rs2    = instr_reg[24:20];
+    wire [6:0] funct7 = instr_reg[31:25];
 
-    wire signed [31:0] imm_i = {{20{instr[31]}}, instr[31:20]};
-    wire signed [31:0] imm_s = {{20{instr[31]}}, instr[31:25], instr[11:7]};
-    wire signed [31:0] imm_b = {{19{instr[31]}}, instr[31], instr[7],
-                                instr[30:25], instr[11:8], 1'b0};
+    wire signed [31:0] imm_i = {{20{instr_reg[31]}}, instr_reg[31:20]};
+    wire signed [31:0] imm_s = {{20{instr_reg[31]}}, instr_reg[31:25], instr_reg[11:7]};
+    wire signed [31:0] imm_b = {{19{instr_reg[31]}}, instr_reg[31], instr_reg[7],
+                                instr_reg[30:25], instr_reg[11:8], 1'b0};
 
     wire [31:0] load_byte_addr  = regs[rs1] + imm_i;
     wire [31:0] store_byte_addr = regs[rs1] + imm_s;
@@ -160,7 +161,6 @@ module Simple_CPU(
     assign dmem_en = 1'b1;
     assign dmem_we = (state == S_STORE);
 
-    (* keep_hierarchy = "yes", dont_touch = "true" *)
     Instruction_Memory u_Instruction_Memory (
         .clka(CLK),
         .addra(imem_addr),
@@ -175,6 +175,7 @@ module Simple_CPU(
             dmem_addr <= 10'd0;
             dmem_wdata <= 32'd0;
             imem_addr <= 10'd0;
+            instr_reg <= 32'd0;
             for (i = 0; i < 32; i = i + 1) begin
                 regs[i] <= 32'd0;
             end
@@ -187,6 +188,11 @@ module Simple_CPU(
                 end
 
                 S_FETCH_WAIT: begin
+                    state <= S_FETCH_CAP;
+                end
+
+                S_FETCH_CAP: begin
+                    instr_reg <= instr;
                     state <= S_DECODE;
                 end
 
@@ -274,7 +280,7 @@ module CNN(
     input         rstn,
     input         start,
     input  [31:0] doutb,
-    output        web,
+    output reg    web,
     output        enb,
     output reg [31:0] dinb,
     output reg [9:0]  addr,
@@ -376,17 +382,12 @@ module CNN(
     wire [1:0] first_lane = first_feature_index[1:0];
     wire last_pixel = (out_index == (total_pixels - 12'd1));
     wire flush_word = (out_index[1:0] == 2'd3) || last_pixel;
-    wire first_cache_hit = cache_valid[0] && (cache_lane[0] == (first_lane - 2'd1));
-    wire first_cache_read_b = first_cache_hit && (first_lane == 2'd2);
-    wire first_cache_no_read = first_cache_hit && (first_lane != 2'd2);
-    wire next_cache_hit = (krow != 2'd2) && cache_valid[cache_next_krow] &&
-                          (cache_lane[cache_next_krow] == (next_lane - 2'd1));
-    wire next_cache_read_b = next_cache_hit && (next_lane == 2'd2);
-    wire next_cache_no_read = next_cache_hit && (next_lane != 2'd2);
+    wire first_cache_read_b = 1'b0;
+    wire first_cache_no_read = 1'b0;
+    wire next_cache_read_b = 1'b0;
+    wire next_cache_no_read = 1'b0;
 
     assign enb = rstn;
-    assign web = (state == C_WRITE_OUT) || (state == C_WRITE_DONE);
-
     function signed [7:0] lane_value;
         input [31:0] word;
         input [1:0] lane;
@@ -555,6 +556,7 @@ module CNN(
             state <= C_IDLE;
             addr <= 10'd0;
             dinb <= 32'd0;
+            web <= 1'b0;
             done <= 1'b0;
             load_idx <= 4'd0;
             fmap_size <= 6'd0;
@@ -594,6 +596,7 @@ module CNN(
             end
         end
         else begin
+            web <= 1'b0;
             case (state)
                 C_IDLE: begin
                     dinb <= 32'd0;
@@ -831,6 +834,7 @@ module CNN(
                     if (flush_word) begin
                         addr <= base_out + out_index[11:2];
                         dinb <= pack_finished_accum;
+                        web <= 1'b1;
                         pack_word <= 32'd0;
                         state <= C_WRITE_OUT;
                     end
@@ -888,6 +892,7 @@ module CNN(
                     else begin
                         addr <= 10'd13;
                         dinb <= 32'd1025;
+                        web <= 1'b1;
                         state <= C_WRITE_DONE;
                     end
                 end

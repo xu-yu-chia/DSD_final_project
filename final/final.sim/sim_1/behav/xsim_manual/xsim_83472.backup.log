@@ -1,0 +1,67 @@
+#-----------------------------------------------------------
+# xsim v2022.1 (64-bit)
+# SW Build 3526262 on Mon Apr 18 15:48:16 MDT 2022
+# IP Build 3524634 on Mon Apr 18 20:55:01 MDT 2022
+# Start of session at: Sun May 24 00:22:52 2026
+# Process ID: 83472
+# Current directory: C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.sim/sim_1/behav/xsim_manual
+# Command line: xsim.exe -mode tcl -source {xsim.dir/tb_finalproject_sim/xsim_script.tcl}
+# Log file: C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.sim/sim_1/behav/xsim_manual/xsim.log
+# Journal file: C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.sim/sim_1/behav/xsim_manual\xsim.jou
+# Running On: MSI, OS: Windows, CPU Frequency: 1797 MHz, CPU Physical cores: 16, Host memory: 33677 MB
+#-----------------------------------------------------------
+source xsim.dir/tb_finalproject_sim/xsim_script.tcl
+# xsim {tb_finalproject_sim} -autoloadwcfg -runall
+Time resolution is 1 ps
+run -all
+ Block Memory Generator module loading initial data...
+ Block Memory Generator data initialization complete.
+Block Memory Generator module tb_finalproject.dut.u_test_circuit.init_rom_inst.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst  is using a behavioral model for simulation which will not precisely model memory collision behavior.
+ Block Memory Generator module loading initial data...
+ Block Memory Generator data initialization complete.
+Block Memory Generator module tb_finalproject.dut.u_test_circuit.golden_rom_inst.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst  is using a behavioral model for simulation which will not precisely model memory collision behavior.
+ Block Memory Generator module loading initial data...
+ Block Memory Generator data initialization complete.
+Block Memory Generator module tb_finalproject.dut.u_cpu.u_Instruction_Memory.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst  is using a behavioral model for simulation which will not precisely model memory collision behavior.
+Block Memory Generator module tb_finalproject.dut.u_data_mem.inst.\native_mem_module.blk_mem_gen_v8_4_5_inst  is using a behavioral model for simulation which will not precisely model memory collision behavior.
+score_bcd = 0030
+result_valid = 7fff
+result_pass  = 1c00
+cycle_count  = 15976
+addr13       = 00000401
+FINALPROJECT_SIM_FAIL score did not reach 0100
+tc = 0, bcd = 0000
+FINALPROJECT_SIM_FAIL tc = 0 expected 0001 got 0000
+tc = 1, bcd = 0010
+FINALPROJECT_SIM_FAIL tc = 1 expected 0011 got 0010
+tc = 2, bcd = 0020
+FINALPROJECT_SIM_FAIL tc = 2 expected 0021 got 0020
+tc = 3, bcd = 0030
+FINALPROJECT_SIM_FAIL tc = 3 expected 0031 got 0030
+tc = 4, bcd = 0040
+FINALPROJECT_SIM_FAIL tc = 4 expected 0041 got 0040
+tc = 5, bcd = 0050
+FINALPROJECT_SIM_FAIL tc = 5 expected 0051 got 0050
+tc = 6, bcd = 0060
+FINALPROJECT_SIM_FAIL tc = 6 expected 0061 got 0060
+tc = 7, bcd = 0070
+FINALPROJECT_SIM_FAIL tc = 7 expected 0071 got 0070
+tc = 8, bcd = 0080
+FINALPROJECT_SIM_FAIL tc = 8 expected 0081 got 0080
+tc = 9, bcd = 0090
+FINALPROJECT_SIM_FAIL tc = 9 expected 0091 got 0090
+tc = a, bcd = 0101
+tc = b, bcd = 0111
+tc = c, bcd = 0121
+tc = d, bcd = 0130
+FINALPROJECT_SIM_FAIL tc = d expected 0131 got 0130
+tc = e, bcd = 0140
+FINALPROJECT_SIM_FAIL tc = e expected 0141 got 0140
+FINALPROJECT_SIM_FAIL fail_count = 13
+Fatal: 
+Time: 45701395 ns  Iteration: 0  Process: /tb_finalproject/Initial394_88  Scope: tb_finalproject  File: C:/Users/User/DSD_Lab/Final/DSD_final_project/tb/tb_finalproject.v Line: 489
+$finish called at time : 45701395 ns
+run: Time (s): cpu = 00:00:01 ; elapsed = 00:00:42 . Memory (MB): peak = 1210.559 ; gain = 0.000
+exit
+INFO: xsimkernel Simulation Memory Usage: 11440 KB (Peak: 11440 KB), Simulation CPU Usage: 42031 ms
+INFO: [Common 17-206] Exiting xsim at Sun May 24 00:23:36 2026...
