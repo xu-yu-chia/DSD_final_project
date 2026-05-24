@@ -1,11 +1,11 @@
 INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/User/DSD_Lab/Final/DSD_final_project/final/final.sim/sim_1/synth/timing/xsim/tb_finalproject_time_synth.v" into library xil_defaultlib
 INFO: [VRFC 10-311] analyzing module CNN
 INFO: [VRFC 10-311] analyzing module Data_mem
+INFO: [VRFC 10-311] analyzing module Instruction_Memory
 INFO: [VRFC 10-311] analyzing module RISCV_CNN
 INFO: [VRFC 10-311] analyzing module Simple_CPU
 INFO: [VRFC 10-311] analyzing module golden_rom
 INFO: [VRFC 10-311] analyzing module init_rom
-INFO: [VRFC 10-311] analyzing module instr_mem
 INFO: [VRFC 10-311] analyzing module test_circuit
 INFO: [VRFC 10-311] analyzing module Data_mem_blk_mem_gen_generic_cstr
 INFO: [VRFC 10-311] analyzing module Data_mem_blk_mem_gen_prim_width
@@ -13,15 +13,25 @@ INFO: [VRFC 10-311] analyzing module Data_mem_blk_mem_gen_prim_wrapper
 INFO: [VRFC 10-311] analyzing module Data_mem_blk_mem_gen_top
 INFO: [VRFC 10-311] analyzing module Data_mem_blk_mem_gen_v8_4_5
 INFO: [VRFC 10-311] analyzing module Data_mem_blk_mem_gen_v8_4_5_synth
+INFO: [VRFC 10-311] analyzing module Instruction_Memory_blk_mem_gen_generic_cstr
+INFO: [VRFC 10-311] analyzing module Instruction_Memory_blk_mem_gen_prim_width
+INFO: [VRFC 10-311] analyzing module Instruction_Memory_blk_mem_gen_prim_wrapper_init
+INFO: [VRFC 10-311] analyzing module Instruction_Memory_blk_mem_gen_top
+INFO: [VRFC 10-311] analyzing module Instruction_Memory_blk_mem_gen_v8_4_5
+INFO: [VRFC 10-311] analyzing module Instruction_Memory_blk_mem_gen_v8_4_5_synth
+INFO: [VRFC 10-311] analyzing module golden_rom_bindec
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_generic_cstr
+INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_mux
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_prim_width
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_prim_width__parameterized0
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_prim_width__parameterized1
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_prim_width__parameterized2
+INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_prim_width__parameterized3
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_prim_wrapper_init
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_prim_wrapper_init__parameterized0
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_prim_wrapper_init__parameterized1
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_prim_wrapper_init__parameterized2
+INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_prim_wrapper_init__parameterized3
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_top
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_v8_4_5
 INFO: [VRFC 10-311] analyzing module golden_rom_blk_mem_gen_v8_4_5_synth
@@ -55,12 +65,6 @@ INFO: [VRFC 10-311] analyzing module init_rom_blk_mem_gen_prim_wrapper_init__par
 INFO: [VRFC 10-311] analyzing module init_rom_blk_mem_gen_top
 INFO: [VRFC 10-311] analyzing module init_rom_blk_mem_gen_v8_4_5
 INFO: [VRFC 10-311] analyzing module init_rom_blk_mem_gen_v8_4_5_synth
-INFO: [VRFC 10-311] analyzing module instr_mem_blk_mem_gen_generic_cstr
-INFO: [VRFC 10-311] analyzing module instr_mem_blk_mem_gen_prim_width
-INFO: [VRFC 10-311] analyzing module instr_mem_blk_mem_gen_prim_wrapper_init
-INFO: [VRFC 10-311] analyzing module instr_mem_blk_mem_gen_top
-INFO: [VRFC 10-311] analyzing module instr_mem_blk_mem_gen_v8_4_5
-INFO: [VRFC 10-311] analyzing module instr_mem_blk_mem_gen_v8_4_5_synth
 INFO: [VRFC 10-311] analyzing module glbl
 INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/User/DSD_Lab/Final/DSD_final_project/tb/tb_finalproject.v" into library xil_defaultlib
 INFO: [VRFC 10-311] analyzing module tb_finalproject

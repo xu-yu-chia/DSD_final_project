@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<GenRun Id="Instruction_Memory_synth_1" LaunchPart="xc7a35tcsg324-1" LaunchTime="1779340079">
+<GenRun Id="Instruction_Memory_synth_1" LaunchPart="xc7a35tcsg324-1" LaunchTime="1779607797">
   <File Type="PA-TCL" Name="Instruction_Memory.tcl"/>
+  <File Type="RDS-PROPCONSTRS" Name="Instruction_Memory_drc_synth.rpt"/>
   <File Type="REPORTS-TCL" Name="Instruction_Memory_reports.tcl"/>
   <File Type="RDS-RDS" Name="Instruction_Memory.vds"/>
+  <File Type="RDS-UTIL" Name="Instruction_Memory_utilization_synth.rpt"/>
+  <File Type="RDS-UTIL-PB" Name="Instruction_Memory_utilization_synth.pb"/>
   <File Type="RDS-DCP" Name="Instruction_Memory.dcp"/>
+  <File Type="VDS-TIMINGSUMMARY" Name="Instruction_Memory_timing_summary_synth.rpt"/>
+  <File Type="VDS-TIMING-PB" Name="Instruction_Memory_timing_summary_synth.pb"/>
   <FileSet Name="sources" Type="BlockSrcs" RelSrcDir="$PSRCDIR/Instruction_Memory">
     <File Path="$PSRCDIR/sources_1/ip/Instruction_Memory/Instruction_Memory.xci">
       <FileInfo>

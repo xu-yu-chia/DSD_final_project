@@ -1,7 +1,7 @@
 # compile verilog/system verilog design source files
 verilog xil_defaultlib  \
 "../../../../final.gen/sources_1/ip/Data_mem/sim/Data_mem.v" \
-"../../../../final.gen/sources_1/ip/instr_mem/sim/instr_mem.v" \
+"../../../../final.gen/sources_1/ip/Instruction_Memory/sim/Instruction_Memory.v" \
 "../../../../final.gen/sources_1/ip/golden_rom/sim/golden_rom.v" \
 "../../../../final.gen/sources_1/ip/init_rom/sim/init_rom.v" \
 "../../../../../RISCV_CNN.v" \
