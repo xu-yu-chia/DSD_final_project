@@ -2,7 +2,7 @@
 
 RISC-V RV32 CPU with a memory-mapped CNN coprocessor for the EE3044 Digital System Design final project.
 
-Current working version: `v0.9.4-rank1-pipeline` AT optimization experiment
+Current working version: `v0.9.5-pdf-verified` PDF compliance check over `v0.9.4-rank1-pipeline`
 
 ## Current Status
 
@@ -14,6 +14,7 @@ Current working version: `v0.9.4-rank1-pipeline` AT optimization experiment
 - Full #3 post-synthesis timing and #5 post-implementation timing simulations have not been rerun for `v0.9.4-rank1-pipeline`; the previous known clean #5 PASS datapath remains `v0.9.0`/`v0.9.1`. This version preserves the timing-simulation interface fixes from those versions.
 - Vivado GUI post-synthesis timing simulation elaboration is supported; the testbench no longer depends on RTL-only internal signals by default.
 - `scripts/run_vivado_checks.tcl` intentionally does not generate a bitstream; `scripts/write_bit_temp.tcl` is used for timestamped bitstreams in `final/bit_temp/`.
+- `PDF_COMPLIANCE_CHECK.md` records the latest PDF/interface/memory-setting compliance check.
 
 Latest RTL result:
 

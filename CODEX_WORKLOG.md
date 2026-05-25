@@ -16,10 +16,13 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前工作版本更新為 `v0.9.4-rank1-pipeline`：在 `RISCV_CNN.v` 採用 CPU instruction prefetch、CNN final-row finish pipeline、19-bit CNN accumulator narrowing，目標是接近 `v0.8.0` 的 AT product，同時保留 `v0.9.x` 的 timing-simulation 修正方向；此版本不是 testcase/golden 特判。
+- 目前工作版本更新為 `v0.9.5-pdf-verified`：此版不改 RTL datapath，新增 `PDF_COMPLIANCE_CHECK.md`，確認 `v0.9.4-rank1-pipeline` 的 top-level interface、BRAM IP 設定、TA 檔案與 prohibited behavior 皆符合目前 PDF/TA 0524 更新方向。
+- `v0.9.5-pdf-verified` 沿用 `v0.9.4-rank1-pipeline` 的 RTL/implementation 結果與 bitstream：`final/bit_temp/at_rank1_adopted_pipeline_20260525_233131.bit`。
+- `v0.9.4-rank1-pipeline` 在 `RISCV_CNN.v` 採用 CPU instruction prefetch、CNN final-row finish pipeline、19-bit CNN accumulator narrowing，目標是接近 `v0.8.0` 的 AT product，同時保留 `v0.9.x` 的 timing-simulation 修正方向；此版本不是 testcase/golden 特判。
 - `v0.9.4-rank1-pipeline` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 14268`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
 - `v0.9.4-rank1-pipeline` bitstream 已產生：`final/bit_temp/at_rank1_adopted_pipeline_20260525_233131.bit`；non-project implementation route 0 errors，post-route setup slack `0.013 ns`、hold slack `0.072 ns`。
 - `v0.9.4-rank1-pipeline` 尚未重新跑 full #3 post-synthesis timing / #5 post-implementation timing simulation；若要作為最終交付版，仍需補跑這兩項。`v0.8.0` 雖然 AT product 略低，但不是 clean #5 PASS 節點，因此本版定位為接近 v0.8 且 implementation timing 可過的採用版。
+- `PDF_COMPLIANCE_CHECK.md` 確認：`test_circuit_bram_ip.v` 與 `tb/post_sim_tb.v` 和 `助教給的檔案/0524更新/` SHA256 相同；`Instruction_Memory` 為 Always Enabled 且 RTL 未接 `.ena(1'b1)`；`Data_mem` 使用 ENA/ENB pin；top-level `FPGA_clk/rstn/tc/mode/st/all_done/seven_seg/anode` 與 XDC pinout 對齊 PDF v5。
 - `v0.9.3-at-fullcache` 已產生 bitstream 並通過 non-project implementation timing，但 AT product 明顯差於 `v0.9.4`，保留為實驗紀錄。
 - `v0.9.2` 已整合 TA 2026-05-24 update 的 top-level `FPGA_clk` 與 `all_done` 介面，並同步新版 `test_circuit_bram_ip.v` / `post_sim_tb.v`。
 - `v0.9.2` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 25746`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
@@ -51,6 +54,11 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.9.5-pdf-verified` - 2026-05-25 Asia/Taipei
+  - 新增 `PDF_COMPLIANCE_CHECK.md`，逐項記錄 PDF v5 / `Memory_setting.pdf` / TA 0524 update 對應狀態。
+  - 檢查項目包含 top-level port、XDC pinout、TA test circuit/post-sim TB hash、BRAM XCI 設定、Instruction_Memory RTL instantiation、Data_mem ENA/ENB 使用、COE/MIF 同步與禁止特判事項。
+  - 此版不改 RTL datapath、不重產 bitstream，沿用 `v0.9.4-rank1-pipeline` 的 bitstream 與 metrics：`cycle_count = 14268`、Official Area `5201`、AT product `742078680`、post-route `WNS = 0.013 ns`。
+  - 採用判定：採用為 PDF compliance verification tag。尚未宣稱 full #3/#5 timing simulation 重新通過。
 - `v0.9.4-rank1-pipeline` - 2026-05-25 23:39 Asia/Taipei
   - `RISCV_CNN.v`：`Simple_CPU` 在 decode 階段提前送出下一個 `Instruction_Memory` address，讓 ALU/I-type/branch/default instruction 少掉一個 fetch-address bubble；load/store 也保留下一指令 prefetch，並在 write-back/store 後直接進入 capture/decode。
   - `RISCV_CNN.v`：CNN 將最後一個 kernel row 的 accumulate、rounding、packing、write decision 合併到 `C_ACCUM_ROW`，移除 `C_FINISH_PIXEL` state；同時將 CNN accumulator/product datapath 收斂為 19-bit，符合 8-bit feature/weight、3x3 MAC 與 bias Q6 range 的上界，降低 post-route critical path。
@@ -219,6 +227,7 @@ PDF AT product = Official Area × Processing Time
 | `v0.9.2` | 2026-05-24 22:38 | 25746 | 257460 ns | cycles -8334 / -24.45% | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | RTL only after TA interface update |
 | `v0.9.3-at-fullcache` | 2026-05-25 16:48 | 16022 | 160220 ns | cycles -18058 / -52.99% | 5256 | +344 / +7.00% | 2355 | 2078 | 261 | 2 | 14 | 2 | 0.983 ns | 842116320 | -831893280 / -49.69% |
 | `v0.9.4-rank1-pipeline` | 2026-05-25 23:39 | 14268 | 142680 ns | cycles -19812 / -58.13% | 5201 | +289 / +5.88% | 2305 | 2065 | 261 | 10 | 14 | 2 | 0.013 ns | 742078680 | -931930920 / -55.67% |
+| `v0.9.5-pdf-verified` | 2026-05-25 | 14268 | 142680 ns | cycles -19812 / -58.13% | 5201 | +289 / +5.88% | 2305 | 2065 | 261 | 10 | 14 | 2 | 0.013 ns | 742078680 | PDF compliance docs only; same bit as v0.9.4 |
 
 解讀：
 
@@ -247,6 +256,7 @@ PDF AT product = Official Area × Processing Time
 - `v0.9.2` 只整合 TA 2026-05-24 top-level `FPGA_clk/all_done` 介面與新版 test circuit；RTL regression 已通過，但 implementation utilization、WNS 與正式 AT product 需重新跑 full Vivado flow 後更新。
 - `v0.9.3-at-fullcache` 重新啟用更激進的 full sliding-window row-cache reuse，cycle_count 降到 16022；Official Area 比 baseline 增加 344，但 PDF AT product 仍比 baseline 改善約 49.69%。此版已產生 bitstream 並通過 non-project implementation timing，但尚未重跑 full #3/#5 timing simulation。
 - `v0.9.4-rank1-pipeline` 進一步把 CPU fetch、load/store overlap、CNN final-row finish 與 accumulator narrowing 合併，cycle_count 降到 14268；PDF AT product 比 baseline 改善約 55.67%，只比 `v0.8.0` 高約 0.231%。因 `v0.8.0` 並非 clean #5 PASS 節點，此版定位為接近 v0.8 的 timing-aware 採用版。
+- `v0.9.5-pdf-verified` 不改 RTL/bitstream，只新增 PDF compliance 檢查紀錄；效能、面積與 timing 數字沿用 `v0.9.4-rank1-pipeline`。
 
 ## 版本改動詳細部分
 
