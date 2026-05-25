@@ -385,10 +385,13 @@ module CNN(
     wire [1:0] first_lane = first_feature_index[1:0];
     wire last_pixel = (out_index == (total_pixels - 12'd1));
     wire flush_word = (out_index[1:0] == 2'd3) || last_pixel;
-    wire first_cache_read_b = 1'b0;
-    wire first_cache_no_read = 1'b0;
-    wire next_cache_read_b = 1'b0;
-    wire next_cache_no_read = 1'b0;
+    wire first_cache_hit = cache_valid[0] && (cache_lane[0] == (first_lane - 2'd1));
+    wire next_cache_hit = (krow != 2'd2) && cache_valid[cache_next_krow] &&
+                          (cache_lane[cache_next_krow] == (next_lane - 2'd1));
+    wire first_cache_read_b = first_cache_hit && (first_lane == 2'd2);
+    wire first_cache_no_read = first_cache_hit && (first_lane != 2'd2);
+    wire next_cache_read_b = next_cache_hit && (next_lane == 2'd2);
+    wire next_cache_no_read = next_cache_hit && (next_lane != 2'd2);
 
     assign enb = rstn;
     function signed [7:0] lane_value;

@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-24 Asia/Taipei
+最後更新：2026-05-25 Asia/Taipei
 
 主要工作區：
 
@@ -16,7 +16,11 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前工作版本更新為 `v0.9.2`：已整合 TA 2026-05-24 update 的 top-level `FPGA_clk` 與 `all_done` 介面，並同步新版 `test_circuit_bram_ip.v` / `post_sim_tb.v`。
+- 目前工作版本更新為 `v0.9.3-at-fullcache`：在 `RISCV_CNN.v` 重新啟用更激進的 general sliding-window row-cache reuse，以降低 AT product；此版本不是 testcase/golden 特判。
+- `v0.9.3-at-fullcache` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 16022`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
+- `v0.9.3-at-fullcache` bitstream 已產生：`final/bit_temp/at_fullcache_20260525_164220.bit`；non-project implementation route 0 errors，post-route setup slack `0.983 ns`、hold slack `0.038 ns`。
+- `v0.9.3-at-fullcache` 尚未重新跑 full #3 post-synthesis timing / #5 post-implementation timing simulation；若要作為最終交付版，仍需補跑這兩項。
+- `v0.9.2` 已整合 TA 2026-05-24 update 的 top-level `FPGA_clk` 與 `all_done` 介面，並同步新版 `test_circuit_bram_ip.v` / `post_sim_tb.v`。
 - `v0.9.2` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 25746`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
 - `v0.9.2` 尚未重新跑 full implementation / #5 post-implementation timing simulation；上一個 clean post-impl timing PASS 節點仍是 `v0.9.1`/`v0.9.0` datapath。
 - `v0.9.1` 補上 Vivado GUI simulation compatibility：testbench 預設不再讀 post-synth/post-impl timing netlist 中可能被最佳化掉的 RTL internal signals；RTL batch flow 需要 cycle_count 時改由 `RTL_INTERNAL_CHECK` 明確啟用。
@@ -42,10 +46,19 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 - `scripts/run_vivado_checks.tcl` 目前刻意不產生 bitstream。
 - Vivado journal/log 與暫存工作檔集中放在 `tmp/`。
 - 舊的 `FinalProject` 資料夾已刪除；有保留價值的舊檔已搬到 `legacy_artifacts/FinalProject_deprecated/`。
-- 助教提供的測試檔不可修改；目前 `test_circuit_bram_ip.v`、`init_rom.coe`、`golden_rom.coe` 仍以 `助教給的檔案/` 官方檔案為基準。`instr_mem_cpucheck.coe` 已依 TA 要求改成專案整合版，不再與 TA 原始檔完全相同。
+- 助教提供的測試檔不可修改；官方原始檔依釋出日期保留在 `助教給的檔案/0518更新/` 與 `助教給的檔案/0524更新/`。根目錄 `instr_mem_cpucheck.coe` 已依 TA 要求改成專案整合版，不再與 TA 原始檔完全相同。
 
 ## 版本紀錄
 
+- `v0.9.3-at-fullcache` - 2026-05-25 16:48 Asia/Taipei
+  - `RISCV_CNN.v`：將 CNN row-cache reuse 改為 full sliding-window cache hit rule。當目前 input word 可由上一個 output pixel 的相鄰 lane cache 提供時，直接重用 cache；lane 2 仍走 read-B path，其餘 cache hit lane 不額外發 BRAM read。
+  - 這是 general datapath reuse：判斷只使用 feature word/lane 與 kernel row 的相鄰關係，不讀取 testcase id、score、golden data 或輸出答案，不是特定 testcase 特判。
+  - `scripts/write_bit_temp.tcl`：新增 non-project bitstream 產生流程，將每個正式實驗版輸出到 `final/bit_temp/`，並把 timing/utilization report 輸出到 `reports/bit_temp/`。
+  - RTL simulation 通過：`score_bcd = 0100`、`cycle_count = 16022`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
+  - Bitstream：`final/bit_temp/at_fullcache_20260525_164220.bit`。
+  - Non-project implementation route 0 errors；post-route timing met：setup slack `0.983 ns`、hold slack `0.038 ns`。
+  - Implementation utilization：2355 Slice LUTs、2078 Slice Registers、261 F7 Muxes、2 F8 Muxes、14 Block RAM Tiles、2 DSPs。
+  - 此版尚未重新跑 full #3/#5 timing simulation；目前定位是更激進 AT product 實驗版，不取代已知 clean #5 PASS 的 `v0.9.0`/`v0.9.1` 穩定 datapath。
 - `v0.9.2` - 2026-05-24 22:38 Asia/Taipei
   - 整合 TA 2026-05-24 update：top-level port 從舊 `clk` 改為新版 template 使用的 `FPGA_clk`，並新增 output `all_done`。
   - `RISCV_CNN.v`：新增 `output all_done`，內部以 `wire clk = FPGA_clk` 保留既有 datapath clock 命名；`test_circuit` instance 接上 `.all_done(all_done)`。
@@ -166,6 +179,7 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 6. 需要形成正式節點時建立 Git tag，例如 `v0.2.1`、`v0.3.0`。
 7. 修改完成後一律推送到 GitHub remote `origin`：即使不建立 tag，也必須至少建立並推送 commit；只有使用者明確要求暫停推送時才例外。
 8. 長時間 Vivado / post-synth / post-impl / xsim job 一律預設使用者可能會斷網：啟動後放背景執行，只回報 PID 與 log path，不持續輪詢、不反覆讀 log；等使用者回來要求狀態時再檢查。
+9. 每個新 RTL 版本或正式實驗版本都要產生一份 bitstream，輸出到 `final/bit_temp/`，檔名需包含版本或實驗名稱與時間戳；bitstream 產生也視為長時間 Vivado job，背景執行並回報 PID/log path。
 
 ## 速度與面積版本比較
 
@@ -192,6 +206,7 @@ PDF AT product = Official Area × Processing Time
 | `v0.9.0` | 2026-05-24 15:22 | 25746 | 257460 ns | cycles -8334 / -24.45% | 4839 | -73 / -1.49% | 2154 | 1862 | 261 | 2 | 14 | 2 | 0.731 ns | 1245848940 | -428160660 / -25.58% |
 | `v0.9.1` | 2026-05-24 15:52 | 25746 | 257460 ns | cycles -8334 / -24.45% | 4839 | -73 / -1.49% | 2154 | 1862 | 261 | 2 | 14 | 2 | 0.731 ns | 1245848940 | -428160660 / -25.58% |
 | `v0.9.2` | 2026-05-24 22:38 | 25746 | 257460 ns | cycles -8334 / -24.45% | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | RTL only after TA interface update |
+| `v0.9.3-at-fullcache` | 2026-05-25 16:48 | 16022 | 160220 ns | cycles -18058 / -52.99% | 5256 | +344 / +7.00% | 2355 | 2078 | 261 | 2 | 14 | 2 | 0.983 ns | 842116320 | -831893280 / -49.69% |
 
 解讀：
 
@@ -218,6 +233,7 @@ PDF AT product = Official Area × Processing Time
 - 以 PDF 官方完整公式計算，`v0.9.0` AT product 為 `1245848940`，比 baseline 改善約 25.58%；這版優先作為 clean post-impl timing PASS 的正式提交版本。
 - `v0.9.1` 只修正 Vivado GUI simulation elaborate compatibility，不修改 RTL datapath；AT product、area 與 timing 數字沿用 `v0.9.0`。
 - `v0.9.2` 只整合 TA 2026-05-24 top-level `FPGA_clk/all_done` 介面與新版 test circuit；RTL regression 已通過，但 implementation utilization、WNS 與正式 AT product 需重新跑 full Vivado flow 後更新。
+- `v0.9.3-at-fullcache` 重新啟用更激進的 full sliding-window row-cache reuse，cycle_count 降到 16022；Official Area 比 baseline 增加 344，但 PDF AT product 仍比 baseline 改善約 49.69%。此版已產生 bitstream 並通過 non-project implementation timing，但尚未重跑 full #3/#5 timing simulation。
 
 ## 版本改動詳細部分
 
