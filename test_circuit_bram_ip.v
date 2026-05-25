@@ -23,7 +23,8 @@ module test_circuit #(
     input  [3:0]        tc,      // 0~9: CNN, 10~14: CPU subtests, 15: run all / summary
     // Display output
     output reg [7-1:0] seven_seg,
-    output reg [3:0] anode
+    output reg [3:0] anode,
+    output reg all_done
 );
 
 localparam TEST_NUM = 10;
@@ -84,6 +85,9 @@ localparam [4:0] S_READ_OFMAP_CAPTURE    = 5'd22;
 localparam [4:0] S_READ_OFMAP_EVAL       = 5'd23;
 
 reg [4:0] state, nstate;
+
+// Internal registered flag for testbench simulation stop condition.
+// This signal is not exported to the top-level port list.
 
 reg test_mode;
 reg [MEM_AW-1:0] tc_addr;
@@ -249,6 +253,7 @@ end
 always @(posedge clk or negedge rstn) begin
     if (!rstn) begin
         state <= S_IDLE;
+        all_done <= 1'b0;
         sys_rstn <= 1'b0;
         test_mode <= 1'b1;
         addr_counter <= 10'd0;
@@ -281,6 +286,7 @@ always @(posedge clk or negedge rstn) begin
                 sys_rstn <= 1'b0;
                 test_mode <= 1'b1;
                 if (mode == 1'b0 && start_bt_pulse) begin
+                    all_done <= 1'b0;
                     addr_counter <= 10'd0;
                     ofmap_idx <= 8'd0;
                     selected_tc <= tc;
@@ -553,6 +559,7 @@ always @(posedge clk or negedge rstn) begin
                 sys_rstn <= 1'b0;
                 test_mode <= 1'b1;
                 if (mode == 1'b0 && start_bt_pulse) begin
+                    all_done <= 1'b0;
                     addr_counter <= 10'd0;
                     ofmap_idx <= 8'd0;
                     selected_tc <= tc;
@@ -582,8 +589,14 @@ always @(posedge clk or negedge rstn) begin
                     addr_counter_q <= 10'd0;
                     ofmap_idx_q <= 8'd0;
                 end
+                else begin
+                    // Assert one cycle after the run-all flow reaches S_DONE.
+                    // This means all 15 result_valid bits have already been updated.
+                    all_done <= (selected_tc == 4'd15) && (result_valid == 15'h7FFF);
+                end
             end
             default: begin
+                all_done <= 1'b0;
                 sys_rstn <= 1'b0;
                 test_mode <= 1'b1;
                 addr_counter <= 10'd0;

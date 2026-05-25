@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-23 Asia/Taipei
+最後更新：2026-05-24 Asia/Taipei
 
 主要工作區：
 
@@ -16,7 +16,9 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前正式版本更新為 `v0.9.1`。
+- 目前工作版本更新為 `v0.9.2`：已整合 TA 2026-05-24 update 的 top-level `FPGA_clk` 與 `all_done` 介面，並同步新版 `test_circuit_bram_ip.v` / `post_sim_tb.v`。
+- `v0.9.2` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 25746`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
+- `v0.9.2` 尚未重新跑 full implementation / #5 post-implementation timing simulation；上一個 clean post-impl timing PASS 節點仍是 `v0.9.1`/`v0.9.0` datapath。
 - `v0.9.1` 補上 Vivado GUI simulation compatibility：testbench 預設不再讀 post-synth/post-impl timing netlist 中可能被最佳化掉的 RTL internal signals；RTL batch flow 需要 cycle_count 時改由 `RTL_INTERNAL_CHECK` 明確啟用。
 - `v0.9.0` 修正 post-implementation timing simulation：CPU instruction fetch 改為 register capture、CNN `web` 改為 registered pulse、finish event 改用 registered `done`，並停用 post-impl timing 下會造成 CNN mismatch 的 row-cache reuse path。
 - `RISCV_CNN.v` 的 `Simple_CPU` 已移除先前硬寫在 RTL 裡的 `S_HOST_*` bias/start host states，CPU 現在只從 `Instruction_Memory` fetch/execute instruction；bias/start machine code 仍由 `.coe` load 進 `Instruction_Memory`。
@@ -44,6 +46,18 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.9.2` - 2026-05-24 22:38 Asia/Taipei
+  - 整合 TA 2026-05-24 update：top-level port 從舊 `clk` 改為新版 template 使用的 `FPGA_clk`，並新增 output `all_done`。
+  - `RISCV_CNN.v`：新增 `output all_done`，內部以 `wire clk = FPGA_clk` 保留既有 datapath clock 命名；`test_circuit` instance 接上 `.all_done(all_done)`。
+  - `test_circuit_bram_ip.v`：同步為 `助教給的檔案/0524更新/test_circuit_bram_ip.v` 官方新版，未手改其內容。
+  - `tb/post_sim_tb.v`：新增官方 0524 `post_sim_tb.v` 副本，供 GUI/report waveform 量測 `st` falling 到 `all_done` rising 的 processing time。
+  - `tb/tb_finalproject.v`：更新 DUT instantiation 為 `.FPGA_clk(FPGA_clk)` 並接出 `all_done`，保留既有 batch display-based regression。
+  - `constraints/RISCV_CNN.xdc`：clock constraint 改套用 `[get_ports FPGA_clk]`，新增 `all_done` package pin `K2` 與 `LVCMOS33`。
+  - `scripts/create_final_project.tcl`、`scripts/update_final_project.tcl`：將官方 `tb/post_sim_tb.v` 加入 simulation fileset，但保留 `tb_finalproject` 為 batch regression top。
+  - `README.md`、`RISCV_CNN_EXPLAINED.md`、`RISCV_CNN_ANNOTATED_CODE.md`：同步更新新版 port 與 `all_done` 說明。
+  - RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 25746`、`result_valid = 7fff`、`result_pass = 7fff`、`addr13 = 00000401`、`FINALPROJECT_SIM_PASS`。
+  - 官方 `tb/post_sim_tb.v` 已 compile/elaborate 通過：`Built simulation snapshot post_sim_tb_elab`。
+  - 此版是 interface/test-circuit update；CNN/CPU datapath 不變。尚未重新跑 full implementation / #5 post-impl timing，因此 utilization、WNS 與 AT product 暫沿用 `v0.9.1` 參考值，正式報告前需重跑 implementation。
 - `v0.9.1` - 2026-05-24 15:52 Asia/Taipei
   - 修正 Vivado GUI `Run Post-Synthesis Timing Simulation` elaborate failure：GUI 不會帶 batch script 的 `POST_SYNTH_DISPLAY_CHECK` macro，原 testbench 因此嘗試讀取 `dut.u_test_circuit.captured_addr13`，但該 internal reg 在 timing netlist 中可能被最佳化/改名。
   - `tb/tb_finalproject.v`：RTL-only internal snapshot 改為只在明確定義 `RTL_INTERNAL_CHECK` 時啟用；GUI behavioral/post-synth/post-impl 預設只透過 top-level `seven_seg/anode` 檢查分數。
@@ -177,6 +191,7 @@ PDF AT product = Official Area × Processing Time
 | `v0.8.0` | 2026-05-22 10:17 | 14290 | 142900 ns | cycles -19790 / -58.07% | 5181 | +269 / +5.48% | 2347 | 2011 | 261 | 2 | 14 | 2 | 0.045 ns | 740364900 | -933644700 / -55.77% |
 | `v0.9.0` | 2026-05-24 15:22 | 25746 | 257460 ns | cycles -8334 / -24.45% | 4839 | -73 / -1.49% | 2154 | 1862 | 261 | 2 | 14 | 2 | 0.731 ns | 1245848940 | -428160660 / -25.58% |
 | `v0.9.1` | 2026-05-24 15:52 | 25746 | 257460 ns | cycles -8334 / -24.45% | 4839 | -73 / -1.49% | 2154 | 1862 | 261 | 2 | 14 | 2 | 0.731 ns | 1245848940 | -428160660 / -25.58% |
+| `v0.9.2` | 2026-05-24 22:38 | 25746 | 257460 ns | cycles -8334 / -24.45% | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | RTL only after TA interface update |
 
 解讀：
 
@@ -202,6 +217,7 @@ PDF AT product = Official Area × Processing Time
 - `v0.9.0` 修正 #5 post-impl timing simulation，full timing sim 達到 `post_impl_score_bcd = 0100`；因停用 row-cache reuse，cycle_count 回升到 25746，但 Official Area 低於 baseline 73。
 - 以 PDF 官方完整公式計算，`v0.9.0` AT product 為 `1245848940`，比 baseline 改善約 25.58%；這版優先作為 clean post-impl timing PASS 的正式提交版本。
 - `v0.9.1` 只修正 Vivado GUI simulation elaborate compatibility，不修改 RTL datapath；AT product、area 與 timing 數字沿用 `v0.9.0`。
+- `v0.9.2` 只整合 TA 2026-05-24 top-level `FPGA_clk/all_done` 介面與新版 test circuit；RTL regression 已通過，但 implementation utilization、WNS 與正式 AT product 需重新跑 full Vivado flow 後更新。
 
 ## 版本改動詳細部分
 

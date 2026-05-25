@@ -1,6 +1,6 @@
 # RISCV_CNN.v Detailed Explanation
 
-本文以目前 `v0.9.1` 的 `RISCV_CNN.v` 為準，說明整個設計的架構、各模組的責任、CNN datapath 的運作方式、用到的時間壓縮技巧，以及為了讓 post-synthesis / post-implementation timing simulation 穩定通過而採取的避錯方法。
+本文以目前 `v0.9.2` 的 `RISCV_CNN.v` 為準，說明整個設計的架構、各模組的責任、CNN datapath 的運作方式、用到的時間壓縮技巧，以及為了讓 post-synthesis / post-implementation timing simulation 穩定通過而採取的避錯方法。
 
 ## 目前版本定位
 
@@ -8,7 +8,7 @@
 
 | 區塊 | 檔案內位置 | 主要功能 |
 |---|---:|---|
-| `RISCV_CNN` top | `RISCV_CNN.v:3` | 串接 TA `test_circuit`、簡化 RISC-V CPU、CNN coprocessor、`Data_mem` |
+| `RISCV_CNN` top | `RISCV_CNN.v:3` | 串接 TA `test_circuit`、簡化 RISC-V CPU、CNN coprocessor、`Data_mem`；對齊 2026-05-24 TA update 的 `FPGA_clk` / `all_done` 介面 |
 | `Simple_CPU` | `RISCV_CNN.v:120` | 執行 `Instruction_Memory` 內的 machine code，負責初始化 bias/start command 與控制流程 |
 | `CNN` | `RISCV_CNN.v:278` | 透過 `Data_mem` port B 讀 feature/weight/bias，執行兩層 3x3 convolution，寫回結果與 done word |
 
@@ -34,11 +34,12 @@
 
 ```verilog
 module RISCV_CNN(
-    input         clk,
+    input         FPGA_clk,
     input         rstn,
     input  [3:0]  tc,
     input         mode,
     input         st,
+    output        all_done,
     output [6:0]  seven_seg,
     output [3:0]  anode
 );
@@ -48,12 +49,13 @@ module RISCV_CNN(
 
 | Signal | 用途 |
 |---|---|
-| `clk` | 系統 clock，專案 timing 以 10 ns clock 驗證 |
+| `FPGA_clk` | 系統 clock，專案 timing 以 10 ns clock 驗證；RTL 內部用 `wire clk = FPGA_clk` 維持原本 datapath 命名 |
 | `rstn` | 外部 active-low reset |
 | `tc` | testcase select |
 | `mode` | test circuit 顯示/模式控制 |
 | `st` | start button input，送給 TA test circuit |
 | `seven_seg`, `anode` | test circuit 的七段顯示輸出 |
+| `all_done` | 2026-05-24 TA update 新增輸出，用於 waveform 量測 simulation processing time |
 
 ### Reset Synchronizer
 

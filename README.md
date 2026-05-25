@@ -2,14 +2,15 @@
 
 RISC-V RV32 CPU with a memory-mapped CNN coprocessor for the EE3044 Digital System Design final project.
 
-Current verified version: `v0.9.1`
+Current working version: `v0.9.2` interface update
 
 ## Current Status
 
 - `test_circuit_bram_ip.v` is kept unchanged from the TA-provided version.
+- The project has been updated to the TA 2026-05-24 interface release: top-level clock port `FPGA_clk` and output `all_done`.
 - `instr_mem_cpucheck.coe` is the integrated instruction image: the first 36 words keep the TA CPU-check program, and the appended words perform bias/start setup through the CPU.
-- RTL display-based regression passes all testcases.
-- Full Vivado synthesis, placement, routing, post-route timing, and #5 post-implementation timing simulation pass.
+- RTL display-based regression passes all testcases after the 2026-05-24 interface update.
+- Full Vivado synthesis, placement, routing, post-route timing, and #5 post-implementation timing simulation passed for `v0.9.1` before the interface-only update; rerun these after regenerating the Vivado project.
 - Vivado GUI post-synthesis timing simulation elaboration is supported; the testbench no longer depends on RTL-only internal signals by default.
 - `scripts/run_vivado_checks.tcl` intentionally does not generate a bitstream.
 
@@ -23,14 +24,14 @@ result_pass  = 7fff
 FINALPROJECT_SIM_PASS
 ```
 
-Latest implementation result:
+Latest full implementation result before the 2026-05-24 interface update:
 
 ```text
 Post Routing Timing Summary | WNS=0.731 | TNS=0.000 | WHS=0.033 | THS=0.000
 All user specified timing constraints are met.
 ```
 
-Latest #5 post-implementation timing simulation result:
+Latest #5 post-implementation timing simulation result before the 2026-05-24 interface update:
 
 ```text
 post_impl_score_bcd = 0100
@@ -44,6 +45,7 @@ FINALPROJECT_POST_IMPL_PASS
 | Top RTL | `RISCV_CNN.v` |
 | TA test circuit in use | `test_circuit_bram_ip.v` |
 | Local simulation testbench | `tb/tb_finalproject.v` |
+| TA post-simulation helper testbench | `tb/post_sim_tb.v` |
 | Constraints | `constraints/RISCV_CNN.xdc` |
 | Vivado project | `final/final.xpr` |
 | Work log | `CODEX_WORKLOG.md` |
@@ -54,6 +56,8 @@ TA-provided reference files are kept in the TA reference directory at the projec
 ## Design Summary
 
 Top module: `RISCV_CNN`
+
+Top-level ports: `FPGA_clk`, `rstn`, `tc[3:0]`, `mode`, `st`, `all_done`, `seven_seg[6:0]`, `anode[3:0]`.
 
 The design contains:
 
@@ -117,7 +121,7 @@ The local testbench defaults to top-level display checking through `seven_seg` a
 
 ## Latest Utilization
 
-Implementation utilization for `v0.9.1`:
+Implementation utilization for `v0.9.1` before the 2026-05-24 interface-only update:
 
 ```text
 Slice LUTs       = 2154 / 20800  (10.36%)

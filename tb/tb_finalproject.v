@@ -28,6 +28,7 @@ module tb_finalproject;
     reg st;
     wire [6:0] seven_seg;
     wire [3:0] anode;
+    wire all_done;
 
     integer timeout_cycles;
     integer tc_idx;
@@ -46,13 +47,14 @@ module tb_finalproject;
 `endif
 
     RISCV_CNN dut (
-        .clk(FPGA_clk),
+        .FPGA_clk(FPGA_clk),
         .rstn(rstn),
         .tc(tc),
         .mode(mode),
         .st(st),
         .seven_seg(seven_seg),
-        .anode(anode)
+        .anode(anode),
+        .all_done(all_done)
     );
 
     always #5 FPGA_clk = ~FPGA_clk;

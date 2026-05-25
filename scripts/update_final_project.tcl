@@ -48,6 +48,7 @@ add_file_once sources_1 [file join $repo_dir RISCV_CNN.v]
 add_file_once sources_1 [file join $repo_dir test_circuit_bram_ip.v]
 add_file_once constrs_1 [file join $repo_dir constraints RISCV_CNN.xdc]
 add_file_once sim_1 [file join $repo_dir tb tb_finalproject.v]
+add_file_once sim_1 [file join $repo_dir tb post_sim_tb.v]
 
 set old_split_core [get_files -quiet [file join $repo_dir src student_fp_core.v]]
 if {[llength $old_split_core] != 0} {

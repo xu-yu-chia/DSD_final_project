@@ -29,7 +29,10 @@ add_files -fileset sources_1 [list \
     [file join $repo_dir test_circuit_bram_ip.v] \
 ]
 add_files -fileset constrs_1 [file join $repo_dir constraints RISCV_CNN.xdc]
-add_files -fileset sim_1 [file join $repo_dir tb tb_finalproject.v]
+add_files -fileset sim_1 [list \
+    [file join $repo_dir tb tb_finalproject.v] \
+    [file join $repo_dir tb post_sim_tb.v] \
+]
 
 set_property top RISCV_CNN [get_filesets sources_1]
 set_property top tb_finalproject [get_filesets sim_1]
