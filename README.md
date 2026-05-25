@@ -2,16 +2,16 @@
 
 RISC-V RV32 CPU with a memory-mapped CNN coprocessor for the EE3044 Digital System Design final project.
 
-Current working version: `v0.9.3-at-fullcache` AT optimization experiment
+Current working version: `v0.9.4-rank1-pipeline` AT optimization experiment
 
 ## Current Status
 
 - `test_circuit_bram_ip.v` is kept unchanged from the TA-provided version.
 - The project has been updated to the TA 2026-05-24 interface release: top-level clock port `FPGA_clk` and output `all_done`.
-- `instr_mem_cpucheck.coe` is the integrated instruction image: the first 36 words keep the TA CPU-check program, and the appended words perform bias/start setup through the CPU.
-- RTL display-based regression passes all testcases with the `v0.9.3-at-fullcache` datapath.
-- A non-project bitstream was generated for `v0.9.3-at-fullcache` at `final/bit_temp/at_fullcache_20260525_164220.bit`, and its implementation timing report met timing.
-- Full #3 post-synthesis timing and #5 post-implementation timing simulations have not been rerun for `v0.9.3-at-fullcache`; the previous known clean #5 PASS datapath remains `v0.9.0`/`v0.9.1`.
+- `instr_mem_cpucheck.coe` is the integrated instruction image: the first 36 words keep the TA CPU-check program, and the appended words perform bias/start setup through the CPU. The latest appended sequence removes redundant control-flow/no-op instructions but still performs the same CPU-driven bias/start behavior.
+- RTL display-based regression passes all testcases with the `v0.9.4-rank1-pipeline` datapath.
+- A non-project bitstream was generated for `v0.9.4-rank1-pipeline` at `final/bit_temp/at_rank1_adopted_pipeline_20260525_233131.bit`, and its implementation timing report met timing.
+- Full #3 post-synthesis timing and #5 post-implementation timing simulations have not been rerun for `v0.9.4-rank1-pipeline`; the previous known clean #5 PASS datapath remains `v0.9.0`/`v0.9.1`. This version preserves the timing-simulation interface fixes from those versions.
 - Vivado GUI post-synthesis timing simulation elaboration is supported; the testbench no longer depends on RTL-only internal signals by default.
 - `scripts/run_vivado_checks.tcl` intentionally does not generate a bitstream; `scripts/write_bit_temp.tcl` is used for timestamped bitstreams in `final/bit_temp/`.
 
@@ -19,16 +19,16 @@ Latest RTL result:
 
 ```text
 score_bcd = 0100
-cycle_count = 16022
+cycle_count = 14268
 result_valid = 7fff
 result_pass  = 7fff
 FINALPROJECT_SIM_PASS
 ```
 
-Latest generated `v0.9.3-at-fullcache` bitstream implementation result:
+Latest generated `v0.9.4-rank1-pipeline` bitstream implementation result:
 
 ```text
-Post Routing Timing Summary | WNS=0.983 | TNS=0.000 | WHS=0.038 | THS=0.000
+Post Routing Timing Summary | WNS=0.013 | TNS=0.000 | WHS=0.072 | THS=0.000
 All user specified timing constraints are met.
 ```
 
@@ -122,13 +122,13 @@ The local testbench defaults to top-level display checking through `seven_seg` a
 
 ## Latest Utilization
 
-Implementation utilization for generated `v0.9.3-at-fullcache` bitstream:
+Implementation utilization for generated `v0.9.4-rank1-pipeline` bitstream:
 
 ```text
-Slice LUTs       = 2355 / 20800  (11.32%)
-Slice Registers  = 2078 / 41600  (5.00%)
+Slice LUTs       = 2305 / 20800  (11.08%)
+Slice Registers  = 2065 / 41600  (4.96%)
 F7 Muxes         = 261
-F8 Muxes         = 2
+F8 Muxes         = 10
 Block RAM Tile   = 14 / 50       (28.00%)
 DSPs             = 2 / 90        (2.22%)
 ```
@@ -143,13 +143,13 @@ Processing Time = cycle_count x 10 ns
 AT product = Official Area x Processing Time
 ```
 
-For `v0.9.3-at-fullcache`:
+For `v0.9.4-rank1-pipeline`:
 
 ```text
-Official Area = 2355 + 2078 + 261 + 2 + 280*2 = 5256
-cycle_count = 16022
-Processing Time = 160220 ns
-AT product = 5256 * 160220 = 842116320
+Official Area = 2305 + 2065 + 261 + 10 + 280*2 = 5201
+cycle_count = 14268
+Processing Time = 142680 ns
+AT product = 5201 * 142680 = 742078680
 ```
 
 ## Memory Settings

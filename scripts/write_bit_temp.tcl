@@ -24,10 +24,8 @@ if {$repo_dir eq ""} {
 set part_name xc7a35tcsg324-1
 set ip_gen_dir [file join $repo_dir final final.gen sources_1 ip]
 set bit_dir [file join $repo_dir final bit_temp]
-set work_dir [file join $repo_dir tmp bit_temp_work]
 set report_dir [file join $repo_dir reports bit_temp]
 file mkdir $bit_dir
-file mkdir $work_dir
 file mkdir $report_dir
 
 if {[info exists ::env(BIT_LABEL)] && $::env(BIT_LABEL) ne ""} {
@@ -36,7 +34,9 @@ if {[info exists ::env(BIT_LABEL)] && $::env(BIT_LABEL) ne ""} {
     set label "manual"
 }
 set stamp [clock format [clock seconds] -format "%Y%m%d_%H%M%S"]
+set work_dir [file join $repo_dir tmp bit_temp_work "${label}_${stamp}"]
 set out_base [file join $bit_dir "${label}_${stamp}"]
+file mkdir $work_dir
 
 foreach mif_name {golden_rom init_rom Instruction_Memory} {
     file copy -force \

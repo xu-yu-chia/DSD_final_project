@@ -160,6 +160,8 @@ module Simple_CPU(
 
     wire [31:0] load_byte_addr  = regs[rs1] + imm_i;
     wire [31:0] store_byte_addr = regs[rs1] + imm_s;
+    wire [31:0] pc_plus4 = pc + 32'd4;
+    wire [31:0] pc_branch = pc + imm_b;
 
     assign dmem_en = 1'b1;
     assign dmem_we = (state == S_STORE);
@@ -208,46 +210,53 @@ module Simple_CPU(
                             else if (funct3 == 3'b000 && funct7 == 7'b0100000) begin
                                 if (rd != 5'd0) regs[rd] <= regs[rs1] - regs[rs2];
                             end
-                            pc <= pc + 32'd4;
-                            state <= S_FETCH_ADDR;
+                            pc <= pc_plus4;
+                            imem_addr <= pc_plus4[9:2];
+                            state <= S_FETCH_WAIT;
                         end
 
                         7'b0010011: begin
                             if (funct3 == 3'b000 && rd != 5'd0) begin
                                 regs[rd] <= regs[rs1] + imm_i;
                             end
-                            pc <= pc + 32'd4;
-                            state <= S_FETCH_ADDR;
+                            pc <= pc_plus4;
+                            imem_addr <= pc_plus4[9:2];
+                            state <= S_FETCH_WAIT;
                         end
 
                         7'b0000011: begin
                             dmem_addr <= load_byte_addr[11:2];
                             load_rd <= rd;
-                            pc <= pc + 32'd4;
+                            pc <= pc_plus4;
+                            imem_addr <= pc_plus4[9:2];
                             state <= S_LOAD_WAIT;
                         end
 
                         7'b0100011: begin
                             dmem_addr <= store_byte_addr[11:2];
                             dmem_wdata <= regs[rs2];
-                            pc <= pc + 32'd4;
+                            pc <= pc_plus4;
+                            imem_addr <= pc_plus4[9:2];
                             state <= S_STORE;
                         end
 
                         7'b1100011: begin
                             if ((funct3 == 3'b000 && regs[rs1] == regs[rs2]) ||
                                 (funct3 == 3'b100 && $signed(regs[rs1]) < $signed(regs[rs2]))) begin
-                                pc <= pc + imm_b;
+                                pc <= pc_branch;
+                                imem_addr <= pc_branch[9:2];
                             end
                             else begin
-                                pc <= pc + 32'd4;
+                                pc <= pc_plus4;
+                                imem_addr <= pc_plus4[9:2];
                             end
-                            state <= S_FETCH_ADDR;
+                            state <= S_FETCH_WAIT;
                         end
 
                         default: begin
-                            pc <= pc + 32'd4;
-                            state <= S_FETCH_ADDR;
+                            pc <= pc_plus4;
+                            imem_addr <= pc_plus4[9:2];
+                            state <= S_FETCH_WAIT;
                         end
                     endcase
                 end
@@ -260,13 +269,14 @@ module Simple_CPU(
                     if (load_rd != 5'd0) begin
                         regs[load_rd] <= dmem_rdata;
                     end
-                    state <= S_FETCH_ADDR;
+                    instr_reg <= instr;
+                    state <= S_DECODE;
                 end
 
                 S_STORE: begin
                     dmem_addr <= 10'd0;
                     dmem_wdata <= 32'd0;
-                    state <= S_FETCH_ADDR;
+                    state <= S_FETCH_CAP;
                 end
 
                 default: begin
@@ -317,7 +327,6 @@ module CNN(
     localparam C_WRITE_DONE    = 6'd25;
     localparam C_FINISHED      = 6'd26;
     localparam C_ACCUM_ROW     = 6'd28;
-    localparam C_FINISH_PIXEL  = 6'd29;
 
     reg [5:0] state;
     reg [3:0] load_idx;
@@ -337,7 +346,7 @@ module CNN(
     reg [11:0] row_base;
     reg [1:0] krow;
     reg [11:0] out_index;
-    reg signed [31:0] accum;
+    reg signed [18:0] accum;
     reg [31:0] pack_word;
 
     reg [9:0] req_word_addr;
@@ -347,9 +356,9 @@ module CNN(
     reg signed [7:0] kernel0;
     reg signed [7:0] kernel1;
     reg signed [7:0] kernel2;
-    reg signed [31:0] prod0_reg;
-    reg signed [31:0] prod1_reg;
-    reg signed [31:0] prod2_reg;
+    reg signed [18:0] prod0_reg;
+    reg signed [18:0] prod1_reg;
+    reg signed [18:0] prod2_reg;
     reg [31:0] cache_word0 [0:2];
     reg [31:0] cache_word1 [0:2];
     reg [1:0] cache_lane [0:2];
@@ -361,13 +370,13 @@ module CNN(
     wire signed [7:0] feature0;
     wire signed [7:0] feature1;
     wire signed [7:0] feature2;
-    wire signed [31:0] prod0_next;
-    wire signed [31:0] prod1_next;
-    wire signed [31:0] prod2_next;
-    wire signed [31:0] row_sum;
-    wire signed [31:0] acc_next;
-    wire signed [7:0] rounded_accum;
-    wire [31:0] pack_finished_accum;
+    wire signed [18:0] prod0_next;
+    wire signed [18:0] prod1_next;
+    wire signed [18:0] prod2_next;
+    wire signed [18:0] row_sum;
+    wire signed [18:0] acc_next;
+    wire signed [7:0] rounded_final_accum;
+    wire [31:0] pack_final_accum;
     wire [11:0] in_w_ext = {6'd0, in_w};
     wire [11:0] col_ext = {6'd0, col};
     wire [1:0] next_krow = krow + 2'd1;
@@ -476,9 +485,9 @@ module CNN(
     endfunction
 
     function signed [7:0] round_sat_q12_to_q6;
-        input signed [31:0] value;
-        reg signed [31:0] base;
-        reg signed [31:0] rounded;
+        input signed [18:0] value;
+        reg signed [18:0] base;
+        reg signed [18:0] rounded;
         reg [5:0] rem;
         begin
             base = value >>> 6;
@@ -487,19 +496,19 @@ module CNN(
                 rounded = base;
             end
             else if (rem > 6'd32) begin
-                rounded = base + 32'sd1;
+                rounded = base + 19'sd1;
             end
             else if (base[0] == 1'b0) begin
                 rounded = base;
             end
             else begin
-                rounded = base + 32'sd1;
+                rounded = base + 19'sd1;
             end
 
-            if (rounded > 32'sd127) begin
+            if (rounded > 19'sd127) begin
                 round_sat_q12_to_q6 = 8'sd127;
             end
-            else if (rounded < -32'sd128) begin
+            else if (rounded < -19'sd128) begin
                 round_sat_q12_to_q6 = -8'sd128;
             end
             else begin
@@ -508,7 +517,7 @@ module CNN(
         end
     endfunction
 
-    function signed [31:0] mul8;
+    function signed [18:0] mul8;
         input signed [7:0] a;
         input signed [7:0] b;
         begin
@@ -554,8 +563,8 @@ module CNN(
     assign prod2_next = mul8(feature2, kernel2);
     assign row_sum = prod0_reg + prod1_reg + prod2_reg;
     assign acc_next = accum + row_sum;
-    assign rounded_accum = round_sat_q12_to_q6(accum);
-    assign pack_finished_accum = put_lane(pack_word, out_index[1:0], rounded_accum);
+    assign rounded_final_accum = round_sat_q12_to_q6(acc_next);
+    assign pack_final_accum = put_lane(pack_word, out_index[1:0], rounded_final_accum);
 
     always @(posedge clk) begin
         if (!rstn) begin
@@ -577,7 +586,7 @@ module CNN(
             row_base <= 12'd0;
             krow <= 2'd0;
             out_index <= 12'd0;
-            accum <= 32'sd0;
+            accum <= 19'sd0;
             pack_word <= 32'd0;
             req_word_addr <= 10'd0;
             req_lane <= 2'd0;
@@ -586,9 +595,9 @@ module CNN(
             kernel0 <= 8'sd0;
             kernel1 <= 8'sd0;
             kernel2 <= 8'sd0;
-            prod0_reg <= 32'sd0;
-            prod1_reg <= 32'sd0;
-            prod2_reg <= 32'sd0;
+            prod0_reg <= 19'sd0;
+            prod1_reg <= 19'sd0;
+            prod2_reg <= 19'sd0;
             cache_valid <= 3'd0;
             bias0 <= 8'sd0;
             bias1 <= 8'sd0;
@@ -729,7 +738,7 @@ module CNN(
                 end
 
                 C_PIXEL_START: begin
-                    accum <= {{18{(layer ? bias1[7] : bias0[7])}},
+                    accum <= {{5{(layer ? bias1[7] : bias0[7])}},
                               (layer ? bias1 : bias0), 6'd0};
                     krow <= 2'd0;
                     req_word_addr <= first_word_addr;
@@ -820,7 +829,27 @@ module CNN(
                 C_ACCUM_ROW: begin
                     accum <= acc_next;
                     if (krow == 2'd2) begin
-                        state <= C_FINISH_PIXEL;
+                        if (flush_word) begin
+                            addr <= base_out + out_index[11:2];
+                            dinb <= pack_final_accum;
+                            web <= 1'b1;
+                            pack_word <= 32'd0;
+                            state <= C_WRITE_OUT;
+                        end
+                        else begin
+                            pack_word <= pack_final_accum;
+                            if (col == out_w - 6'd1) begin
+                                col <= 6'd0;
+                                row <= row + 6'd1;
+                                row_base <= row_base + {6'd0, in_w};
+                                cache_valid <= 3'd0;
+                            end
+                            else begin
+                                col <= col + 6'd1;
+                            end
+                            out_index <= out_index + 12'd1;
+                            state <= C_PIXEL_START;
+                        end
                     end
                     else begin
                         krow <= next_krow;
@@ -833,30 +862,6 @@ module CNN(
                         else begin
                             state <= C_ROW_CAP_A;
                         end
-                    end
-                end
-
-                C_FINISH_PIXEL: begin
-                    if (flush_word) begin
-                        addr <= base_out + out_index[11:2];
-                        dinb <= pack_finished_accum;
-                        web <= 1'b1;
-                        pack_word <= 32'd0;
-                        state <= C_WRITE_OUT;
-                    end
-                    else begin
-                        pack_word <= pack_finished_accum;
-                        if (col == out_w - 6'd1) begin
-                            col <= 6'd0;
-                            row <= row + 6'd1;
-                            row_base <= row_base + {6'd0, in_w};
-                            cache_valid <= 3'd0;
-                        end
-                        else begin
-                            col <= col + 6'd1;
-                        end
-                        out_index <= out_index + 12'd1;
-                        state <= C_PIXEL_START;
                     end
                 end
 

@@ -16,18 +16,19 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前工作版本更新為 `v0.9.3-at-fullcache`：在 `RISCV_CNN.v` 重新啟用更激進的 general sliding-window row-cache reuse，以降低 AT product；此版本不是 testcase/golden 特判。
-- `v0.9.3-at-fullcache` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 16022`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
-- `v0.9.3-at-fullcache` bitstream 已產生：`final/bit_temp/at_fullcache_20260525_164220.bit`；non-project implementation route 0 errors，post-route setup slack `0.983 ns`、hold slack `0.038 ns`。
-- `v0.9.3-at-fullcache` 尚未重新跑 full #3 post-synthesis timing / #5 post-implementation timing simulation；若要作為最終交付版，仍需補跑這兩項。
+- 目前工作版本更新為 `v0.9.4-rank1-pipeline`：在 `RISCV_CNN.v` 採用 CPU instruction prefetch、CNN final-row finish pipeline、19-bit CNN accumulator narrowing，目標是接近 `v0.8.0` 的 AT product，同時保留 `v0.9.x` 的 timing-simulation 修正方向；此版本不是 testcase/golden 特判。
+- `v0.9.4-rank1-pipeline` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 14268`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
+- `v0.9.4-rank1-pipeline` bitstream 已產生：`final/bit_temp/at_rank1_adopted_pipeline_20260525_233131.bit`；non-project implementation route 0 errors，post-route setup slack `0.013 ns`、hold slack `0.072 ns`。
+- `v0.9.4-rank1-pipeline` 尚未重新跑 full #3 post-synthesis timing / #5 post-implementation timing simulation；若要作為最終交付版，仍需補跑這兩項。`v0.8.0` 雖然 AT product 略低，但不是 clean #5 PASS 節點，因此本版定位為接近 v0.8 且 implementation timing 可過的採用版。
+- `v0.9.3-at-fullcache` 已產生 bitstream 並通過 non-project implementation timing，但 AT product 明顯差於 `v0.9.4`，保留為實驗紀錄。
 - `v0.9.2` 已整合 TA 2026-05-24 update 的 top-level `FPGA_clk` 與 `all_done` 介面，並同步新版 `test_circuit_bram_ip.v` / `post_sim_tb.v`。
 - `v0.9.2` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 25746`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
 - `v0.9.2` 尚未重新跑 full implementation / #5 post-implementation timing simulation；上一個 clean post-impl timing PASS 節點仍是 `v0.9.1`/`v0.9.0` datapath。
 - `v0.9.1` 補上 Vivado GUI simulation compatibility：testbench 預設不再讀 post-synth/post-impl timing netlist 中可能被最佳化掉的 RTL internal signals；RTL batch flow 需要 cycle_count 時改由 `RTL_INTERNAL_CHECK` 明確啟用。
 - `v0.9.0` 修正 post-implementation timing simulation：CPU instruction fetch 改為 register capture、CNN `web` 改為 registered pulse、finish event 改用 registered `done`，並停用 post-impl timing 下會造成 CNN mismatch 的 row-cache reuse path。
 - `RISCV_CNN.v` 的 `Simple_CPU` 已移除先前硬寫在 RTL 裡的 `S_HOST_*` bias/start host states，CPU 現在只從 `Instruction_Memory` fetch/execute instruction；bias/start machine code 仍由 `.coe` load 進 `Instruction_Memory`。
-- 根目錄 `instr_mem_cpucheck.coe` 目前是專案整合版：前 36 筆保留 TA CPU-check instruction，後面追加 17 筆 bias/start/halt instruction，共 53 筆。TA 原始 `instr_mem_cpucheck.coe` 保留在 `助教給的檔案/` 作為 baseline/reference。
-- 已同步 `Instruction_Memory` 相關 COE/MIF 複本：`final/final.ip_user_files/mem_init_files/instr_mem_cpucheck.coe`、`final/final.gen/sources_1/ip/Instruction_Memory/Instruction_Memory.mif`、`final/final.ip_user_files/mem_init_files/Instruction_Memory.mif`、`final/final.runs/Instruction_Memory_synth_1/Instruction_Memory.mif`。
+- 根目錄 `instr_mem_cpucheck.coe` 目前是專案整合版：前 36 筆保留 TA CPU-check instruction，後面追加 15 筆 bias/start/halt instruction，共 51 筆。TA 原始 `instr_mem_cpucheck.coe` 保留在 `助教給的檔案/` 作為 baseline/reference。
+- 已同步 `Instruction_Memory` 相關 COE/MIF 複本：`final/final.ip_user_files/mem_init_files/instr_mem_cpucheck.coe`、`final/final.gen/sources_1/ip/Instruction_Memory/Instruction_Memory.mif`、`final/final.ip_user_files/mem_init_files/Instruction_Memory.mif`。
 - `v0.9.0` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 25746`、`FINALPROJECT_SIM_PASS`。
 - COE-based bias/start 版本 post-synthesis fast functional simulation 已通過：`post_synth_score_bcd = 0100`，`FINALPROJECT_POST_SYNTH_PASS`。
 - `v0.9.0` full #5 post-implementation timing simulation 已通過：`post_impl_score_bcd = 0100`、`FINALPROJECT_POST_IMPL_PASS`。
@@ -50,6 +51,16 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.9.4-rank1-pipeline` - 2026-05-25 23:39 Asia/Taipei
+  - `RISCV_CNN.v`：`Simple_CPU` 在 decode 階段提前送出下一個 `Instruction_Memory` address，讓 ALU/I-type/branch/default instruction 少掉一個 fetch-address bubble；load/store 也保留下一指令 prefetch，並在 write-back/store 後直接進入 capture/decode。
+  - `RISCV_CNN.v`：CNN 將最後一個 kernel row 的 accumulate、rounding、packing、write decision 合併到 `C_ACCUM_ROW`，移除 `C_FINISH_PIXEL` state；同時將 CNN accumulator/product datapath 收斂為 19-bit，符合 8-bit feature/weight、3x3 MAC 與 bias Q6 range 的上界，降低 post-route critical path。
+  - `instr_mem_cpucheck.coe` 與 `Instruction_Memory.mif` 複本：保留 TA 前 36 筆 CPU-check instruction；只縮短追加的 bias/start setup sequence，移除一條無條件 branch 與一條最後 halt 前的 redundant `lw x0,0(x0)`。這仍是 CPU 執行的一般 machine-code setup，不是 RTL host state 或 testcase 特判。
+  - RTL simulation 通過：`score_bcd = 0100`、`cycle_count = 14268`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
+  - Bitstream：`final/bit_temp/at_rank1_adopted_pipeline_20260525_233131.bit`。
+  - Non-project implementation route 0 errors；post-route timing met：setup slack `0.013 ns`、hold slack `0.072 ns`。
+  - Implementation utilization：2305 Slice LUTs、2065 Slice Registers、261 F7 Muxes、10 F8 Muxes、14 Block RAM Tiles、2 DSPs。
+  - PDF 官方 AT product：`742078680`，比 baseline 改善約 `55.67%`，比 `v0.8.0` 高 `1713780`，約差 `0.231%`。考量 `v0.8.0` 不是 clean #5 PASS 節點，此版採用為接近 v0.8 的 timing-aware pipeline 版本。
+  - 捨棄嘗試：`S_FETCH_WAIT` 直接 capture 造成 RTL score 只到 `0030`；full prefetch 在 accumulator narrowing 前 post-route WNS 約 `-0.383 ns`；partial prefetch timing 可過但 AT product 變差；PC10/PC12 裁剪功能與 timing 可過但 area 變大，因此不採用。
 - `v0.9.3-at-fullcache` - 2026-05-25 16:48 Asia/Taipei
   - `RISCV_CNN.v`：將 CNN row-cache reuse 改為 full sliding-window cache hit rule。當目前 input word 可由上一個 output pixel 的相鄰 lane cache 提供時，直接重用 cache；lane 2 仍走 read-B path，其餘 cache hit lane 不額外發 BRAM read。
   - 這是 general datapath reuse：判斷只使用 feature word/lane 與 kernel row 的相鄰關係，不讀取 testcase id、score、golden data 或輸出答案，不是特定 testcase 特判。
@@ -207,6 +218,7 @@ PDF AT product = Official Area × Processing Time
 | `v0.9.1` | 2026-05-24 15:52 | 25746 | 257460 ns | cycles -8334 / -24.45% | 4839 | -73 / -1.49% | 2154 | 1862 | 261 | 2 | 14 | 2 | 0.731 ns | 1245848940 | -428160660 / -25.58% |
 | `v0.9.2` | 2026-05-24 22:38 | 25746 | 257460 ns | cycles -8334 / -24.45% | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | not rerun | RTL only after TA interface update |
 | `v0.9.3-at-fullcache` | 2026-05-25 16:48 | 16022 | 160220 ns | cycles -18058 / -52.99% | 5256 | +344 / +7.00% | 2355 | 2078 | 261 | 2 | 14 | 2 | 0.983 ns | 842116320 | -831893280 / -49.69% |
+| `v0.9.4-rank1-pipeline` | 2026-05-25 23:39 | 14268 | 142680 ns | cycles -19812 / -58.13% | 5201 | +289 / +5.88% | 2305 | 2065 | 261 | 10 | 14 | 2 | 0.013 ns | 742078680 | -931930920 / -55.67% |
 
 解讀：
 
@@ -234,8 +246,54 @@ PDF AT product = Official Area × Processing Time
 - `v0.9.1` 只修正 Vivado GUI simulation elaborate compatibility，不修改 RTL datapath；AT product、area 與 timing 數字沿用 `v0.9.0`。
 - `v0.9.2` 只整合 TA 2026-05-24 top-level `FPGA_clk/all_done` 介面與新版 test circuit；RTL regression 已通過，但 implementation utilization、WNS 與正式 AT product 需重新跑 full Vivado flow 後更新。
 - `v0.9.3-at-fullcache` 重新啟用更激進的 full sliding-window row-cache reuse，cycle_count 降到 16022；Official Area 比 baseline 增加 344，但 PDF AT product 仍比 baseline 改善約 49.69%。此版已產生 bitstream 並通過 non-project implementation timing，但尚未重跑 full #3/#5 timing simulation。
+- `v0.9.4-rank1-pipeline` 進一步把 CPU fetch、load/store overlap、CNN final-row finish 與 accumulator narrowing 合併，cycle_count 降到 14268；PDF AT product 比 baseline 改善約 55.67%，只比 `v0.8.0` 高約 0.231%。因 `v0.8.0` 並非 clean #5 PASS 節點，此版定位為接近 v0.8 的 timing-aware 採用版。
 
 ## 版本改動詳細部分
+
+### v0.9.4 rank1 pipeline timing-aware 採用版
+
+修改檔案：
+
+```text
+RISCV_CNN.v
+instr_mem_cpucheck.coe
+final\final.ip_user_files\mem_init_files\instr_mem_cpucheck.coe
+final\final.gen\sources_1\ip\Instruction_Memory\Instruction_Memory.mif
+final\final.ip_user_files\mem_init_files\Instruction_Memory.mif
+scripts\write_bit_temp.tcl
+README.md
+CODEX_WORKLOG.md
+```
+
+修正內容：
+
+- CPU fetch pipeline：decode 時就送出下一個 instruction address，讓非 load/store instruction 少掉 `S_FETCH_ADDR` bubble；load/store 則把 Data_mem wait/write-back 與下一條 instruction memory read 重疊。
+- CNN finish pipeline：最後一個 kernel row 累加完成後同 cycle 進行 rounding、packing 與 write decision，移除 `C_FINISH_PIXEL`。
+- CNN accumulator narrowing：依 8-bit feature/weight、3x3 MAC 與 bias Q6 範圍，將 accumulator/product datapath 從 32-bit 收斂到 19-bit，降低 timing pressure。
+- Instruction image：追加的 bias/start setup machine code 移除 redundant branch/no-op，但仍由 CPU 一般指令完成 bias/start，不改 TA test circuit、不讀 golden、不特判 testcase。
+- `scripts/write_bit_temp.tcl`：每次 bitstream 使用獨立 timestamp work directory，避免 Vivado 重用 `.Xil` 暫存目錄造成刪除/鎖定錯誤。
+
+驗證結果：
+
+```text
+RTL simulation:
+score_bcd    = 0100
+result_valid = 7fff
+result_pass  = 7fff
+cycle_count  = 14268
+FINALPROJECT_SIM_PASS
+
+Non-project implementation:
+bitstream = final/bit_temp/at_rank1_adopted_pipeline_20260525_233131.bit
+route errors = 0
+WNS = 0.013 ns
+WHS = 0.072 ns
+```
+
+採用判定：
+
+- 採用。`v0.8.0` 的 AT product 略低，但不是 clean #5 PASS 節點；此版 AT product 僅比 `v0.8.0` 高約 `0.231%`，且保留 `v0.9.x` 的 timing-simulation 修正方向與通過 implementation timing。
+- 未宣稱 full #3/#5 timing simulation 已重新通過；正式交付前仍需依 GUI 或 batch flow 補跑。
 
 ### v0.9.1 Vivado GUI simulation compatibility 修正版
 
