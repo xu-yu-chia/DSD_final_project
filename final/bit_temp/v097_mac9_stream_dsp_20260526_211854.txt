@@ -1,0 +1,5 @@
+label=v097_mac9_stream_dsp
+timestamp=20260526_211854
+bitstream=C:/Users/User/DSD_Lab/Final/DSD_final_project/final/bit_temp/v097_mac9_stream_dsp_20260526_211854.bit
+checkpoint=C:/Users/User/DSD_Lab/Final/DSD_final_project/final/bit_temp/v097_mac9_stream_dsp_20260526_211854.dcp
+source_repo=C:/Users/User/DSD_Lab/Final/DSD_final_project

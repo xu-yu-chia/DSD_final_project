@@ -10,7 +10,7 @@ module RISCV_CNN(
     output [6:0]  seven_seg,
     output [3:0]  anode
 );
-    localparam integer CNN_MAC_PARALLEL = 3;
+    localparam integer CNN_MAC_PARALLEL = 9;
 
     wire clk = FPGA_clk;
     wire sys_rstn;
@@ -352,8 +352,12 @@ module CNN #(
     reg [31:0] stream_word;
     reg [11:0] output_total;
     reg [11:0] out_index;
+    reg [11:0] retire_count;
     reg [11:0] active_out_index;
     reg active_last;
+    reg write_pending;
+    reg [9:0] pending_addr;
+    reg [31:0] pending_word;
     reg [31:0] pack_word;
     integer wi;
 
@@ -393,6 +397,10 @@ module CNN #(
     wire mac_valid;
     wire mac_busy;
     wire signed [31:0] mac_result;
+    wire [11:0] mac_out_index;
+    wire mac_out_last;
+    wire streaming_mac = (MAC_PARALLEL == 9);
+    wire mac_result_flush = (mac_out_index[1:0] == 2'd3) || mac_out_last;
 
     assign enb = rstn;
 
@@ -449,8 +457,12 @@ module CNN #(
         .k6(k6),
         .k7(k7),
         .k8(k8),
+        .tag_index(out_index),
+        .tag_last(current_last),
         .busy(mac_busy),
         .valid(mac_valid),
+        .result_index(mac_out_index),
+        .result_last(mac_out_last),
         .result_q12(mac_result)
     );
 
@@ -516,8 +528,12 @@ module CNN #(
             stream_word <= 32'd0;
             output_total <= 12'd0;
             out_index <= 12'd0;
+            retire_count <= 12'd0;
             active_out_index <= 12'd0;
             active_last <= 1'b0;
+            write_pending <= 1'b0;
+            pending_addr <= 10'd0;
+            pending_word <= 32'd0;
             pack_word <= 32'd0;
             bias0 <= 8'sd0;
             bias1 <= 8'sd0;
@@ -527,6 +543,19 @@ module CNN #(
         end
         else begin
             web <= 1'b0;
+            if (streaming_mac && mac_valid) begin
+                retire_count <= retire_count + 12'd1;
+                if (mac_result_flush) begin
+                    pending_addr <= base_out + mac_out_index[11:2];
+                    pending_word <= put_lane(pack_word, mac_out_index[1:0], quant_pixel);
+                    write_pending <= 1'b1;
+                    pack_word <= 32'd0;
+                end
+                else begin
+                    pack_word <= put_lane(pack_word, mac_out_index[1:0], quant_pixel);
+                end
+            end
+
             case (state)
                 C_IDLE: begin
                     addr <= 10'd0;
@@ -644,15 +673,27 @@ module CNN #(
                     stream_x <= 6'd0;
                     stream_y <= 6'd0;
                     out_index <= 12'd0;
+                    retire_count <= 12'd0;
                     active_out_index <= 12'd0;
                     active_last <= 1'b0;
+                    write_pending <= 1'b0;
+                    pending_addr <= 10'd0;
+                    pending_word <= 32'd0;
                     pack_word <= 32'd0;
                     state <= C_STREAM_NEXT;
                 end
 
                 C_STREAM_NEXT: begin
-                    if (stream_done) begin
-                        state <= C_LAYER_NEXT;
+                    if (streaming_mac && write_pending) begin
+                        state <= C_WRITE_OUT;
+                    end
+                    else if (stream_done) begin
+                        if (streaming_mac && (retire_count != output_total)) begin
+                            state <= C_MAC_WAIT;
+                        end
+                        else begin
+                            state <= C_LAYER_NEXT;
+                        end
                     end
                     else if (stream_lane == 2'd0) begin
                         addr <= stream_word_addr;
@@ -678,9 +719,16 @@ module CNN #(
 
                 C_WINDOW: begin
                     if (line_valid) begin
-                        active_out_index <= out_index;
-                        active_last <= current_last;
-                        state <= C_MAC_WAIT;
+                        if (streaming_mac) begin
+                            out_index <= out_index + 12'd1;
+                            advance_input;
+                            state <= C_STREAM_NEXT;
+                        end
+                        else begin
+                            active_out_index <= out_index;
+                            active_last <= current_last;
+                            state <= C_MAC_WAIT;
+                        end
                     end
                     else begin
                         advance_input;
@@ -689,7 +737,15 @@ module CNN #(
                 end
 
                 C_MAC_WAIT: begin
-                    if (mac_valid) begin
+                    if (streaming_mac) begin
+                        if (write_pending) begin
+                            state <= C_WRITE_OUT;
+                        end
+                        else if (retire_count == output_total) begin
+                            state <= C_LAYER_NEXT;
+                        end
+                    end
+                    else if (mac_valid) begin
                         if (flush_word) begin
                             addr <= base_out + active_out_index[11:2];
                             dinb <= packed_next_word;
@@ -707,9 +763,18 @@ module CNN #(
                 end
 
                 C_WRITE_OUT: begin
-                    out_index <= out_index + 12'd1;
-                    advance_input;
-                    state <= active_last ? C_LAYER_NEXT : C_STREAM_NEXT;
+                    if (streaming_mac) begin
+                        addr <= pending_addr;
+                        dinb <= pending_word;
+                        web <= 1'b1;
+                        write_pending <= 1'b0;
+                        state <= C_STREAM_NEXT;
+                    end
+                    else begin
+                        out_index <= out_index + 12'd1;
+                        advance_input;
+                        state <= active_last ? C_LAYER_NEXT : C_STREAM_NEXT;
+                    end
                 end
 
                 C_LAYER_NEXT: begin
@@ -1097,8 +1162,12 @@ module CNN_MAC_Engine #(
     input signed [7:0] k6,
     input signed [7:0] k7,
     input signed [7:0] k8,
+    input [11:0] tag_index,
+    input tag_last,
     output reg busy,
     output reg valid,
+    output reg [11:0] result_index,
+    output reg result_last,
     output reg signed [31:0] result_q12
 );
     localparam M_IDLE    = 2'd0;
@@ -1113,6 +1182,20 @@ module CNN_MAC_Engine #(
         begin
             prod = a * b;
             mul_ext = {{16{prod[15]}}, prod};
+        end
+    endfunction
+
+    function signed [17:0] sx18;
+        input signed [7:0] value;
+        begin
+            sx18 = {{10{value[7]}}, value};
+        end
+    endfunction
+
+    function signed [31:0] prod36_to_q12;
+        input signed [35:0] value;
+        begin
+            prod36_to_q12 = {{16{value[15]}}, value[15:0]};
         end
     endfunction
 
@@ -1137,6 +1220,8 @@ generate
         reg signed [7:0] kr6;
         reg signed [7:0] kr7;
         reg signed [7:0] kr8;
+        reg [11:0] tag_index_r;
+        reg tag_last_r;
 
         always @(posedge clk) begin
             if (!rstn) begin
@@ -1145,7 +1230,11 @@ generate
                 acc <= 32'sd0;
                 busy <= 1'b0;
                 valid <= 1'b0;
+                result_index <= 12'd0;
+                result_last <= 1'b0;
                 result_q12 <= 32'sd0;
+                tag_index_r <= 12'd0;
+                tag_last_r <= 1'b0;
             end
             else begin
                 valid <= 1'b0;
@@ -1157,6 +1246,8 @@ generate
                             f5 <= w12; f6 <= w20; f7 <= w21; f8 <= w22;
                             kr1 <= k1; kr2 <= k2; kr3 <= k3; kr4 <= k4;
                             kr5 <= k5; kr6 <= k6; kr7 <= k7; kr8 <= k8;
+                            tag_index_r <= tag_index;
+                            tag_last_r <= tag_last;
                             acc <= bias_q12 + mul_ext(w00, k0);
                             term_idx <= 4'd1;
                             busy <= 1'b1;
@@ -1175,6 +1266,8 @@ generate
                             4'd7: acc <= acc + mul_ext(f7, kr7);
                             default: begin
                                 result_q12 <= acc + mul_ext(f8, kr8);
+                                result_index <= tag_index_r;
+                                result_last <= tag_last_r;
                                 valid <= 1'b1;
                                 busy <= 1'b0;
                                 state <= M_IDLE;
@@ -1194,53 +1287,108 @@ generate
         end
     end
     else if (MAC_PARALLEL == 9) begin : gen_mac9
-        reg [1:0] state;
-        reg signed [31:0] s1_0;
-        reg signed [31:0] s1_1;
-        reg signed [31:0] s1_2;
-        reg signed [31:0] s1_3;
-        reg signed [31:0] s1_4;
+        reg [2:0] pipe_valid;
+        (* use_dsp = "yes" *) reg signed [35:0] p0;
+        (* use_dsp = "yes" *) reg signed [35:0] p1;
+        (* use_dsp = "yes" *) reg signed [35:0] p2;
+        (* use_dsp = "yes" *) reg signed [35:0] p3;
+        (* use_dsp = "yes" *) reg signed [35:0] p4;
+        (* use_dsp = "yes" *) reg signed [35:0] p5;
+        (* use_dsp = "yes" *) reg signed [35:0] p6;
+        (* use_dsp = "yes" *) reg signed [35:0] p7;
+        (* use_dsp = "yes" *) reg signed [35:0] p8;
+        reg signed [31:0] bias_s1;
+        reg [11:0] tag_s1;
+        reg tag_last_s1;
+        reg signed [31:0] s2_0;
+        reg signed [31:0] s2_1;
+        reg signed [31:0] s2_2;
+        reg signed [31:0] s2_3;
+        reg signed [31:0] s2_4;
+        reg [11:0] tag_s2;
+        reg tag_last_s2;
+        reg signed [31:0] s3_0;
+        reg signed [31:0] s3_1;
+        reg signed [31:0] s3_2;
+        reg [11:0] tag_s3;
+        reg tag_last_s3;
 
         always @(posedge clk) begin
             if (!rstn) begin
-                state <= M_IDLE;
                 busy <= 1'b0;
                 valid <= 1'b0;
+                result_index <= 12'd0;
+                result_last <= 1'b0;
                 result_q12 <= 32'sd0;
-                s1_0 <= 32'sd0;
-                s1_1 <= 32'sd0;
-                s1_2 <= 32'sd0;
-                s1_3 <= 32'sd0;
-                s1_4 <= 32'sd0;
+                pipe_valid <= 3'b000;
+                p0 <= 36'sd0;
+                p1 <= 36'sd0;
+                p2 <= 36'sd0;
+                p3 <= 36'sd0;
+                p4 <= 36'sd0;
+                p5 <= 36'sd0;
+                p6 <= 36'sd0;
+                p7 <= 36'sd0;
+                p8 <= 36'sd0;
+                bias_s1 <= 32'sd0;
+                tag_s1 <= 12'd0;
+                tag_last_s1 <= 1'b0;
+                s2_0 <= 32'sd0;
+                s2_1 <= 32'sd0;
+                s2_2 <= 32'sd0;
+                s2_3 <= 32'sd0;
+                s2_4 <= 32'sd0;
+                tag_s2 <= 12'd0;
+                tag_last_s2 <= 1'b0;
+                s3_0 <= 32'sd0;
+                s3_1 <= 32'sd0;
+                s3_2 <= 32'sd0;
+                tag_s3 <= 12'd0;
+                tag_last_s3 <= 1'b0;
             end
             else begin
-                valid <= 1'b0;
-                case (state)
-                    M_IDLE: begin
-                        busy <= 1'b0;
-                        if (start) begin
-                            s1_0 <= mul_ext(w00, k0) + mul_ext(w01, k1);
-                            s1_1 <= mul_ext(w02, k2) + mul_ext(w10, k3);
-                            s1_2 <= mul_ext(w11, k4) + mul_ext(w12, k5);
-                            s1_3 <= mul_ext(w20, k6) + mul_ext(w21, k7);
-                            s1_4 <= bias_q12 + mul_ext(w22, k8);
-                            busy <= 1'b1;
-                            state <= M9_S2;
-                        end
-                    end
+                valid <= pipe_valid[2];
+                busy <= start | (|pipe_valid);
+                pipe_valid <= {pipe_valid[1:0], start};
 
-                    M9_S2: begin
-                        result_q12 <= (s1_0 + s1_1) + (s1_2 + s1_3) + s1_4;
-                        valid <= 1'b1;
-                        busy <= 1'b0;
-                        state <= M_IDLE;
-                    end
+                if (start) begin
+                    p0 <= sx18(w00) * sx18(k0);
+                    p1 <= sx18(w01) * sx18(k1);
+                    p2 <= sx18(w02) * sx18(k2);
+                    p3 <= sx18(w10) * sx18(k3);
+                    p4 <= sx18(w11) * sx18(k4);
+                    p5 <= sx18(w12) * sx18(k5);
+                    p6 <= sx18(w20) * sx18(k6);
+                    p7 <= sx18(w21) * sx18(k7);
+                    p8 <= sx18(w22) * sx18(k8);
+                    bias_s1 <= bias_q12;
+                    tag_s1 <= tag_index;
+                    tag_last_s1 <= tag_last;
+                end
 
-                    default: begin
-                        state <= M_IDLE;
-                        busy <= 1'b0;
-                    end
-                endcase
+                if (pipe_valid[0]) begin
+                    s2_0 <= prod36_to_q12(p0) + prod36_to_q12(p1);
+                    s2_1 <= prod36_to_q12(p2) + prod36_to_q12(p3);
+                    s2_2 <= prod36_to_q12(p4) + prod36_to_q12(p5);
+                    s2_3 <= prod36_to_q12(p6) + prod36_to_q12(p7);
+                    s2_4 <= bias_s1 + prod36_to_q12(p8);
+                    tag_s2 <= tag_s1;
+                    tag_last_s2 <= tag_last_s1;
+                end
+
+                if (pipe_valid[1]) begin
+                    s3_0 <= s2_0 + s2_1;
+                    s3_1 <= s2_2 + s2_3;
+                    s3_2 <= s2_4;
+                    tag_s3 <= tag_s2;
+                    tag_last_s3 <= tag_last_s2;
+                end
+
+                if (pipe_valid[2]) begin
+                    result_q12 <= s3_0 + s3_1 + s3_2;
+                    result_index <= tag_s3;
+                    result_last <= tag_last_s3;
+                end
             end
         end
     end
@@ -1261,6 +1409,8 @@ generate
         reg signed [7:0] kr6;
         reg signed [7:0] kr7;
         reg signed [7:0] kr8;
+        reg [11:0] tag_index_r;
+        reg tag_last_r;
 
         always @(posedge clk) begin
             if (!rstn) begin
@@ -1270,7 +1420,11 @@ generate
                 row_sum <= 32'sd0;
                 busy <= 1'b0;
                 valid <= 1'b0;
+                result_index <= 12'd0;
+                result_last <= 1'b0;
                 result_q12 <= 32'sd0;
+                tag_index_r <= 12'd0;
+                tag_last_r <= 1'b0;
             end
             else begin
                 valid <= 1'b0;
@@ -1282,6 +1436,8 @@ generate
                             f6 <= w20; f7 <= w21; f8 <= w22;
                             kr3 <= k3; kr4 <= k4; kr5 <= k5;
                             kr6 <= k6; kr7 <= k7; kr8 <= k8;
+                            tag_index_r <= tag_index;
+                            tag_last_r <= tag_last;
                             acc <= bias_q12 + mul_ext(w00, k0) +
                                    mul_ext(w01, k1) + mul_ext(w02, k2);
                             row_idx <= 2'd1;
@@ -1305,6 +1461,8 @@ generate
 
                     M3_FINISH: begin
                         result_q12 <= acc + row_sum;
+                        result_index <= tag_index_r;
+                        result_last <= tag_last_r;
                         valid <= 1'b1;
                         busy <= 1'b0;
                         state <= M_IDLE;

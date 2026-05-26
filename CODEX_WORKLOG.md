@@ -16,7 +16,12 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前工作版本更新為 `v0.9.6-cnn-stream-mac3`：`RISCV_CNN.v` 的 CPU pipeline 不改，CNN coprocessor 改成 streaming mem_reader / unpacker / 2-line-buffer 3-row sliding window / parameterized MAC / quantizer / packer / mem_writer pipeline。
+- 目前工作版本更新為 `v0.9.7-mac9-stream-dsp`：`RISCV_CNN.v` 的 CPU pipeline 不改，CNN coprocessor 預設切到 `MAC_PARALLEL = 9`，用 9 個 18x18 DSP-style product registers + staged adder tree，並讓 CNN FSM 在 MAC9 模式下 launch window 後繼續 stream，MAC result 帶 output index tag 回來再 pack/write。
+- `v0.9.7-mac9-stream-dsp` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 7762`、`result_valid = 7fff`、`result_pass = 7fff`、`addr13 = 000004b1`、`FINALPROJECT_SIM_PASS`。
+- `v0.9.7-mac9-stream-dsp` full Vivado checks 已通過：post-route `WNS = 0.666 ns`、`WHS = 0.019 ns`；Implementation utilization 為 1848 LUT、2042 registers、261 F7、10 F8、14 BRAM tile、10 DSP。
+- `v0.9.7-mac9-stream-dsp` PDF 官方 Area = `6961`，Processing Time = `77620 ns`，AT product = `540312820`；相比 `v0.1.2` baseline AT 改善約 `67.72%`，相比 `v0.9.6-cnn-stream-mac3` AT 再改善約 `26.56%`。
+- `v0.9.7-mac9-stream-dsp` bitstream 已產生：`final/bit_temp/v097_mac9_stream_dsp_20260526_211854.bit`；bitgen route errors `0`，final bitgen `0 Errors / 0 Critical Warnings`。
+- `v0.9.6-cnn-stream-mac3` 是上一個 3-mul timing-safe 節點：`RISCV_CNN.v` 的 CPU pipeline 不改，CNN coprocessor 改成 streaming mem_reader / unpacker / 2-line-buffer 3-row sliding window / parameterized MAC / quantizer / packer / mem_writer pipeline。
 - `v0.9.6-cnn-stream-mac3` 已先備份舊 RTL：`RISCV_CNN.before_cnn_pipeline.v`。此備份來自改 CNN pipeline 前的 `RISCV_CNN.v`，保留作為回退基準。
 - `v0.9.6-cnn-stream-mac3` 預設 `MAC_PARALLEL = 3`，使用 true 3-multiplier row-MAC，並加上 final row-sum register 讓 10 ns implementation timing 收斂；`MAC_PARALLEL=1/9` 程式路徑已保留，但尚未分別跑 RTL/full Vivado 簽核。
 - `v0.9.6-cnn-stream-mac3` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 14067`、`result_valid = 7fff`、`result_pass = 7fff`、`addr13 = 000004b1`、`FINALPROJECT_SIM_PASS`。
@@ -57,6 +62,17 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.9.7-mac9-stream-dsp` - 2026-05-26 Asia/Taipei
+  - `RISCV_CNN.v`：預設 `CNN_MAC_PARALLEL` 從 `3` 改為 `9`，CPU pipeline 不改。
+  - `CNN_MAC_Engine`：MAC9 path 改成可每 cycle 接收一個 window 的 pipeline，使用 9 個 18x18 sign-extended product registers，並以 `(* use_dsp = "yes" *)` 促使 Vivado 使用 DSP；product、pair-sum、final-sum 分 stage。
+  - `CNN` FSM：MAC9 模式下不再每個 output pixel 等 MAC 完成；window launch 後立即 `advance_input` 繼續 stream。MAC result 透過 `tag_index/tag_last -> result_index/result_last` 帶回 output address/lane/end flag，確保 valid、output index 與 write address 對齊。
+  - Mem writer：MAC result 回來時先 pack；每 4 個 output 或 layer end 建立 pending write，再由 FSM 在安全 cycle 寫回 Data Memory port B。Intermediate base 仍為 `272`，final output base 仍為 `600`，避開 `0..15` 與 `960..1023` reserved range。
+  - RTL simulation 通過：`score_bcd = 0100`、`cycle_count = 7762`、`result_valid = 7fff`、`result_pass = 7fff`、`addr13 = 000004b1`、`FINALPROJECT_SIM_PASS`。
+  - Full Vivado checks 通過：post-route `WNS = 0.666 ns`、`TNS = 0`、`WHS = 0.019 ns`、`THS = 0`。
+  - Implementation utilization：1848 Slice LUTs、2042 Slice Registers、261 F7 Muxes、10 F8 Muxes、14 Block RAM Tiles、10 DSPs。
+  - PDF 官方 AT product：`540312820`，比 baseline 改善約 `67.72%`；相比 `v0.9.6-cnn-stream-mac3`，cycle 從 `14067` 降到 `7762`，DSP 從 `1` 增加到 `10`，Official Area 從 `5227` 增加到 `6961`，AT product 從 `735681090` 降到 `540312820`，約再改善 `26.56%`。
+  - Bitstream：`final/bit_temp/v097_mac9_stream_dsp_20260526_211854.bit`；checkpoint：`final/bit_temp/v097_mac9_stream_dsp_20260526_211854.dcp`；manifest：`final/bit_temp/v097_mac9_stream_dsp_20260526_211854.txt`。
+  - QA 05/21 warning 判讀：final bitgen 階段為 `0 Errors`、`0 Critical Warnings`；剩餘 DRC warnings 主要來自 TA `test_circuit/golden_rom` 的 RAMB async control check。此版沒有新增 BRAM/IP，Data_mem/Instruction_Memory 設定仍由既有 flow 對齊 Memory Setting。
 - `v0.9.6-cnn-stream-mac3` - 2026-05-26 Asia/Taipei
   - `RISCV_CNN.v`：先備份舊檔為 `RISCV_CNN.before_cnn_pipeline.v`，再重構 CNN coprocessor；top module 仍為 `RISCV_CNN`，CPU pipeline 不改。
   - CNN pipeline 改為 streaming 結構：config/bias/weights 先載入暫存器，input/intermediate feature map 以 mem_reader + unpacker 串流進 2-line-buffer 3-row sliding window，再送入 parameterized `CNN_MAC_Engine`、`CNN_Quantizer`、packer 與 mem_writer。
@@ -243,6 +259,7 @@ PDF AT product = Official Area × Processing Time
 | `v0.9.4-rank1-pipeline` | 2026-05-25 23:39 | 14268 | 142680 ns | cycles -19812 / -58.13% | 5201 | +289 / +5.88% | 2305 | 2065 | 261 | 10 | 14 | 2 | 0.013 ns | 742078680 | -931930920 / -55.67% |
 | `v0.9.5-pdf-verified` | 2026-05-25 | 14268 | 142680 ns | cycles -19812 / -58.13% | 5201 | +289 / +5.88% | 2305 | 2065 | 261 | 10 | 14 | 2 | 0.013 ns | 742078680 | PDF compliance docs only; same bit as v0.9.4 |
 | `v0.9.6-cnn-stream-mac3` | 2026-05-26 | 14067 | 140670 ns | cycles -20013 / -58.72% | 5227 | +315 / +6.41% | 2603 | 2072 | 262 | 10 | 14 | 1 | 0.007 ns | 735681090 | -938328510 / -56.05% |
+| `v0.9.7-mac9-stream-dsp` | 2026-05-26 | 7762 | 77620 ns | cycles -26318 / -77.22% | 6961 | +2049 / +41.71% | 1848 | 2042 | 261 | 10 | 14 | 10 | 0.666 ns | 540312820 | -1133696780 / -67.72% |
 
 解讀：
 
@@ -272,9 +289,73 @@ PDF AT product = Official Area × Processing Time
 - `v0.9.3-at-fullcache` 重新啟用更激進的 full sliding-window row-cache reuse，cycle_count 降到 16022；Official Area 比 baseline 增加 344，但 PDF AT product 仍比 baseline 改善約 49.69%。此版已產生 bitstream 並通過 non-project implementation timing，但尚未重跑 full #3/#5 timing simulation。
 - `v0.9.4-rank1-pipeline` 進一步把 CPU fetch、load/store overlap、CNN final-row finish 與 accumulator narrowing 合併，cycle_count 降到 14268；PDF AT product 比 baseline 改善約 55.67%，只比 `v0.8.0` 高約 0.231%。因 `v0.8.0` 並非 clean #5 PASS 節點，此版定位為接近 v0.8 的 timing-aware 採用版。
 - `v0.9.5-pdf-verified` 不改 RTL/bitstream，只新增 PDF compliance 檢查紀錄；效能、面積與 timing 數字沿用 `v0.9.4-rank1-pipeline`。
-- `v0.9.6-cnn-stream-mac3` 將 CNN 改成 streaming line-buffer pipeline 與 true parameterized MAC；預設 3-mul 加 final row-sum register，full Vivado timing 通過，cycle_count 比 `v0.9.4/v0.9.5` 少 201 cycles，PDF AT product 約再改善 0.862%。此版尚未產生 bitstream，且 `MAC_PARALLEL=1/9` 尚未獨立簽核。
+- `v0.9.6-cnn-stream-mac3` 將 CNN 改成 streaming line-buffer pipeline 與 true parameterized MAC；預設 3-mul 加 final row-sum register，full Vivado timing 通過，cycle_count 比 `v0.9.4/v0.9.5` 少 201 cycles，PDF AT product 約再改善 0.862%。此版已補產 bitstream，`MAC_PARALLEL=1` 尚未獨立簽核。
+- `v0.9.7-mac9-stream-dsp` 使用更多 DSP 並把 MAC9 result/tag pipeline 化，同時讓 CNN FSM overlap MAC 與 input stream；cycle_count 降到 7762。雖然 DSP 從 1 增到 10、Official Area 增到 6961，但 PDF AT product 降到 `540312820`，相對 `v0.9.6` 再改善約 26.56%。
 
 ## 版本改動詳細部分
+
+### v0.9.7 MAC9 streaming DSP pipeline
+
+修改檔案：
+
+```text
+RISCV_CNN.v
+reports\utilization_impl.rpt
+reports\timing_impl.rpt
+reports\timing_synth.rpt
+reports\route_status.rpt
+reports\utilization_synth.rpt
+final\bit_temp\v097_mac9_stream_dsp_20260526_211854.bit
+final\bit_temp\v097_mac9_stream_dsp_20260526_211854.dcp
+final\bit_temp\v097_mac9_stream_dsp_20260526_211854.txt
+reports\bit_temp\v097_mac9_stream_dsp_20260526_211854_utilization_synth.rpt
+reports\bit_temp\v097_mac9_stream_dsp_20260526_211854_timing_synth.rpt
+reports\bit_temp\v097_mac9_stream_dsp_20260526_211854_utilization_impl.rpt
+reports\bit_temp\v097_mac9_stream_dsp_20260526_211854_timing_impl.rpt
+reports\bit_temp\v097_mac9_stream_dsp_20260526_211854_route_status.rpt
+CODEX_WORKLOG.md
+```
+
+修正內容：
+
+- `CNN_MAC_PARALLEL` 預設改為 `9`，讓目前實作走 MAC9 path。
+- `CNN_MAC_Engine` MAC9 path 改成 throughput-oriented pipeline：stage1 註冊 9 個 18x18 product、stage2 做 pair sum、stage3 做 final grouped sum；valid pipeline 同步輸出 `result_q12/result_index/result_last`。
+- MAC9 product registers 標註 `(* use_dsp = "yes" *)`，implementation 實際 DSP 使用量從 `1` 增加到 `10`。
+- `CNN` FSM 對 MAC9 模式加入 streaming overlap：`C_WINDOW` launch MAC 後立即前進下一個 input pixel；MAC result 回來時依 tag pack，必要時建立 pending write，再由 FSM 插入 Data Memory write cycle。
+- Data Memory 寫入範圍維持 intermediate `272` 起、final `600` 起；done word 維持 `addr13 = 0x000004b1`。
+
+驗證結果：
+
+```text
+RTL simulation:
+score_bcd    = 0100
+result_valid = 7fff
+result_pass  = 7fff
+cycle_count  = 7762
+addr13       = 000004b1
+FINALPROJECT_SIM_PASS
+
+Full Vivado checks:
+Slice LUTs      = 1848
+Slice Registers = 2042
+F7 Muxes        = 261
+F8 Muxes        = 10
+Block RAM Tile  = 14
+DSPs            = 10
+WNS             = 0.666 ns
+WHS             = 0.019 ns
+route errors    = 0
+
+Bitstream:
+bitstream       = final/bit_temp/v097_mac9_stream_dsp_20260526_211854.bit
+checkpoint      = final/bit_temp/v097_mac9_stream_dsp_20260526_211854.dcp
+final bitgen    = completed successfully
+```
+
+採用判定：
+
+- 採用為目前最佳 AT 節點。Area 因 DSP 增加而變大，但 cycle 大幅下降，PDF AT product 從 `735681090` 降到 `540312820`。
+- 後續可嘗試縮掉 MAC9 模式下被 synthesis trim 的 legacy `active_out_index/active_last` 與未使用的舊 MAC module，或測試 6-DSP/row-pair hybrid 版本，看是否能在 AT 與 DSP 數之間取得更好的折衷。
 
 ### v0.9.6 CNN streaming line-buffer MAC3 節點
 
