@@ -1,0 +1,5 @@
+label=v096_cnn_stream_mac3
+timestamp=20260526_204224
+bitstream=C:/Users/User/DSD_Lab/Final/DSD_final_project/final/bit_temp/v096_cnn_stream_mac3_20260526_204224.bit
+checkpoint=C:/Users/User/DSD_Lab/Final/DSD_final_project/final/bit_temp/v096_cnn_stream_mac3_20260526_204224.dcp
+source_repo=C:/Users/User/DSD_Lab/Final/DSD_final_project

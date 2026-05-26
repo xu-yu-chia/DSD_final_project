@@ -22,7 +22,7 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 - `v0.9.6-cnn-stream-mac3` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 14067`、`result_valid = 7fff`、`result_pass = 7fff`、`addr13 = 000004b1`、`FINALPROJECT_SIM_PASS`。
 - `v0.9.6-cnn-stream-mac3` full Vivado checks 已通過：post-route `WNS = 0.007 ns`、`WHS = 0.048 ns`；Implementation utilization 為 2603 LUT、2072 registers、262 F7、10 F8、14 BRAM tile、1 DSP。
 - `v0.9.6-cnn-stream-mac3` PDF 官方 Area = `5227`，Processing Time = `140670 ns`，AT product = `735681090`；相比 `v0.1.2` baseline AT 改善約 `56.05%`，相比 `v0.9.4/v0.9.5` AT 再改善約 `0.862%`。
-- 本節點尚未產生 bitstream；`scripts/run_vivado_checks.tcl` 目前刻意不產生 bitstream，若要作正式提交仍需另跑 bitstream flow 與必要 timing simulation。
+- 本節點 bitstream 已產生：`final/bit_temp/v096_cnn_stream_mac3_20260526_204224.bit`；bitgen route errors `0`，final post-route `WNS = 0.007 ns`、`WHS = 0.048 ns`。Log 中第一次 `route_design` 曾出現 timing 未滿足的 intermediate Critical Warning，但後續 `phys_opt_design` / reroute 已修正，最終 bitgen 完成且 final timing met。
 - `v0.9.5-pdf-verified` 是上一個 PDF compliance verification tag：此版不改 RTL datapath，新增 `PDF_COMPLIANCE_CHECK.md`，確認 `v0.9.4-rank1-pipeline` 的 top-level interface、BRAM IP 設定、TA 檔案與 prohibited behavior 皆符合目前 PDF/TA 0524 更新方向。
 - `v0.9.5-pdf-verified` 沿用 `v0.9.4-rank1-pipeline` 的 RTL/implementation 結果與 bitstream：`final/bit_temp/at_rank1_adopted_pipeline_20260525_233131.bit`。
 - `PDF_COMPLIANCE_CHECK.md` 確認：`test_circuit_bram_ip.v` 與 `tb/post_sim_tb.v` 和 `助教給的檔案/0524更新/` SHA256 相同；`Instruction_Memory` 為 Always Enabled 且 RTL 未接 `.ena(1'b1)`；`Data_mem` 使用 ENA/ENB pin；top-level `FPGA_clk/rstn/tc/mode/st/all_done/seven_seg/anode` 與 XDC pinout 對齊 PDF v5。
@@ -67,7 +67,7 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
   - Implementation utilization：2603 Slice LUTs、2072 Slice Registers、262 F7 Muxes、10 F8 Muxes、14 Block RAM Tiles、1 DSP。
   - PDF 官方 AT product：`735681090`，比 baseline 改善約 `56.05%`；相比 `v0.9.4/v0.9.5`，cycle 從 `14268` 降到 `14067`，AT product 從 `742078680` 降到 `735681090`，約再改善 `0.862%`。
   - 捨棄/暫存嘗試：較早的 product-upfront 版本達到 `cycle_count = 12383`、Area `5150`、AT `637724500` 且 timing pass，但不是乾淨的 true `MAC_PARALLEL=3` row-MAC 架構，因此沒有作為目前預設版；可留待後續作為 aggressive DSP/LUT variant 重新整理。
-  - 尚未產生本節點 bitstream；目前先記錄為已 RTL/full Vivado pass 的 CNN streaming pipeline 工作節點。
+  - Bitstream 已補產：`final/bit_temp/v096_cnn_stream_mac3_20260526_204224.bit`；checkpoint 為 `final/bit_temp/v096_cnn_stream_mac3_20260526_204224.dcp`，manifest 為 `final/bit_temp/v096_cnn_stream_mac3_20260526_204224.txt`。
 - `v0.9.5-pdf-verified` - 2026-05-25 Asia/Taipei
   - 新增 `PDF_COMPLIANCE_CHECK.md`，逐項記錄 PDF v5 / `Memory_setting.pdf` / TA 0524 update 對應狀態。
   - 檢查項目包含 top-level port、XDC pinout、TA test circuit/post-sim TB hash、BRAM XCI 設定、Instruction_Memory RTL instantiation、Data_mem ENA/ENB 使用、COE/MIF 同步與禁止特判事項。
@@ -288,6 +288,14 @@ reports\timing_impl.rpt
 reports\timing_synth.rpt
 reports\route_status.rpt
 reports\utilization_synth.rpt
+final\bit_temp\v096_cnn_stream_mac3_20260526_204224.bit
+final\bit_temp\v096_cnn_stream_mac3_20260526_204224.dcp
+final\bit_temp\v096_cnn_stream_mac3_20260526_204224.txt
+reports\bit_temp\v096_cnn_stream_mac3_20260526_204224_utilization_synth.rpt
+reports\bit_temp\v096_cnn_stream_mac3_20260526_204224_timing_synth.rpt
+reports\bit_temp\v096_cnn_stream_mac3_20260526_204224_utilization_impl.rpt
+reports\bit_temp\v096_cnn_stream_mac3_20260526_204224_timing_impl.rpt
+reports\bit_temp\v096_cnn_stream_mac3_20260526_204224_route_status.rpt
 CODEX_WORKLOG.md
 ```
 
@@ -365,12 +373,19 @@ Block RAM Tile  = 14
 DSPs            = 1
 WNS             = 0.007 ns
 WHS             = 0.048 ns
+
+Bitstream:
+bitstream       = final/bit_temp/v096_cnn_stream_mac3_20260526_204224.bit
+checkpoint      = final/bit_temp/v096_cnn_stream_mac3_20260526_204224.dcp
+route errors    = 0
+final bitgen    = completed successfully
 ```
 
 採用判定：
 
 - 採用為目前 CNN coprocessor pipeline 優化工作節點。此版比 `v0.9.4/v0.9.5` 面積增加 26 official area，但少 201 cycles，PDF AT product 從 `742078680` 降到 `735681090`。
-- 尚未作為最終交付節點：需要補產 bitstream，並視需求分別驗證 `MAC_PARALLEL=1` 與 `MAC_PARALLEL=9` 的 correctness/timing/AT。
+- 已補產 bitstream。若作為最終交付節點，仍建議依 TA flow 補跑 post-implementation timing simulation / board check；`MAC_PARALLEL=1` 與 `MAC_PARALLEL=9` 仍需另行驗證 correctness/timing/AT。
+- QA 05/21 warning 判讀：final bitgen 階段為 `0 Errors`、`0 Critical Warnings`，剩餘 DRC warnings 主要來自 TA `test_circuit/golden_rom` 的 RAMB async control check；不屬於新增 CNN datapath、Data_mem/Instruction_Memory IP 設定或 top module interface 錯誤。Vivado log 中第一次 route 曾有 timing Critical Warning，但後續 phys_opt/reroute 後 final timing report 已收斂。
 
 ### v0.9.4 rank1 pipeline timing-aware 採用版
 
