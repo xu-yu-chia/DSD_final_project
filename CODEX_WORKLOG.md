@@ -1,6 +1,6 @@
 ﻿# DSD Final Project 工作紀錄
 
-最後更新：2026-05-25 Asia/Taipei
+最後更新：2026-05-26 Asia/Taipei
 
 主要工作區：
 
@@ -16,12 +16,15 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 目前狀態
 
-- 目前工作版本更新為 `v0.9.5-pdf-verified`：此版不改 RTL datapath，新增 `PDF_COMPLIANCE_CHECK.md`，確認 `v0.9.4-rank1-pipeline` 的 top-level interface、BRAM IP 設定、TA 檔案與 prohibited behavior 皆符合目前 PDF/TA 0524 更新方向。
+- 目前工作版本更新為 `v0.9.6-cnn-stream-mac3`：`RISCV_CNN.v` 的 CPU pipeline 不改，CNN coprocessor 改成 streaming mem_reader / unpacker / 2-line-buffer 3-row sliding window / parameterized MAC / quantizer / packer / mem_writer pipeline。
+- `v0.9.6-cnn-stream-mac3` 已先備份舊 RTL：`RISCV_CNN.before_cnn_pipeline.v`。此備份來自改 CNN pipeline 前的 `RISCV_CNN.v`，保留作為回退基準。
+- `v0.9.6-cnn-stream-mac3` 預設 `MAC_PARALLEL = 3`，使用 true 3-multiplier row-MAC，並加上 final row-sum register 讓 10 ns implementation timing 收斂；`MAC_PARALLEL=1/9` 程式路徑已保留，但尚未分別跑 RTL/full Vivado 簽核。
+- `v0.9.6-cnn-stream-mac3` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 14067`、`result_valid = 7fff`、`result_pass = 7fff`、`addr13 = 000004b1`、`FINALPROJECT_SIM_PASS`。
+- `v0.9.6-cnn-stream-mac3` full Vivado checks 已通過：post-route `WNS = 0.007 ns`、`WHS = 0.048 ns`；Implementation utilization 為 2603 LUT、2072 registers、262 F7、10 F8、14 BRAM tile、1 DSP。
+- `v0.9.6-cnn-stream-mac3` PDF 官方 Area = `5227`，Processing Time = `140670 ns`，AT product = `735681090`；相比 `v0.1.2` baseline AT 改善約 `56.05%`，相比 `v0.9.4/v0.9.5` AT 再改善約 `0.862%`。
+- 本節點尚未產生 bitstream；`scripts/run_vivado_checks.tcl` 目前刻意不產生 bitstream，若要作正式提交仍需另跑 bitstream flow 與必要 timing simulation。
+- `v0.9.5-pdf-verified` 是上一個 PDF compliance verification tag：此版不改 RTL datapath，新增 `PDF_COMPLIANCE_CHECK.md`，確認 `v0.9.4-rank1-pipeline` 的 top-level interface、BRAM IP 設定、TA 檔案與 prohibited behavior 皆符合目前 PDF/TA 0524 更新方向。
 - `v0.9.5-pdf-verified` 沿用 `v0.9.4-rank1-pipeline` 的 RTL/implementation 結果與 bitstream：`final/bit_temp/at_rank1_adopted_pipeline_20260525_233131.bit`。
-- `v0.9.4-rank1-pipeline` 在 `RISCV_CNN.v` 採用 CPU instruction prefetch、CNN final-row finish pipeline、19-bit CNN accumulator narrowing，目標是接近 `v0.8.0` 的 AT product，同時保留 `v0.9.x` 的 timing-simulation 修正方向；此版本不是 testcase/golden 特判。
-- `v0.9.4-rank1-pipeline` RTL simulation 已通過：`score_bcd = 0100`、`cycle_count = 14268`、`result_valid = 7fff`、`result_pass = 7fff`、`FINALPROJECT_SIM_PASS`。
-- `v0.9.4-rank1-pipeline` bitstream 已產生：`final/bit_temp/at_rank1_adopted_pipeline_20260525_233131.bit`；non-project implementation route 0 errors，post-route setup slack `0.013 ns`、hold slack `0.072 ns`。
-- `v0.9.4-rank1-pipeline` 尚未重新跑 full #3 post-synthesis timing / #5 post-implementation timing simulation；若要作為最終交付版，仍需補跑這兩項。`v0.8.0` 雖然 AT product 略低，但不是 clean #5 PASS 節點，因此本版定位為接近 v0.8 且 implementation timing 可過的採用版。
 - `PDF_COMPLIANCE_CHECK.md` 確認：`test_circuit_bram_ip.v` 與 `tb/post_sim_tb.v` 和 `助教給的檔案/0524更新/` SHA256 相同；`Instruction_Memory` 為 Always Enabled 且 RTL 未接 `.ena(1'b1)`；`Data_mem` 使用 ENA/ENB pin；top-level `FPGA_clk/rstn/tc/mode/st/all_done/seven_seg/anode` 與 XDC pinout 對齊 PDF v5。
 - `v0.9.3-at-fullcache` 已產生 bitstream 並通過 non-project implementation timing，但 AT product 明顯差於 `v0.9.4`，保留為實驗紀錄。
 - `v0.9.2` 已整合 TA 2026-05-24 update 的 top-level `FPGA_clk` 與 `all_done` 介面，並同步新版 `test_circuit_bram_ip.v` / `post_sim_tb.v`。
@@ -54,6 +57,17 @@ C:\Users\User\DSD_Lab\Final\DSD_final_project\final\final.xpr
 
 ## 版本紀錄
 
+- `v0.9.6-cnn-stream-mac3` - 2026-05-26 Asia/Taipei
+  - `RISCV_CNN.v`：先備份舊檔為 `RISCV_CNN.before_cnn_pipeline.v`，再重構 CNN coprocessor；top module 仍為 `RISCV_CNN`，CPU pipeline 不改。
+  - CNN pipeline 改為 streaming 結構：config/bias/weights 先載入暫存器，input/intermediate feature map 以 mem_reader + unpacker 串流進 2-line-buffer 3-row sliding window，再送入 parameterized `CNN_MAC_Engine`、`CNN_Quantizer`、packer 與 mem_writer。
+  - Memory layout：input base `16`，intermediate base `272`，final output base `600`；done word 寫 `Data_mem[13] = 0x000004b1`，代表 `addr13[10:1] = 600`、`addr13[0] = 1`。輸出寫入避開 `0..15` 與 `960..1023` reserved range。
+  - `MAC_PARALLEL=3` 作為預設採用版：3 個乘法器每次處理 1 row，最後一列 row sum 額外 register 一級，避免 true 3-mul datapath 的 post-route critical path 失敗。`MAC_PARALLEL=1` 與 `MAC_PARALLEL=9` 程式路徑存在，但尚未獨立驗證。
+  - RTL simulation 通過：`score_bcd = 0100`、`cycle_count = 14067`、`result_valid = 7fff`、`result_pass = 7fff`、`addr13 = 000004b1`、`FINALPROJECT_SIM_PASS`。
+  - Full Vivado checks 通過：post-route `WNS = 0.007 ns`、`TNS = 0`、`WHS = 0.048 ns`、`THS = 0`。
+  - Implementation utilization：2603 Slice LUTs、2072 Slice Registers、262 F7 Muxes、10 F8 Muxes、14 Block RAM Tiles、1 DSP。
+  - PDF 官方 AT product：`735681090`，比 baseline 改善約 `56.05%`；相比 `v0.9.4/v0.9.5`，cycle 從 `14268` 降到 `14067`，AT product 從 `742078680` 降到 `735681090`，約再改善 `0.862%`。
+  - 捨棄/暫存嘗試：較早的 product-upfront 版本達到 `cycle_count = 12383`、Area `5150`、AT `637724500` 且 timing pass，但不是乾淨的 true `MAC_PARALLEL=3` row-MAC 架構，因此沒有作為目前預設版；可留待後續作為 aggressive DSP/LUT variant 重新整理。
+  - 尚未產生本節點 bitstream；目前先記錄為已 RTL/full Vivado pass 的 CNN streaming pipeline 工作節點。
 - `v0.9.5-pdf-verified` - 2026-05-25 Asia/Taipei
   - 新增 `PDF_COMPLIANCE_CHECK.md`，逐項記錄 PDF v5 / `Memory_setting.pdf` / TA 0524 update 對應狀態。
   - 檢查項目包含 top-level port、XDC pinout、TA test circuit/post-sim TB hash、BRAM XCI 設定、Instruction_Memory RTL instantiation、Data_mem ENA/ENB 使用、COE/MIF 同步與禁止特判事項。
@@ -228,6 +242,7 @@ PDF AT product = Official Area × Processing Time
 | `v0.9.3-at-fullcache` | 2026-05-25 16:48 | 16022 | 160220 ns | cycles -18058 / -52.99% | 5256 | +344 / +7.00% | 2355 | 2078 | 261 | 2 | 14 | 2 | 0.983 ns | 842116320 | -831893280 / -49.69% |
 | `v0.9.4-rank1-pipeline` | 2026-05-25 23:39 | 14268 | 142680 ns | cycles -19812 / -58.13% | 5201 | +289 / +5.88% | 2305 | 2065 | 261 | 10 | 14 | 2 | 0.013 ns | 742078680 | -931930920 / -55.67% |
 | `v0.9.5-pdf-verified` | 2026-05-25 | 14268 | 142680 ns | cycles -19812 / -58.13% | 5201 | +289 / +5.88% | 2305 | 2065 | 261 | 10 | 14 | 2 | 0.013 ns | 742078680 | PDF compliance docs only; same bit as v0.9.4 |
+| `v0.9.6-cnn-stream-mac3` | 2026-05-26 | 14067 | 140670 ns | cycles -20013 / -58.72% | 5227 | +315 / +6.41% | 2603 | 2072 | 262 | 10 | 14 | 1 | 0.007 ns | 735681090 | -938328510 / -56.05% |
 
 解讀：
 
@@ -257,8 +272,105 @@ PDF AT product = Official Area × Processing Time
 - `v0.9.3-at-fullcache` 重新啟用更激進的 full sliding-window row-cache reuse，cycle_count 降到 16022；Official Area 比 baseline 增加 344，但 PDF AT product 仍比 baseline 改善約 49.69%。此版已產生 bitstream 並通過 non-project implementation timing，但尚未重跑 full #3/#5 timing simulation。
 - `v0.9.4-rank1-pipeline` 進一步把 CPU fetch、load/store overlap、CNN final-row finish 與 accumulator narrowing 合併，cycle_count 降到 14268；PDF AT product 比 baseline 改善約 55.67%，只比 `v0.8.0` 高約 0.231%。因 `v0.8.0` 並非 clean #5 PASS 節點，此版定位為接近 v0.8 的 timing-aware 採用版。
 - `v0.9.5-pdf-verified` 不改 RTL/bitstream，只新增 PDF compliance 檢查紀錄；效能、面積與 timing 數字沿用 `v0.9.4-rank1-pipeline`。
+- `v0.9.6-cnn-stream-mac3` 將 CNN 改成 streaming line-buffer pipeline 與 true parameterized MAC；預設 3-mul 加 final row-sum register，full Vivado timing 通過，cycle_count 比 `v0.9.4/v0.9.5` 少 201 cycles，PDF AT product 約再改善 0.862%。此版尚未產生 bitstream，且 `MAC_PARALLEL=1/9` 尚未獨立簽核。
 
 ## 版本改動詳細部分
+
+### v0.9.6 CNN streaming line-buffer MAC3 節點
+
+修改檔案：
+
+```text
+RISCV_CNN.v
+RISCV_CNN.before_cnn_pipeline.v
+reports\utilization_impl.rpt
+reports\timing_impl.rpt
+reports\timing_synth.rpt
+reports\route_status.rpt
+reports\utilization_synth.rpt
+CODEX_WORKLOG.md
+```
+
+修正內容：
+
+- 保留 top module `RISCV_CNN` 與既有 `Data_mem` / `Instruction_Memory`；沒有新增 BRAM。`Simple_CPU` pipeline 不改，只讓既有 CPU flow 負責 start polling、clear start、bias/config/start CNN。
+- CNN coprocessor 改成 streaming pipeline：`mem_reader -> CNN_Unpacker -> CNN_LineBuffer -> CNN_MAC_Engine -> CNN_Quantizer -> packer -> mem_writer`。
+- `CNN_LineBuffer` 使用兩組 `(* ram_style = "distributed" *)` 8-bit line buffers 加 row shift registers 形成 3x3 window；此為 LUT/distributed storage，不新增 BRAM tile。
+- `CNN_MAC_Engine` 支援 `MAC_PARALLEL=1/3/9`。目前採用 `MAC_PARALLEL=3`，每次處理 3 個 product row，並加 `M3_FINISH` register 切斷最後 row sum 到 accumulator 的 timing path。
+- `CNN_Quantizer` 保留 full precision Q?.12 accumulation 後轉 Q1.6 的 round-to-nearest ties-to-even，再 clamp 到 signed 8-bit `[-128, 127]`。
+- Packer 依 big-endian lane 寫回 32-bit word；每 4 個 output 或 layer end flush 一次。Final output base 固定 `600`，intermediate base 固定 `272`，皆避開 `0..15` 與 `960..1023`。
+
+CNN FSM 狀態：
+
+```text
+C_IDLE          : 等待 CPU/CNN start。
+C_LOAD_CFG_*    : 讀 Data_mem[12] feature size。
+C_LOAD_B0_*     : 讀 Data_mem[14] bias0。
+C_LOAD_B1_*     : 讀 Data_mem[15] bias1。
+C_LOAD_W_*      : 讀 weights0/weights1 word，載入暫存器，避免 convolution loop 重複讀 weight。
+C_LAYER_SETUP   : 設定 layer input/output size、base address、stream/output counters，清 pack word。
+C_STREAM_NEXT   : mem_reader 排下一個 packed word address；lane 0 發 BRAM read，其餘 lane 重用 stream_word。
+C_READ_WAIT     : 同步 memory read latency wait。
+C_READ_CAP      : capture doutb 到 stream_word。
+C_UNPACK        : big-endian unpack 目前 lane。
+C_WINDOW        : line buffer accept pixel；若 3x3 window valid，帶著 out_index/last flag 啟動 MAC。
+C_MAC_WAIT      : 等 MAC valid；valid、active_out_index、active_last 一起維持到 quantize/pack/write decision。
+C_WRITE_OUT     : mem_writer flush packed 32-bit word。
+C_LAYER_NEXT    : layer0 完成後切到 intermediate；layer1 完成後寫 addr13 done/output base。
+C_WRITE_DONE    : done pulse register。
+C_FINISHED      : 保持 done。
+```
+
+MAC cycle estimate：
+
+```text
+令單層 input side = S，output side = P = S - 2。
+目前 streaming FSM 粗估：
+layer_cycles(S) ~= 3*S*S + 2*ceil(S*S/4) + Lmac*P*P + ceil(P*P/4)
+
+Lmac roughly:
+MAC_PARALLEL=1 : 9  (1 multiplier, 9 term serial MAC; not yet separately verified)
+MAC_PARALLEL=3 : 4  (3 row-MAC cycles plus registered finish/consumer latency; current verified default)
+MAC_PARALLEL=9 : 2  (9 multipliers plus 2-stage adder tree; not yet separately verified)
+
+N=32 rough CNN-only estimate:
+MAC_PARALLEL=1 : about 22.3k cycles
+MAC_PARALLEL=3 : about 14.1k cycles, measured full RTL cycle_count = 14067 with CPU/test flow
+MAC_PARALLEL=9 : about 10.6k cycles, expected higher LUT/DSP/timing cost
+```
+
+驗證結果：
+
+```text
+RTL simulation command:
+vivado.bat -mode batch -source scripts\run_rtl_xsim.tcl -journal tmp\cnn_pipeline_mac3_piped_rtl.jou -log tmp\cnn_pipeline_mac3_piped_rtl.log
+
+RTL simulation result:
+score_bcd    = 0100
+result_valid = 7fff
+result_pass  = 7fff
+cycle_count  = 14067
+addr13       = 000004b1
+FINALPROJECT_SIM_PASS
+
+Full Vivado checks command:
+vivado.bat -mode batch -source scripts\run_vivado_checks.tcl -journal tmp\cnn_pipeline_mac3_piped_full_checks.jou -log tmp\cnn_pipeline_mac3_piped_full_checks.log
+
+Implementation:
+Slice LUTs      = 2603
+Slice Registers = 2072
+F7 Muxes        = 262
+F8 Muxes        = 10
+Block RAM Tile  = 14
+DSPs            = 1
+WNS             = 0.007 ns
+WHS             = 0.048 ns
+```
+
+採用判定：
+
+- 採用為目前 CNN coprocessor pipeline 優化工作節點。此版比 `v0.9.4/v0.9.5` 面積增加 26 official area，但少 201 cycles，PDF AT product 從 `742078680` 降到 `735681090`。
+- 尚未作為最終交付節點：需要補產 bitstream，並視需求分別驗證 `MAC_PARALLEL=1` 與 `MAC_PARALLEL=9` 的 correctness/timing/AT。
 
 ### v0.9.4 rank1 pipeline timing-aware 採用版
 
