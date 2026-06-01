@@ -10,21 +10,24 @@ module RISCV_CNN(
     output [6:0]  seven_seg,
     output [3:0]  anode
 );
-    localparam integer CNN_MAC_PARALLEL = 9;
-
     wire clk = FPGA_clk;
     wire sys_rstn;
     wire locked;
+
+    // 1024 data-memory words, each word is 32 bits.
+    // Test circuit side signals for initializing/checking Data Memory.
     wire [9:0] tc_mem_addr;
     wire [31:0] tc_mem_wdata;
     wire [31:0] tc_cpu_rdata;
     wire tc_mem_we;
 
+    // CPU side signals for Data Memory access.
     wire cpu_dmem_en, cpu_dmem_we;
     wire [9:0] cpu_dmem_addr;
     wire [31:0] cpu_dmem_wdata;
     wire [31:0] cpu_dmem_rdata;
 
+    // CNN side signals for Data Memory access.
     wire cnn_enb, cnn_web, cnn_done;
     wire [9:0] cnn_addr;
     wire [31:0] cnn_dinb, cnn_doutb;
@@ -35,6 +38,15 @@ module RISCV_CNN(
     reg rstn_sync1;
     reg cnn_start_latched;
     wire test_rstn;
+    reg sys_rstn_sync0;
+    reg sys_rstn_sync1;
+    wire core_rstn;
+    reg mode_sync0;
+    reg mode_sync1;
+    reg st_sync0;
+    reg st_sync1;
+    reg [3:0] tc_sync0;
+    reg [3:0] tc_sync1;
 
     assign cnn_finish_event = cnn_done;
     assign cnn_start_event = cpu_dmem_we && (cpu_dmem_addr == 10'd11) && !cpu_dmem_wdata[0];
@@ -51,11 +63,53 @@ module RISCV_CNN(
         end
     end
 
+    // Synchronize the test-circuit reset before it drives CPU/CNN.
+    // This avoids post-implementation timing simulation X/race behavior
+    // from sys_rstn directly controlling many FDREs.
+    assign core_rstn = sys_rstn_sync1;
+
+    always @(posedge clk or negedge test_rstn) begin
+        if (!test_rstn) begin
+            sys_rstn_sync0 <= 1'b0;
+            sys_rstn_sync1 <= 1'b0;
+        end
+        else begin
+            sys_rstn_sync0 <= sys_rstn;
+            sys_rstn_sync1 <= sys_rstn_sync0;
+        end
+    end
+
+    // The switches/buttons are asynchronous to FPGA_clk in hardware and also
+    // appear as top-level inputs in timing simulation. Register them before
+    // the TA test circuit so its display/check logic is driven by clocked
+    // signals instead of direct I/O paths.
+    always @(posedge clk or negedge test_rstn) begin
+        if (!test_rstn) begin
+            mode_sync0 <= 1'b0;
+            mode_sync1 <= 1'b0;
+            st_sync0 <= 1'b0;
+            st_sync1 <= 1'b0;
+            tc_sync0 <= 4'd0;
+            tc_sync1 <= 4'd0;
+        end
+        else begin
+            mode_sync0 <= mode;
+            mode_sync1 <= mode_sync0;
+            st_sync0 <= st;
+            st_sync1 <= st_sync0;
+            tc_sync0 <= tc;
+            tc_sync1 <= tc_sync0;
+        end
+    end
+
     always @(posedge clk or negedge rstn) begin
         if (!rstn) begin
             cnn_start_latched <= 1'b0;
         end
-        else if (!sys_rstn) begin
+        else if (!core_rstn) begin
+            cnn_start_latched <= 1'b0;
+        end
+        else if (cnn_done) begin
             cnn_start_latched <= 1'b0;
         end
         else if (cnn_start_event) begin
@@ -63,6 +117,8 @@ module RISCV_CNN(
         end
     end
     
+    // Test circuit controls testcase selection, memory initialization,
+    // CPU/CNN reset sequencing, result checking, and seven-segment display.
     test_circuit u_test_circuit(
         .clk(clk),
         .rstn(test_rstn),
@@ -76,9 +132,9 @@ module RISCV_CNN(
         .cpu_rdata(tc_cpu_rdata),
         .cpu_we(cpu_dmem_we),
         .system_done(cnn_finish_event),
-        .start_bt(st),
-        .mode(mode),
-        .tc(tc),        
+        .start_bt(st_sync1),
+        .mode(mode_sync1),
+        .tc(tc_sync1),
         .seven_seg(seven_seg),
         .anode(anode),
         .all_done(all_done)
@@ -86,7 +142,7 @@ module RISCV_CNN(
 
     Simple_CPU u_cpu(
         .CLK(clk),
-        .RSTN(sys_rstn),
+        .RSTN(core_rstn),
         .dmem_en(cpu_dmem_en),
         .dmem_we(cpu_dmem_we),
         .dmem_addr(cpu_dmem_addr),
@@ -94,11 +150,9 @@ module RISCV_CNN(
         .dmem_rdata(tc_cpu_rdata)
     );
 
-    CNN #(
-        .MAC_PARALLEL(CNN_MAC_PARALLEL)
-    ) u_cnn(
+    CNN u_cnn(
         .clk(clk),
-        .rstn(sys_rstn),
+        .rstn(core_rstn),
         .start(cnn_start_latched),
         .doutb(cnn_doutb),
         .web(cnn_web),
@@ -129,46 +183,85 @@ module Simple_CPU(
     input         RSTN,
     output        dmem_en,
     output        dmem_we,
-    output reg [9:0]  dmem_addr,
-    output reg [31:0] dmem_wdata,
+    output [9:0]  dmem_addr,
+    output [31:0] dmem_wdata,
     input      [31:0] dmem_rdata
 );
-    localparam S_FETCH_ADDR      = 5'd0;
-    localparam S_FETCH_WAIT      = 5'd1;
-    localparam S_DECODE          = 5'd2;
-    localparam S_LOAD_WAIT       = 5'd3;
-    localparam S_LOAD_WB         = 5'd4;
-    localparam S_STORE           = 5'd5;
-    localparam S_FETCH_CAP       = 5'd6;
+    localparam ALU_ADD = 1'b0;
+    localparam ALU_SUB = 1'b1;
 
-    reg [4:0] state;
-    reg [31:0] pc;
-    reg [4:0] load_rd;
-    reg [31:0] regs [0:31];
-    reg [9:0] imem_addr;
-    reg [31:0] instr_reg;
-    integer i;
+    reg [11:0] pc;
+    reg [11:0] fetch_pc_d;
+    reg        fetch_valid_d;
+    reg        if_skid_valid;
+    reg [11:0] if_skid_pc;
+    reg [31:0] if_skid_instr;
+
+    reg        if_id_valid;
+    reg [11:0] if_id_pc;
+    reg [31:0] if_id_instr;
+
+    reg        id_ex_valid;
+    reg [11:0] id_ex_pc;
+    reg [4:0]  id_ex_rs1;
+    reg [4:0]  id_ex_rs2;
+    reg [4:0]  id_ex_rd;
+    reg [31:0] id_ex_rs1_val;
+    reg [31:0] id_ex_rs2_val;
+    reg [31:0] id_ex_imm;
+    reg        id_ex_alu_op;
+    reg        id_ex_alu_src_imm;
+    reg        id_ex_regwrite;
+    reg        id_ex_memread;
+    reg        id_ex_memwrite;
+    reg        id_ex_branch;
+    reg        id_ex_branch_blt;
+
+    reg        mem_valid;
+    reg [4:0]  mem_rd;
+    reg [31:0] mem_alu_result;
+    reg        mem_regwrite;
+    reg        mem_memread;
+
+    reg        wb_forward_valid;
+    reg [4:0]  wb_forward_rd;
+    reg [31:0] wb_forward_data;
+
+    reg [31:0] regs_rs1 [0:31];
+    reg [31:0] regs_rs2 [0:31];
 
     wire [31:0] instr;
-    wire [6:0] opcode = instr_reg[6:0];
-    wire [4:0] rd     = instr_reg[11:7];
-    wire [2:0] funct3 = instr_reg[14:12];
-    wire [4:0] rs1    = instr_reg[19:15];
-    wire [4:0] rs2    = instr_reg[24:20];
-    wire [6:0] funct7 = instr_reg[31:25];
+    wire [9:0] imem_addr = pc[11:2];
 
-    wire signed [31:0] imm_i = {{20{instr_reg[31]}}, instr_reg[31:20]};
-    wire signed [31:0] imm_s = {{20{instr_reg[31]}}, instr_reg[31:25], instr_reg[11:7]};
-    wire signed [31:0] imm_b = {{19{instr_reg[31]}}, instr_reg[31], instr_reg[7],
-                                instr_reg[30:25], instr_reg[11:8], 1'b0};
+    wire [6:0] id_opcode = if_id_instr[6:0];
+    wire [4:0] id_rd     = if_id_instr[11:7];
+    wire [2:0] id_funct3 = if_id_instr[14:12];
+    wire [4:0] id_rs1    = if_id_instr[19:15];
+    wire [4:0] id_rs2    = if_id_instr[24:20];
+    wire [6:0] id_funct7 = if_id_instr[31:25];
 
-    wire [31:0] load_byte_addr  = regs[rs1] + imm_i;
-    wire [31:0] store_byte_addr = regs[rs1] + imm_s;
-    wire [31:0] pc_plus4 = pc + 32'd4;
-    wire [31:0] pc_branch = pc + imm_b;
+    wire signed [31:0] id_imm_i = {{20{if_id_instr[31]}}, if_id_instr[31:20]};
+    wire signed [31:0] id_imm_s = {{20{if_id_instr[31]}}, if_id_instr[31:25], if_id_instr[11:7]};
+    wire signed [31:0] id_imm_b = {{19{if_id_instr[31]}}, if_id_instr[31], if_id_instr[7],
+                                   if_id_instr[30:25], if_id_instr[11:8], 1'b0};
+
+    wire id_is_add  = (id_opcode == 7'b0110011) && (id_funct3 == 3'b000) && (id_funct7 == 7'b0000000);
+    wire id_is_sub  = (id_opcode == 7'b0110011) && (id_funct3 == 3'b000) && (id_funct7 == 7'b0100000);
+    wire id_is_addi = (id_opcode == 7'b0010011) && (id_funct3 == 3'b000);
+    wire id_is_lw   = (id_opcode == 7'b0000011);
+    wire id_is_sw   = (id_opcode == 7'b0100011);
+    wire id_is_beq  = (id_opcode == 7'b1100011) && (id_funct3 == 3'b000);
+    wire id_is_blt  = (id_opcode == 7'b1100011) && (id_funct3 == 3'b100);
+
+    wire id_uses_rs1 = id_is_add | id_is_sub | id_is_addi | id_is_lw | id_is_sw | id_is_beq | id_is_blt;
+    wire id_uses_rs2 = id_is_add | id_is_sub | id_is_sw | id_is_beq | id_is_blt;
+    wire [31:0] id_selected_imm = id_is_sw ? id_imm_s :
+                                   (id_is_beq | id_is_blt) ? id_imm_b : id_imm_i;
+    wire load_use_stall = if_id_valid && id_ex_valid && id_ex_memread && (id_ex_rd != 5'd0) &&
+                          ((id_uses_rs1 && (id_rs1 == id_ex_rd)) ||
+                           (id_uses_rs2 && (id_rs2 == id_ex_rd)));
 
     assign dmem_en = 1'b1;
-    assign dmem_we = (state == S_STORE);
 
     Instruction_Memory u_Instruction_Memory (
         .clka(CLK),
@@ -176,125 +269,153 @@ module Simple_CPU(
         .douta(instr)
     );
 
+    wire [31:0] mem_stage_wdata = mem_memread ? dmem_rdata : mem_alu_result;
+    wire mem_forward_valid = mem_valid && mem_regwrite && !mem_memread && (mem_rd != 5'd0);
+    wire wb_can_forward = wb_forward_valid && (wb_forward_rd != 5'd0);
+    wire id_wb_now = mem_valid && mem_regwrite && !mem_memread && (mem_rd != 5'd0);
+
+    wire [31:0] ex_rs1 =
+        ((id_ex_rs1 != 5'd0) && mem_forward_valid && (mem_rd == id_ex_rs1)) ? mem_stage_wdata :
+        ((id_ex_rs1 != 5'd0) && wb_can_forward && (wb_forward_rd == id_ex_rs1)) ? wb_forward_data :
+        id_ex_rs1_val;
+    wire [31:0] ex_rs2 =
+        ((id_ex_rs2 != 5'd0) && mem_forward_valid && (mem_rd == id_ex_rs2)) ? mem_stage_wdata :
+        ((id_ex_rs2 != 5'd0) && wb_can_forward && (wb_forward_rd == id_ex_rs2)) ? wb_forward_data :
+        id_ex_rs2_val;
+    wire [31:0] ex_alu_b = id_ex_alu_src_imm ? id_ex_imm : ex_rs2;
+    wire [31:0] ex_alu_result = id_ex_alu_op ? (ex_rs1 - ex_rs2) : (ex_rs1 + ex_alu_b);
+    wire branch_taken = id_ex_valid && id_ex_branch &&
+                        (id_ex_branch_blt ? ($signed(ex_rs1) < $signed(ex_rs2)) : (ex_rs1 == ex_rs2));
+    wire [11:0] branch_target = id_ex_pc + id_ex_imm[11:0];
+
+    assign dmem_addr = ex_alu_result[11:2];
+    assign dmem_wdata = ex_rs2;
+    assign dmem_we = id_ex_valid && id_ex_memwrite;
+
+    wire [31:0] id_rs1_read =
+        (id_rs1 == 5'd0) ? 32'd0 :
+        (id_wb_now && (mem_rd == id_rs1)) ? mem_stage_wdata :
+        regs_rs1[id_rs1];
+    wire [31:0] id_rs2_read =
+        (id_rs2 == 5'd0) ? 32'd0 :
+        (id_wb_now && (mem_rd == id_rs2)) ? mem_stage_wdata :
+        regs_rs2[id_rs2];
+
     always @(posedge CLK) begin
         if (!RSTN) begin
-            state <= S_FETCH_ADDR;
-            pc <= 32'd0;
-            load_rd <= 5'd0;
-            dmem_addr <= 10'd0;
-            dmem_wdata <= 32'd0;
-            imem_addr <= 10'd0;
-            instr_reg <= 32'd0;
-            for (i = 0; i < 32; i = i + 1) begin
-                regs[i] <= 32'd0;
-            end
+            pc <= 12'd0;
+            fetch_pc_d <= 12'd0;
+            fetch_valid_d <= 1'b0;
+            if_skid_valid <= 1'b0;
+            if_skid_pc <= 12'd0;
+            if_skid_instr <= 32'd0;
+            if_id_valid <= 1'b0;
+            if_id_pc <= 12'd0;
+            if_id_instr <= 32'd0;
+            id_ex_valid <= 1'b0;
+            id_ex_pc <= 12'd0;
+            id_ex_rs1 <= 5'd0;
+            id_ex_rs2 <= 5'd0;
+            id_ex_rd <= 5'd0;
+            id_ex_rs1_val <= 32'd0;
+            id_ex_rs2_val <= 32'd0;
+            id_ex_imm <= 32'd0;
+            id_ex_alu_op <= ALU_ADD;
+            id_ex_alu_src_imm <= 1'b0;
+            id_ex_regwrite <= 1'b0;
+            id_ex_memread <= 1'b0;
+            id_ex_memwrite <= 1'b0;
+            id_ex_branch <= 1'b0;
+            id_ex_branch_blt <= 1'b0;
+            mem_valid <= 1'b0;
+            mem_rd <= 5'd0;
+            mem_alu_result <= 32'd0;
+            mem_regwrite <= 1'b0;
+            mem_memread <= 1'b0;
+            wb_forward_valid <= 1'b0;
+            wb_forward_rd <= 5'd0;
+            wb_forward_data <= 32'd0;
         end
         else begin
-            case (state)
-                S_FETCH_ADDR: begin
-                    imem_addr <= pc[9:2];
-                    state <= S_FETCH_WAIT;
+            if (mem_valid && mem_regwrite && (mem_rd != 5'd0)) begin
+                regs_rs1[mem_rd] <= mem_stage_wdata;
+                regs_rs2[mem_rd] <= mem_stage_wdata;
+            end
+
+            wb_forward_valid <= mem_valid && mem_regwrite && (mem_rd != 5'd0);
+            wb_forward_rd <= mem_rd;
+            wb_forward_data <= mem_stage_wdata;
+
+            mem_valid <= id_ex_valid;
+            mem_rd <= id_ex_rd;
+            mem_alu_result <= ex_alu_result;
+            mem_regwrite <= id_ex_regwrite;
+            mem_memread <= id_ex_memread;
+
+            if (branch_taken) begin
+                pc <= branch_target;
+                fetch_pc_d <= pc;
+                fetch_valid_d <= 1'b0;
+                if_skid_valid <= 1'b0;
+                if_id_valid <= 1'b0;
+                id_ex_valid <= 1'b0;
+                id_ex_regwrite <= 1'b0;
+                id_ex_memread <= 1'b0;
+                id_ex_memwrite <= 1'b0;
+                id_ex_branch <= 1'b0;
+            end
+            else if (load_use_stall) begin
+                if (!if_skid_valid && fetch_valid_d) begin
+                    if_skid_valid <= 1'b1;
+                    if_skid_pc <= fetch_pc_d;
+                    if_skid_instr <= instr;
+                end
+                fetch_pc_d <= pc;
+                fetch_valid_d <= 1'b0;
+                id_ex_valid <= 1'b0;
+                id_ex_regwrite <= 1'b0;
+                id_ex_memread <= 1'b0;
+                id_ex_memwrite <= 1'b0;
+                id_ex_branch <= 1'b0;
+            end
+            else begin
+                pc <= pc + 12'd4;
+                fetch_pc_d <= pc;
+                fetch_valid_d <= 1'b1;
+
+                if (if_skid_valid) begin
+                    if_id_instr <= if_skid_instr;
+                    if_id_pc <= if_skid_pc;
+                    if_id_valid <= 1'b1;
+                    if_skid_valid <= 1'b0;
+                end
+                else begin
+                    if_id_instr <= instr;
+                    if_id_pc <= fetch_pc_d;
+                    if_id_valid <= fetch_valid_d;
                 end
 
-                S_FETCH_WAIT: begin
-                    state <= S_FETCH_CAP;
-                end
-
-                S_FETCH_CAP: begin
-                    instr_reg <= instr;
-                    state <= S_DECODE;
-                end
-
-                S_DECODE: begin
-                    case (opcode)
-                        7'b0110011: begin
-                            if (funct3 == 3'b000 && funct7 == 7'b0000000) begin
-                                if (rd != 5'd0) regs[rd] <= regs[rs1] + regs[rs2];
-                            end
-                            else if (funct3 == 3'b000 && funct7 == 7'b0100000) begin
-                                if (rd != 5'd0) regs[rd] <= regs[rs1] - regs[rs2];
-                            end
-                            pc <= pc_plus4;
-                            imem_addr <= pc_plus4[9:2];
-                            state <= S_FETCH_WAIT;
-                        end
-
-                        7'b0010011: begin
-                            if (funct3 == 3'b000 && rd != 5'd0) begin
-                                regs[rd] <= regs[rs1] + imm_i;
-                            end
-                            pc <= pc_plus4;
-                            imem_addr <= pc_plus4[9:2];
-                            state <= S_FETCH_WAIT;
-                        end
-
-                        7'b0000011: begin
-                            dmem_addr <= load_byte_addr[11:2];
-                            load_rd <= rd;
-                            pc <= pc_plus4;
-                            imem_addr <= pc_plus4[9:2];
-                            state <= S_LOAD_WAIT;
-                        end
-
-                        7'b0100011: begin
-                            dmem_addr <= store_byte_addr[11:2];
-                            dmem_wdata <= regs[rs2];
-                            pc <= pc_plus4;
-                            imem_addr <= pc_plus4[9:2];
-                            state <= S_STORE;
-                        end
-
-                        7'b1100011: begin
-                            if ((funct3 == 3'b000 && regs[rs1] == regs[rs2]) ||
-                                (funct3 == 3'b100 && $signed(regs[rs1]) < $signed(regs[rs2]))) begin
-                                pc <= pc_branch;
-                                imem_addr <= pc_branch[9:2];
-                            end
-                            else begin
-                                pc <= pc_plus4;
-                                imem_addr <= pc_plus4[9:2];
-                            end
-                            state <= S_FETCH_WAIT;
-                        end
-
-                        default: begin
-                            pc <= pc_plus4;
-                            imem_addr <= pc_plus4[9:2];
-                            state <= S_FETCH_WAIT;
-                        end
-                    endcase
-                end
-
-                S_LOAD_WAIT: begin
-                    state <= S_LOAD_WB;
-                end
-
-                S_LOAD_WB: begin
-                    if (load_rd != 5'd0) begin
-                        regs[load_rd] <= dmem_rdata;
-                    end
-                    instr_reg <= instr;
-                    state <= S_DECODE;
-                end
-
-                S_STORE: begin
-                    dmem_addr <= 10'd0;
-                    dmem_wdata <= 32'd0;
-                    state <= S_FETCH_CAP;
-                end
-
-                default: begin
-                    state <= S_FETCH_ADDR;
-                end
-            endcase
-            regs[0] <= 32'd0;
+                id_ex_valid <= if_id_valid;
+                id_ex_pc <= if_id_pc;
+                id_ex_rs1 <= id_rs1;
+                id_ex_rs2 <= id_rs2;
+                id_ex_rd <= id_rd;
+                id_ex_rs1_val <= id_rs1_read;
+                id_ex_rs2_val <= id_rs2_read;
+                id_ex_imm <= id_selected_imm;
+                id_ex_alu_op <= id_is_sub ? ALU_SUB : ALU_ADD;
+                id_ex_alu_src_imm <= id_is_addi | id_is_lw | id_is_sw;
+                id_ex_regwrite <= id_is_add | id_is_sub | id_is_addi | id_is_lw;
+                id_ex_memread <= id_is_lw;
+                id_ex_memwrite <= id_is_sw;
+                id_ex_branch <= id_is_beq | id_is_blt;
+                id_ex_branch_blt <= id_is_blt;
+            end
         end
     end
 endmodule
 
-module CNN #(
-    parameter integer MAC_PARALLEL = 3
-)(
+module CNN(
     input         clk,
     input         rstn,
     input         start,
@@ -330,12 +451,17 @@ module CNN #(
     localparam C_WRITE_DONE    = 6'd22;
     localparam C_FINISHED      = 6'd23;
 
-    localparam [9:0] INPUT_BASE = 10'd16;
-    localparam [9:0] INTER_BASE = 10'd272;
-    localparam [9:0] FINAL_BASE = 10'd600;
+    // Data Memory map for CNN feature maps.
+    localparam [9:0] INPUT_BASE = 10'd16;   // Input feature map starts at address 16.
+    localparam [9:0] INTER_BASE = 10'd272;  // Layer-0 output / layer-1 input starts at address 272.
+    localparam [9:0] FINAL_BASE = 10'd600;  // Final layer-1 output starts at address 600.
 
     reg [5:0] state;
-    reg [3:0] load_idx;
+    reg [3:0] load_idx; // Index used while loading packed kernel weights.
+
+    // Two 3x3 kernels:
+    // weights[0]~weights[8] are used in layer 0.
+    // weights[9]~weights[17] are used in layer 1.
     reg signed [7:0] weights [0:17];
     reg signed [7:0] bias0;
     reg signed [7:0] bias1;
@@ -345,33 +471,43 @@ module CNN #(
     reg [9:0] base_in;
     reg [9:0] base_out;
     reg layer;
+
+    // Input streaming position and total number of pixels in the current layer.
     reg [11:0] input_total;
     reg [11:0] input_index;
     reg [5:0] stream_x;
     reg [5:0] stream_y;
+
+    // 32-bit memory word contains four packed 8-bit pixels.
     reg [31:0] stream_word;
+
+    // Output packing and bookkeeping.
     reg [11:0] output_total;
     reg [11:0] out_index;
+    // Number of MAC9 pipeline results already completed.
     reg [11:0] retire_count;
-    reg [11:0] active_out_index;
-    reg active_last;
     reg write_pending;
     reg [9:0] pending_addr;
     reg [31:0] pending_word;
+    // Buffer used to pack four 8-bit output pixels into one 32-bit word.
     reg [31:0] pack_word;
     integer wi;
 
     wire [1:0] stream_lane = input_index[1:0];
     wire [9:0] stream_word_addr = base_in + input_index[11:2];
     wire stream_done = (input_index == input_total);
+    wire [9:0] stream_word_index = input_index[11:2];
+    wire [9:0] input_last_word_index = input_total[11:2] - 10'd1;
+    wire stream_word_has_next = (stream_word_index < input_last_word_index);
+    wire stream_read_slot = (!stream_done) && (stream_lane == 2'd1) && stream_word_has_next;
+    wire stream_capture_slot = (!stream_done) && (stream_lane == 2'd3) && stream_word_has_next;
+    wire stream_write_slot = (!stream_done) && ((stream_lane == 2'd0) || (stream_lane == 2'd3));
     wire line_valid;
-    wire line_accept = (state == C_UNPACK);
-    wire mac_start = (state == C_WINDOW) && line_valid;
+    wire line_accept = (state == C_UNPACK) && !stream_done;
+    wire mac_start = (state == C_UNPACK) && line_valid;
     wire current_last = (out_index == (output_total - 12'd1));
-    wire flush_word = (active_out_index[1:0] == 2'd3) || active_last;
     wire signed [7:0] unpacked_pixel;
     wire signed [7:0] quant_pixel;
-    wire [31:0] packed_next_word;
     wire signed [31:0] active_bias_q12 =
         layer ? {{18{bias1[7]}}, bias1, 6'd0} : {{18{bias0[7]}}, bias0, 6'd0};
     wire signed [7:0] k0 = weights[layer ? 9 : 0];
@@ -399,17 +535,19 @@ module CNN #(
     wire signed [31:0] mac_result;
     wire [11:0] mac_out_index;
     wire mac_out_last;
-    wire streaming_mac = (MAC_PARALLEL == 9);
     wire mac_result_flush = (mac_out_index[1:0] == 2'd3) || mac_out_last;
 
     assign enb = rstn;
 
+    // Select one 8-bit pixel from the current 32-bit packed input word.
     CNN_Unpacker u_unpacker(
         .word(stream_word),
         .lane(stream_lane),
         .pixel(unpacked_pixel)
     );
 
+    // Line buffer receives pixels sequentially and generates a valid 3x3
+    // convolution window once enough rows and columns are available.
     CNN_LineBuffer u_line_buffer(
         .clk(clk),
         .rstn(rstn),
@@ -432,9 +570,8 @@ module CNN #(
         .w22(win22)
     );
 
-    CNN_MAC_Engine #(
-        .MAC_PARALLEL(MAC_PARALLEL)
-    ) u_mac_engine (
+    // MAC engine performs one 3x3 convolution using the fixed MAC9 parallel pipeline.
+    CNN_MAC_Engine u_mac_engine (
         .clk(clk),
         .rstn(rstn),
         .start(mac_start),
@@ -466,11 +603,13 @@ module CNN #(
         .result_q12(mac_result)
     );
 
+    // Convert the MAC result back to 8-bit output using rounding and clipping.
     CNN_Quantizer u_quantizer(
         .value_q12(mac_result),
         .pixel_q6(quant_pixel)
     );
 
+    // Put one 8-bit pixel back into the selected lane of a 32-bit word.
     function [31:0] put_lane;
         input [31:0] word;
         input [1:0] lane;
@@ -485,15 +624,50 @@ module CNN #(
         end
     endfunction
 
+    // Calculate total number of pixels from the feature-map width.
     function [11:0] square6;
         input [5:0] value;
         begin
-            square6 = value * value;
+            case (value)
+                6'd0:  square6 = 12'd0;
+                6'd1:  square6 = 12'd1;
+                6'd2:  square6 = 12'd4;
+                6'd3:  square6 = 12'd9;
+                6'd4:  square6 = 12'd16;
+                6'd5:  square6 = 12'd25;
+                6'd6:  square6 = 12'd36;
+                6'd7:  square6 = 12'd49;
+                6'd8:  square6 = 12'd64;
+                6'd9:  square6 = 12'd81;
+                6'd10: square6 = 12'd100;
+                6'd11: square6 = 12'd121;
+                6'd12: square6 = 12'd144;
+                6'd13: square6 = 12'd169;
+                6'd14: square6 = 12'd196;
+                6'd15: square6 = 12'd225;
+                6'd16: square6 = 12'd256;
+                6'd17: square6 = 12'd289;
+                6'd18: square6 = 12'd324;
+                6'd19: square6 = 12'd361;
+                6'd20: square6 = 12'd400;
+                6'd21: square6 = 12'd441;
+                6'd22: square6 = 12'd484;
+                6'd23: square6 = 12'd529;
+                6'd24: square6 = 12'd576;
+                6'd25: square6 = 12'd625;
+                6'd26: square6 = 12'd676;
+                6'd27: square6 = 12'd729;
+                6'd28: square6 = 12'd784;
+                6'd29: square6 = 12'd841;
+                6'd30: square6 = 12'd900;
+                6'd31: square6 = 12'd961;
+                6'd32: square6 = 12'd1024;
+                default: square6 = 12'd0;
+            endcase
         end
     endfunction
 
-    assign packed_next_word = put_lane(pack_word, active_out_index[1:0], quant_pixel);
-
+    // Advance the streaming position across the 2D feature map.
     task advance_input;
         begin
             input_index <= input_index + 12'd1;
@@ -515,26 +689,28 @@ module CNN #(
             web <= 1'b0;
             done <= 1'b0;
             load_idx <= 4'd0;
+            // Feature-map and layer configuration.
             fmap_size <= 6'd0;
             in_w <= 6'd0;
             out_w <= 6'd0;
             base_in <= 10'd0;
             base_out <= 10'd0;
             layer <= 1'b0;
+            // Input streaming state.
             input_total <= 12'd0;
             input_index <= 12'd0;
             stream_x <= 6'd0;
             stream_y <= 6'd0;
             stream_word <= 32'd0;
+            // Output streaming/packing state.
             output_total <= 12'd0;
             out_index <= 12'd0;
             retire_count <= 12'd0;
-            active_out_index <= 12'd0;
-            active_last <= 1'b0;
             write_pending <= 1'b0;
             pending_addr <= 10'd0;
             pending_word <= 32'd0;
             pack_word <= 32'd0;
+            // Bias and kernel initialization.
             bias0 <= 8'sd0;
             bias1 <= 8'sd0;
             for (wi = 0; wi < 18; wi = wi + 1) begin
@@ -543,7 +719,9 @@ module CNN #(
         end
         else begin
             web <= 1'b0;
-            if (streaming_mac && mac_valid) begin
+            // MAC9 results come from a pipeline.
+            // Quantize and pack each valid result while input streaming continues.
+            if (mac_valid) begin
                 retire_count <= retire_count + 12'd1;
                 if (mac_result_flush) begin
                     pending_addr <= base_out + mac_out_index[11:2];
@@ -576,11 +754,13 @@ module CNN #(
                 end
 
                 C_LOAD_CFG_CAP: begin
+                    // Read feature-map size from Data Memory address 12.
                     fmap_size <= doutb[6:1];
                     state <= C_LOAD_B0_ADDR;
                 end
 
                 C_LOAD_B0_ADDR: begin
+                    // Read layer-0 bias from Data Memory address 14.
                     addr <= 10'd14;
                     state <= C_LOAD_B0_WAIT;
                 end
@@ -595,6 +775,7 @@ module CNN #(
                 end
 
                 C_LOAD_B1_ADDR: begin
+                    // Read layer-1 bias from Data Memory address 15.
                     addr <= 10'd15;
                     state <= C_LOAD_B1_WAIT;
                 end
@@ -667,6 +848,7 @@ module CNN #(
                 end
 
                 C_LAYER_SETUP: begin
+                    // Set current layer dimensions and restart input/output counters.
                     input_total <= square6(in_w);
                     output_total <= square6(out_w);
                     input_index <= 12'd0;
@@ -674,8 +856,6 @@ module CNN #(
                     stream_y <= 6'd0;
                     out_index <= 12'd0;
                     retire_count <= 12'd0;
-                    active_out_index <= 12'd0;
-                    active_last <= 1'b0;
                     write_pending <= 1'b0;
                     pending_addr <= 10'd0;
                     pending_word <= 32'd0;
@@ -684,23 +864,15 @@ module CNN #(
                 end
 
                 C_STREAM_NEXT: begin
-                    if (streaming_mac && write_pending) begin
-                        state <= C_WRITE_OUT;
-                    end
-                    else if (stream_done) begin
-                        if (streaming_mac && (retire_count != output_total)) begin
-                            state <= C_MAC_WAIT;
-                        end
-                        else begin
-                            state <= C_LAYER_NEXT;
-                        end
-                    end
-                    else if (stream_lane == 2'd0) begin
-                        addr <= stream_word_addr;
-                        state <= C_READ_WAIT;
+                    // Prime the first input word of this layer. After this point,
+                    // C_UNPACK keeps the pixel stream running at one pixel per cycle
+                    // and prefetches the next 32-bit word while unpacking lanes.
+                    if (stream_done) begin
+                        state <= C_LAYER_NEXT;
                     end
                     else begin
-                        state <= C_UNPACK;
+                        addr <= stream_word_addr;
+                        state <= C_READ_WAIT;
                     end
                 end
 
@@ -714,70 +886,66 @@ module CNN #(
                 end
 
                 C_UNPACK: begin
-                    state <= C_WINDOW;
+                    // line_accept is asserted in this state when stream_done is false.
+                    // line_valid belongs to the previous accepted pixel, so a new MAC
+                    // can be launched while the next pixel is being accepted.
+                    if (line_valid) begin
+                        out_index <= out_index + 12'd1;
+                    end
+
+                    if (stream_done) begin
+                        state <= C_MAC_WAIT;
+                    end
+                    else begin
+                        // For 32-bit packed input, request the next word at lane 1.
+                        // With the BRAM latency used by the reference memory, the word
+                        // can be captured when lane 3 is consumed.
+                        if (stream_read_slot) begin
+                            addr <= base_in + stream_word_index + 10'd1;
+                        end
+                        else if (write_pending && stream_write_slot) begin
+                            // Output writes use otherwise-free memory slots.  The read
+                            // request slot has priority so the input stream does not stall.
+                            addr <= pending_addr;
+                            dinb <= pending_word;
+                            web <= 1'b1;
+                            write_pending <= 1'b0;
+                        end
+
+                        if (stream_capture_slot) begin
+                            stream_word <= doutb;
+                        end
+
+                        advance_input;
+                        state <= C_UNPACK;
+                    end
                 end
 
                 C_WINDOW: begin
-                    if (line_valid) begin
-                        if (streaming_mac) begin
-                            out_index <= out_index + 12'd1;
-                            advance_input;
-                            state <= C_STREAM_NEXT;
-                        end
-                        else begin
-                            active_out_index <= out_index;
-                            active_last <= current_last;
-                            state <= C_MAC_WAIT;
-                        end
-                    end
-                    else begin
-                        advance_input;
-                        state <= C_STREAM_NEXT;
-                    end
+                    // Unused in the fast streaming datapath; kept for state encoding compatibility.
+                    state <= C_UNPACK;
                 end
 
                 C_MAC_WAIT: begin
-                    if (streaming_mac) begin
-                        if (write_pending) begin
-                            state <= C_WRITE_OUT;
-                        end
-                        else if (retire_count == output_total) begin
-                            state <= C_LAYER_NEXT;
-                        end
+                    // If a full packed output word is waiting, write it first.
+                    if (write_pending) begin
+                        state <= C_WRITE_OUT;
                     end
-                    else if (mac_valid) begin
-                        if (flush_word) begin
-                            addr <= base_out + active_out_index[11:2];
-                            dinb <= packed_next_word;
-                            web <= 1'b1;
-                            pack_word <= 32'd0;
-                            state <= C_WRITE_OUT;
-                        end
-                        else begin
-                            pack_word <= packed_next_word;
-                            out_index <= out_index + 12'd1;
-                            advance_input;
-                            state <= C_STREAM_NEXT;
-                        end
+                    else if (retire_count == output_total) begin
+                        state <= C_LAYER_NEXT;
                     end
                 end
 
                 C_WRITE_OUT: begin
-                    if (streaming_mac) begin
-                        addr <= pending_addr;
-                        dinb <= pending_word;
-                        web <= 1'b1;
-                        write_pending <= 1'b0;
-                        state <= C_STREAM_NEXT;
-                    end
-                    else begin
-                        out_index <= out_index + 12'd1;
-                        advance_input;
-                        state <= active_last ? C_LAYER_NEXT : C_STREAM_NEXT;
-                    end
+                    addr <= pending_addr;
+                    dinb <= pending_word;
+                    web <= 1'b1;
+                    write_pending <= 1'b0;
+                    state <= C_MAC_WAIT;
                 end
 
                 C_LAYER_NEXT: begin
+                    // Layer 1 uses the layer-0 output as its input feature map.
                     if (!layer) begin
                         layer <= 1'b1;
                         in_w <= fmap_size - 6'd2;
@@ -795,7 +963,9 @@ module CNN #(
                 end
 
                 C_WRITE_DONE: begin
-                    done <= 1'b1;
+                    // Give the BRAM write of DataMemory[13] one full cycle to settle
+                    // before the test circuit sees system_done.
+                    done <= 1'b0;
                     state <= C_FINISHED;
                 end
 
@@ -847,8 +1017,10 @@ module CNN_LineBuffer(
     output reg signed [7:0] w21,
     output reg signed [7:0] w22
 );
-    (* ram_style = "distributed" *) reg signed [7:0] line0 [0:31];
-    (* ram_style = "distributed" *) reg signed [7:0] line1 [0:31];
+    // line0 and line1 store the previous two rows of pixels.
+    // Distributed RAM avoids spending flip-flops on the 2-row buffer.
+    reg signed [7:0] line0 [0:31];
+    reg signed [7:0] line1 [0:31];
     reg signed [7:0] top0;
     reg signed [7:0] top1;
     reg signed [7:0] mid0;
@@ -883,6 +1055,8 @@ module CNN_LineBuffer(
             w22 <= 8'sd0;
         end
         else begin
+            // valid is normally low; it is asserted for one cycle when a
+            // complete 3x3 window is generated.
             valid <= 1'b0;
             if (layer_start) begin
                 top0 <= 8'sd0;
@@ -893,6 +1067,7 @@ module CNN_LineBuffer(
                 bot1 <= 8'sd0;
             end
             else if (accept) begin
+                // accept means a new pixel enters the line buffer this cycle.
                 if (x == 6'd0) begin
                     top0 <= 8'sd0;
                     top1 <= top2;
@@ -910,6 +1085,8 @@ module CNN_LineBuffer(
                     bot1 <= bot2;
                 end
 
+                // A complete 3x3 window exists only after at least 3 rows
+                // and 3 columns have been received.
                 if ((x >= 6'd2) && (y >= 6'd2)) begin
                     valid <= 1'b1;
                     out_x <= x - 6'd2;
@@ -925,6 +1102,8 @@ module CNN_LineBuffer(
                     w22 <= bot2;
                 end
 
+                // Update vertical line buffers: current pixel becomes previous row
+                // data for the next row, and old line1 moves into line0.
                 line0[x_idx] <= line1[x_idx];
                 line1[x_idx] <= pixel;
             end
@@ -932,13 +1111,17 @@ module CNN_LineBuffer(
     end
 endmodule
 
-module CNN_MAC_Engine_old #(
-    parameter integer MAC_PARALLEL = 3
-)(
+
+
+module CNN_MAC_Engine(
     input clk,
     input rstn,
     input start,
     input signed [31:0] bias_q12,
+    // 3x3 input feature-map window:
+    // w00 w01 w02
+    // w10 w11 w12
+    // w20 w21 w22
     input signed [7:0] w00,
     input signed [7:0] w01,
     input signed [7:0] w02,
@@ -948,6 +1131,10 @@ module CNN_MAC_Engine_old #(
     input signed [7:0] w20,
     input signed [7:0] w21,
     input signed [7:0] w22,
+    // 3x3 kernel weights:
+    // k0 k1 k2
+    // k3 k4 k5
+    // k6 k7 k8
     input signed [7:0] k0,
     input signed [7:0] k1,
     input signed [7:0] k2,
@@ -957,211 +1144,8 @@ module CNN_MAC_Engine_old #(
     input signed [7:0] k6,
     input signed [7:0] k7,
     input signed [7:0] k8,
-    output reg busy,
-    output reg valid,
-    output reg signed [31:0] result_q12
-);
-    localparam M_IDLE = 3'd0;
-    localparam M_RUN  = 3'd1;
-    localparam M9_S2  = 3'd2;
-    localparam M9_S3  = 3'd3;
-
-    reg [2:0] state;
-    reg [3:0] term_idx;
-    reg [1:0] row_idx;
-    reg signed [31:0] acc;
-    reg signed [31:0] p0_r;
-    reg signed [31:0] p1_r;
-    reg signed [31:0] p2_r;
-    reg signed [31:0] p3_r;
-    reg signed [31:0] p4_r;
-    reg signed [31:0] p5_r;
-    reg signed [31:0] p6_r;
-    reg signed [31:0] p7_r;
-    reg signed [31:0] p8_r;
-    reg signed [31:0] s1_0;
-    reg signed [31:0] s1_1;
-    reg signed [31:0] s1_2;
-    reg signed [31:0] s1_3;
-    reg signed [31:0] s1_4;
-    reg signed [31:0] s2_0;
-    reg signed [31:0] s2_1;
-    reg signed [31:0] s2_2;
-
-    wire signed [15:0] p0_16 = w00 * k0;
-    wire signed [15:0] p1_16 = w01 * k1;
-    wire signed [15:0] p2_16 = w02 * k2;
-    wire signed [15:0] p3_16 = w10 * k3;
-    wire signed [15:0] p4_16 = w11 * k4;
-    wire signed [15:0] p5_16 = w12 * k5;
-    wire signed [15:0] p6_16 = w20 * k6;
-    wire signed [15:0] p7_16 = w21 * k7;
-    wire signed [15:0] p8_16 = w22 * k8;
-    wire signed [31:0] p0 = {{16{p0_16[15]}}, p0_16};
-    wire signed [31:0] p1 = {{16{p1_16[15]}}, p1_16};
-    wire signed [31:0] p2 = {{16{p2_16[15]}}, p2_16};
-    wire signed [31:0] p3 = {{16{p3_16[15]}}, p3_16};
-    wire signed [31:0] p4 = {{16{p4_16[15]}}, p4_16};
-    wire signed [31:0] p5 = {{16{p5_16[15]}}, p5_16};
-    wire signed [31:0] p6 = {{16{p6_16[15]}}, p6_16};
-    wire signed [31:0] p7 = {{16{p7_16[15]}}, p7_16};
-    wire signed [31:0] p8 = {{16{p8_16[15]}}, p8_16};
-
-    function signed [31:0] term_value;
-        input [3:0] idx;
-        begin
-            case (idx)
-                4'd1: term_value = p1_r;
-                4'd2: term_value = p2_r;
-                4'd3: term_value = p3_r;
-                4'd4: term_value = p4_r;
-                4'd5: term_value = p5_r;
-                4'd6: term_value = p6_r;
-                4'd7: term_value = p7_r;
-                default: term_value = p8_r;
-            endcase
-        end
-    endfunction
-
-    always @(posedge clk) begin
-        if (!rstn) begin
-            state <= M_IDLE;
-            term_idx <= 4'd0;
-            row_idx <= 2'd0;
-            acc <= 32'sd0;
-            result_q12 <= 32'sd0;
-            busy <= 1'b0;
-            valid <= 1'b0;
-            p0_r <= 32'sd0;
-            p1_r <= 32'sd0;
-            p2_r <= 32'sd0;
-            p3_r <= 32'sd0;
-            p4_r <= 32'sd0;
-            p5_r <= 32'sd0;
-            p6_r <= 32'sd0;
-            p7_r <= 32'sd0;
-            p8_r <= 32'sd0;
-            s1_0 <= 32'sd0;
-            s1_1 <= 32'sd0;
-            s1_2 <= 32'sd0;
-            s1_3 <= 32'sd0;
-            s1_4 <= 32'sd0;
-            s2_0 <= 32'sd0;
-            s2_1 <= 32'sd0;
-            s2_2 <= 32'sd0;
-        end
-        else begin
-            valid <= 1'b0;
-            case (state)
-                M_IDLE: begin
-                    busy <= 1'b0;
-                    if (start) begin
-                        p0_r <= p0;
-                        p1_r <= p1;
-                        p2_r <= p2;
-                        p3_r <= p3;
-                        p4_r <= p4;
-                        p5_r <= p5;
-                        p6_r <= p6;
-                        p7_r <= p7;
-                        p8_r <= p8;
-                        busy <= 1'b1;
-                        if (MAC_PARALLEL == 1) begin
-                            acc <= bias_q12 + p0;
-                            term_idx <= 4'd1;
-                            state <= M_RUN;
-                        end
-                        else if (MAC_PARALLEL == 9) begin
-                            s1_0 <= p0 + p1;
-                            s1_1 <= p2 + p3;
-                            s1_2 <= p4 + p5;
-                            s1_3 <= p6 + p7;
-                            s1_4 <= bias_q12 + p8;
-                            state <= M9_S2;
-                        end
-                        else begin
-                            acc <= bias_q12 + p0 + p1 + p2;
-                            row_idx <= 2'd1;
-                            state <= M_RUN;
-                        end
-                    end
-                end
-
-                M_RUN: begin
-                    if (MAC_PARALLEL == 1) begin
-                        if (term_idx == 4'd8) begin
-                            result_q12 <= acc + p8_r;
-                            valid <= 1'b1;
-                            busy <= 1'b0;
-                            state <= M_IDLE;
-                        end
-                        else begin
-                            acc <= acc + term_value(term_idx);
-                            term_idx <= term_idx + 4'd1;
-                        end
-                    end
-                    else begin
-                        if (row_idx == 2'd1) begin
-                            acc <= acc + p3_r + p4_r + p5_r;
-                            row_idx <= 2'd2;
-                        end
-                        else begin
-                            result_q12 <= acc + p6_r + p7_r + p8_r;
-                            valid <= 1'b1;
-                            busy <= 1'b0;
-                            state <= M_IDLE;
-                        end
-                    end
-                end
-
-                M9_S2: begin
-                    s2_0 <= s1_0 + s1_1;
-                    s2_1 <= s1_2 + s1_3;
-                    s2_2 <= s1_4;
-                    state <= M9_S3;
-                end
-
-                M9_S3: begin
-                    result_q12 <= s2_0 + s2_1 + s2_2;
-                    valid <= 1'b1;
-                    busy <= 1'b0;
-                    state <= M_IDLE;
-                end
-
-                default: begin
-                    state <= M_IDLE;
-                    busy <= 1'b0;
-                end
-            endcase
-        end
-    end
-endmodule
-
-module CNN_MAC_Engine #(
-    parameter integer MAC_PARALLEL = 3
-)(
-    input clk,
-    input rstn,
-    input start,
-    input signed [31:0] bias_q12,
-    input signed [7:0] w00,
-    input signed [7:0] w01,
-    input signed [7:0] w02,
-    input signed [7:0] w10,
-    input signed [7:0] w11,
-    input signed [7:0] w12,
-    input signed [7:0] w20,
-    input signed [7:0] w21,
-    input signed [7:0] w22,
-    input signed [7:0] k0,
-    input signed [7:0] k1,
-    input signed [7:0] k2,
-    input signed [7:0] k3,
-    input signed [7:0] k4,
-    input signed [7:0] k5,
-    input signed [7:0] k6,
-    input signed [7:0] k7,
-    input signed [7:0] k8,
+    // tag_index and tag_last keep output position information aligned
+    // with delayed MAC9 pipeline results.
     input [11:0] tag_index,
     input tag_last,
     output reg busy,
@@ -1170,315 +1154,148 @@ module CNN_MAC_Engine #(
     output reg result_last,
     output reg signed [31:0] result_q12
 );
-    localparam M_IDLE    = 2'd0;
-    localparam M_RUN     = 2'd1;
-    localparam M9_S2     = 2'd2;
-    localparam M3_FINISH = 2'd3;
 
-    function signed [31:0] mul_ext;
-        input signed [7:0] a;
-        input signed [7:0] b;
-        reg signed [15:0] prod;
-        begin
-            prod = a * b;
-            mul_ext = {{16{prod[15]}}, prod};
-        end
-    endfunction
-
-    function signed [17:0] sx18;
+    // hope vivado built 8x8 multipliers into fabric LUTs instead of DSP48s.
+    // This trades LUT area for a lower official area score because DSPs
+    // carry a 280x penalty in the project formula.
+    function signed [7:0] sx8;
         input signed [7:0] value;
         begin
-            sx18 = {{10{value[7]}}, value};
+            sx8 = value;
         end
     endfunction
 
-    function signed [31:0] prod36_to_q12;
-        input signed [35:0] value;
+    // The 9 signed 8x8 products plus bias fit in 20 bits; keep the
+    // internal reduction narrow and sign-extend only at the output.
+    function signed [19:0] prod16_to_q12;
+        input signed [15:0] value;
         begin
-            prod36_to_q12 = {{16{value[15]}}, value[15:0]};
+            prod16_to_q12 = {{4{value[15]}}, value};
+        end
+    endfunction
+    //extend to fit in quantizer
+    function signed [31:0] sx20_to_q32;
+        input signed [19:0] value;
+        begin
+            sx20_to_q32 = {{12{value[19]}}, value};
         end
     endfunction
 
-generate
-    if (MAC_PARALLEL == 1) begin : gen_mac1
-        reg [1:0] state;
-        reg [3:0] term_idx;
-        reg signed [31:0] acc;
-        reg signed [7:0] f1;
-        reg signed [7:0] f2;
-        reg signed [7:0] f3;
-        reg signed [7:0] f4;
-        reg signed [7:0] f5;
-        reg signed [7:0] f6;
-        reg signed [7:0] f7;
-        reg signed [7:0] f8;
-        reg signed [7:0] kr1;
-        reg signed [7:0] kr2;
-        reg signed [7:0] kr3;
-        reg signed [7:0] kr4;
-        reg signed [7:0] kr5;
-        reg signed [7:0] kr6;
-        reg signed [7:0] kr7;
-        reg signed [7:0] kr8;
-        reg [11:0] tag_index_r;
-        reg tag_last_r;
+    // Valid shift register for the 3-stage MAC pipeline.
+    reg [2:0] pipe_valid;
+    reg signed [15:0] p0;
+    reg signed [15:0] p1;
+    reg signed [15:0] p2;
+    reg signed [15:0] p3;
+    reg signed [15:0] p4;
+    reg signed [15:0] p5;
+    reg signed [15:0] p6;
+    reg signed [15:0] p7;
+    reg signed [15:0] p8;
+    // Bias and output tags must move through the pipeline with the data.
+    reg signed [19:0] bias_s1;
+    reg [11:0] tag_s1;
+    reg tag_last_s1;
+    reg signed [19:0] s2_0;
+    reg signed [19:0] s2_1;
+    reg signed [19:0] s2_2;
+    reg signed [19:0] s2_3;
+    reg signed [19:0] s2_4;
+    reg [11:0] tag_s2;
+    reg tag_last_s2;
+    reg signed [19:0] s3_0;
+    reg signed [19:0] s3_1;
+    reg signed [19:0] s3_2;
+    reg [11:0] tag_s3;
+    reg tag_last_s3;
 
-        always @(posedge clk) begin
-            if (!rstn) begin
-                state <= M_IDLE;
-                term_idx <= 4'd0;
-                acc <= 32'sd0;
-                busy <= 1'b0;
-                valid <= 1'b0;
-                result_index <= 12'd0;
-                result_last <= 1'b0;
-                result_q12 <= 32'sd0;
-                tag_index_r <= 12'd0;
-                tag_last_r <= 1'b0;
+    always @(posedge clk) begin
+        if (!rstn) begin
+            busy <= 1'b0;
+            valid <= 1'b0;
+            result_index <= 12'd0;
+            result_last <= 1'b0;
+            result_q12 <= 32'sd0;
+            pipe_valid <= 3'b000;
+            p0 <= 16'sd0;
+            p1 <= 16'sd0;
+            p2 <= 16'sd0;
+            p3 <= 16'sd0;
+            p4 <= 16'sd0;
+            p5 <= 16'sd0;
+            p6 <= 16'sd0;
+            p7 <= 16'sd0;
+            p8 <= 16'sd0;
+            bias_s1 <= 20'sd0;
+            tag_s1 <= 12'd0;
+            tag_last_s1 <= 1'b0;
+            s2_0 <= 20'sd0;
+            s2_1 <= 20'sd0;
+            s2_2 <= 20'sd0;
+            s2_3 <= 20'sd0;
+            s2_4 <= 20'sd0;
+            tag_s2 <= 12'd0;
+            tag_last_s2 <= 1'b0;
+            s3_0 <= 20'sd0;
+            s3_1 <= 20'sd0;
+            s3_2 <= 20'sd0;
+            tag_s3 <= 12'd0;
+            tag_last_s3 <= 1'b0;
+        end
+        else begin
+            valid <= pipe_valid[2];
+            // busy is high when a new input starts or when data remains in the pipeline.
+            busy <= start | (|pipe_valid);//只要 pipeline 任一級仍然有有效資料，MAC 就還在忙碌中
+            pipe_valid <= {pipe_valid[1:0], start};//000 010 100
+
+            if (start) begin
+                // Stage 1: compute 9 parallel products.
+                p0 <= sx8(w00) * sx8(k0);
+                p1 <= sx8(w01) * sx8(k1);
+                p2 <= sx8(w02) * sx8(k2);
+                p3 <= sx8(w10) * sx8(k3);
+                p4 <= sx8(w11) * sx8(k4);
+                p5 <= sx8(w12) * sx8(k5);
+                p6 <= sx8(w20) * sx8(k6);
+                p7 <= sx8(w21) * sx8(k7);
+                p8 <= sx8(w22) * sx8(k8);
+                bias_s1 <= bias_q12[19:0];
+                tag_s1 <= tag_index;
+                tag_last_s1 <= tag_last;
             end
-            else begin
-                valid <= 1'b0;
-                case (state)
-                    M_IDLE: begin
-                        busy <= 1'b0;
-                        if (start) begin
-                            f1 <= w01; f2 <= w02; f3 <= w10; f4 <= w11;
-                            f5 <= w12; f6 <= w20; f7 <= w21; f8 <= w22;
-                            kr1 <= k1; kr2 <= k2; kr3 <= k3; kr4 <= k4;
-                            kr5 <= k5; kr6 <= k6; kr7 <= k7; kr8 <= k8;
-                            tag_index_r <= tag_index;
-                            tag_last_r <= tag_last;
-                            acc <= bias_q12 + mul_ext(w00, k0);
-                            term_idx <= 4'd1;
-                            busy <= 1'b1;
-                            state <= M_RUN;
-                        end
-                    end
 
-                    M_RUN: begin
-                        case (term_idx)
-                            4'd1: acc <= acc + mul_ext(f1, kr1);
-                            4'd2: acc <= acc + mul_ext(f2, kr2);
-                            4'd3: acc <= acc + mul_ext(f3, kr3);
-                            4'd4: acc <= acc + mul_ext(f4, kr4);
-                            4'd5: acc <= acc + mul_ext(f5, kr5);
-                            4'd6: acc <= acc + mul_ext(f6, kr6);
-                            4'd7: acc <= acc + mul_ext(f7, kr7);
-                            default: begin
-                                result_q12 <= acc + mul_ext(f8, kr8);
-                                result_index <= tag_index_r;
-                                result_last <= tag_last_r;
-                                valid <= 1'b1;
-                                busy <= 1'b0;
-                                state <= M_IDLE;
-                            end
-                        endcase
-                        if (term_idx < 4'd8) begin
-                            term_idx <= term_idx + 4'd1;
-                        end
-                    end
+            if (pipe_valid[0]) begin
+                // Stage 2: reduce 9 products into 5 partial sums.
+                s2_0 <= prod16_to_q12(p0) + prod16_to_q12(p1);
+                s2_1 <= prod16_to_q12(p2) + prod16_to_q12(p3);
+                s2_2 <= prod16_to_q12(p4) + prod16_to_q12(p5);
+                s2_3 <= prod16_to_q12(p6) + prod16_to_q12(p7);
+                s2_4 <= bias_s1 + prod16_to_q12(p8);
+                tag_s2 <= tag_s1;
+                tag_last_s2 <= tag_last_s1;
+            end
 
-                    default: begin
-                        state <= M_IDLE;
-                        busy <= 1'b0;
-                    end
-                endcase
+            if (pipe_valid[1]) begin
+                // Stage 3: reduce 5 partial sums into 3 partial sums.
+                s3_0 <= s2_0 + s2_1;
+                s3_1 <= s2_2 + s2_3;
+                s3_2 <= s2_4;
+                tag_s3 <= tag_s2;
+                tag_last_s3 <= tag_last_s2;
+            end
+
+            if (pipe_valid[2]) begin
+                // Final stage: produce the convolution result and its tag.
+                result_q12 <= sx20_to_q32(s3_0 + s3_1 + s3_2);
+                result_index <= tag_s3;
+                result_last <= tag_last_s3;
             end
         end
     end
-    else if (MAC_PARALLEL == 9) begin : gen_mac9
-        reg [2:0] pipe_valid;
-        (* use_dsp = "yes" *) reg signed [35:0] p0;
-        (* use_dsp = "yes" *) reg signed [35:0] p1;
-        (* use_dsp = "yes" *) reg signed [35:0] p2;
-        (* use_dsp = "yes" *) reg signed [35:0] p3;
-        (* use_dsp = "yes" *) reg signed [35:0] p4;
-        (* use_dsp = "yes" *) reg signed [35:0] p5;
-        (* use_dsp = "yes" *) reg signed [35:0] p6;
-        (* use_dsp = "yes" *) reg signed [35:0] p7;
-        (* use_dsp = "yes" *) reg signed [35:0] p8;
-        reg signed [31:0] bias_s1;
-        reg [11:0] tag_s1;
-        reg tag_last_s1;
-        reg signed [31:0] s2_0;
-        reg signed [31:0] s2_1;
-        reg signed [31:0] s2_2;
-        reg signed [31:0] s2_3;
-        reg signed [31:0] s2_4;
-        reg [11:0] tag_s2;
-        reg tag_last_s2;
-        reg signed [31:0] s3_0;
-        reg signed [31:0] s3_1;
-        reg signed [31:0] s3_2;
-        reg [11:0] tag_s3;
-        reg tag_last_s3;
-
-        always @(posedge clk) begin
-            if (!rstn) begin
-                busy <= 1'b0;
-                valid <= 1'b0;
-                result_index <= 12'd0;
-                result_last <= 1'b0;
-                result_q12 <= 32'sd0;
-                pipe_valid <= 3'b000;
-                p0 <= 36'sd0;
-                p1 <= 36'sd0;
-                p2 <= 36'sd0;
-                p3 <= 36'sd0;
-                p4 <= 36'sd0;
-                p5 <= 36'sd0;
-                p6 <= 36'sd0;
-                p7 <= 36'sd0;
-                p8 <= 36'sd0;
-                bias_s1 <= 32'sd0;
-                tag_s1 <= 12'd0;
-                tag_last_s1 <= 1'b0;
-                s2_0 <= 32'sd0;
-                s2_1 <= 32'sd0;
-                s2_2 <= 32'sd0;
-                s2_3 <= 32'sd0;
-                s2_4 <= 32'sd0;
-                tag_s2 <= 12'd0;
-                tag_last_s2 <= 1'b0;
-                s3_0 <= 32'sd0;
-                s3_1 <= 32'sd0;
-                s3_2 <= 32'sd0;
-                tag_s3 <= 12'd0;
-                tag_last_s3 <= 1'b0;
-            end
-            else begin
-                valid <= pipe_valid[2];
-                busy <= start | (|pipe_valid);
-                pipe_valid <= {pipe_valid[1:0], start};
-
-                if (start) begin
-                    p0 <= sx18(w00) * sx18(k0);
-                    p1 <= sx18(w01) * sx18(k1);
-                    p2 <= sx18(w02) * sx18(k2);
-                    p3 <= sx18(w10) * sx18(k3);
-                    p4 <= sx18(w11) * sx18(k4);
-                    p5 <= sx18(w12) * sx18(k5);
-                    p6 <= sx18(w20) * sx18(k6);
-                    p7 <= sx18(w21) * sx18(k7);
-                    p8 <= sx18(w22) * sx18(k8);
-                    bias_s1 <= bias_q12;
-                    tag_s1 <= tag_index;
-                    tag_last_s1 <= tag_last;
-                end
-
-                if (pipe_valid[0]) begin
-                    s2_0 <= prod36_to_q12(p0) + prod36_to_q12(p1);
-                    s2_1 <= prod36_to_q12(p2) + prod36_to_q12(p3);
-                    s2_2 <= prod36_to_q12(p4) + prod36_to_q12(p5);
-                    s2_3 <= prod36_to_q12(p6) + prod36_to_q12(p7);
-                    s2_4 <= bias_s1 + prod36_to_q12(p8);
-                    tag_s2 <= tag_s1;
-                    tag_last_s2 <= tag_last_s1;
-                end
-
-                if (pipe_valid[1]) begin
-                    s3_0 <= s2_0 + s2_1;
-                    s3_1 <= s2_2 + s2_3;
-                    s3_2 <= s2_4;
-                    tag_s3 <= tag_s2;
-                    tag_last_s3 <= tag_last_s2;
-                end
-
-                if (pipe_valid[2]) begin
-                    result_q12 <= s3_0 + s3_1 + s3_2;
-                    result_index <= tag_s3;
-                    result_last <= tag_last_s3;
-                end
-            end
-        end
-    end
-    else begin : gen_mac3
-        reg [1:0] state;
-        reg [1:0] row_idx;
-        reg signed [31:0] acc;
-        reg signed [31:0] row_sum;
-        reg signed [7:0] f3;
-        reg signed [7:0] f4;
-        reg signed [7:0] f5;
-        reg signed [7:0] f6;
-        reg signed [7:0] f7;
-        reg signed [7:0] f8;
-        reg signed [7:0] kr3;
-        reg signed [7:0] kr4;
-        reg signed [7:0] kr5;
-        reg signed [7:0] kr6;
-        reg signed [7:0] kr7;
-        reg signed [7:0] kr8;
-        reg [11:0] tag_index_r;
-        reg tag_last_r;
-
-        always @(posedge clk) begin
-            if (!rstn) begin
-                state <= M_IDLE;
-                row_idx <= 2'd0;
-                acc <= 32'sd0;
-                row_sum <= 32'sd0;
-                busy <= 1'b0;
-                valid <= 1'b0;
-                result_index <= 12'd0;
-                result_last <= 1'b0;
-                result_q12 <= 32'sd0;
-                tag_index_r <= 12'd0;
-                tag_last_r <= 1'b0;
-            end
-            else begin
-                valid <= 1'b0;
-                case (state)
-                    M_IDLE: begin
-                        busy <= 1'b0;
-                        if (start) begin
-                            f3 <= w10; f4 <= w11; f5 <= w12;
-                            f6 <= w20; f7 <= w21; f8 <= w22;
-                            kr3 <= k3; kr4 <= k4; kr5 <= k5;
-                            kr6 <= k6; kr7 <= k7; kr8 <= k8;
-                            tag_index_r <= tag_index;
-                            tag_last_r <= tag_last;
-                            acc <= bias_q12 + mul_ext(w00, k0) +
-                                   mul_ext(w01, k1) + mul_ext(w02, k2);
-                            row_idx <= 2'd1;
-                            busy <= 1'b1;
-                            state <= M_RUN;
-                        end
-                    end
-
-                    M_RUN: begin
-                        if (row_idx == 2'd1) begin
-                            acc <= acc + mul_ext(f3, kr3) +
-                                   mul_ext(f4, kr4) + mul_ext(f5, kr5);
-                            row_idx <= 2'd2;
-                        end
-                        else begin
-                            row_sum <= mul_ext(f6, kr6) +
-                                       mul_ext(f7, kr7) + mul_ext(f8, kr8);
-                            state <= M3_FINISH;
-                        end
-                    end
-
-                    M3_FINISH: begin
-                        result_q12 <= acc + row_sum;
-                        result_index <= tag_index_r;
-                        result_last <= tag_last_r;
-                        valid <= 1'b1;
-                        busy <= 1'b0;
-                        state <= M_IDLE;
-                    end
-
-                    default: begin
-                        state <= M_IDLE;
-                        busy <= 1'b0;
-                    end
-                endcase
-            end
-        end
-    end
-endgenerate
 endmodule
 
+// Quantizer rounds the Q12 MAC result back toward Q6-like 8-bit pixel output
+// and clips the result to the signed 8-bit range.
 module CNN_Quantizer(
     input signed [31:0] value_q12,
     output reg signed [7:0] pixel_q6
@@ -1512,3 +1329,5 @@ module CNN_Quantizer(
         end
     end
 endmodule
+
+
